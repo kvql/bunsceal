@@ -1,0 +1,11 @@
+---
+name: Development
+id: dev
+description: |
+  Development Security environment is where POCs and experiments are run. 
+def_sensitivity: "D"
+sensitivity_reason: |
+  No customer data to be processed here and therefore the sensitivity is low. 
+def_criticality: "5"
+criticality_reason: |
+  Not on the release path and therefore should have minimal impact on the business if there are any outages

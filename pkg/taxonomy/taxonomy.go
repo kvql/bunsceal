@@ -1,0 +1,204 @@
+package taxonomy
+
+import (
+	"errors"
+	"regexp"
+
+	"github.com/kvql/bunsceal/pkg/util"
+)
+
+// Use this to test compatibility in clients
+const ApiVersion = "v1beta1"
+
+type Taxonomy struct {
+	ApiVersion        string
+	SecEnvironments   map[string]SecEnv
+	SecDomains        map[string]SecDomain
+	SensitivityLevels []string
+	CriticalityLevels []string
+	CompReqs          map[string]CompReq
+}
+
+// Define sensitivity levels
+var SensitivityLevels = map[string]string{
+	"A": "High",
+	"B": "Medium",
+	"C": "Low",
+	"D": "N/A",
+}
+
+// Define Criticality levels
+var CriticalityLevels map[string]string = map[string]string{
+	"1": "Critical",
+	"2": "High",
+	"3": "Medium",
+	"4": "Low",
+	"5": "N/A",
+}
+
+// create slice of risk levels to track order
+var SenseOrder = []string{"A", "B", "C", "D"}
+var CritOrder = []string{"1", "2", "3", "4", "5"}
+
+var descPattern = "(?s).{70,}"
+var descRex = regexp.MustCompile(descPattern)
+
+func (txy *Taxonomy) validateSecurityDomains() (bool, int) {
+	valid := true
+	failures := 0
+	// Loop through SecDomains and validate default risk levels
+	for _, secDomain := range txy.SecDomains {
+		for envID, sdEnv := range secDomain.EnvDetails {
+			// validate compliance scope for each SD
+			for _, compReq := range sdEnv.DefCompReqs {
+				if _, ok := txy.CompReqs[compReq]; !ok {
+					util.Log.Printf("Invalid compliance scope(%s) for SecEnv (%s) in SD (%s)", compReq, envID, secDomain.Name)
+					failures++
+					valid = false
+				}
+			}
+			// validate secEnv for each SD is a valid secEnv in the taxonomy,
+			if _, ok := txy.SecEnvironments[envID]; !ok {
+				util.Log.Printf("Invalid secEnv for SD %s: %s\n", secDomain.Name, envID)
+				failures++
+				valid = false
+			}
+		}
+	}
+	return valid, failures
+}
+
+func (txy *Taxonomy) validateEnv() bool {
+	valid := true
+	// Loop through environments and validate
+	for _, env := range txy.SecEnvironments {
+		// validate compliance scope for each SD
+		for _, compReq := range env.DefCompReqs {
+			if _, ok := txy.CompReqs[compReq]; !ok {
+				util.Log.Printf("Invalid compliance scope (%s) for env(%s)", env.ID, compReq)
+				valid = false
+			}
+		}
+	}
+	return valid
+}
+
+func (txy *Taxonomy) ApplyInheritance() {
+	// Loop through env details for each security domain and update risk compliance if not set based on env default
+	for _, secDomain := range txy.SecDomains {
+		for envID, sdEnv := range secDomain.EnvDetails {
+			if sdEnv.DefSensitivity == "" && sdEnv.SensitivityReason == "" {
+				sdEnv.DefSensitivity = txy.SecEnvironments[envID].DefSensitivity
+				sdEnv.SensitivityReason = "Inherited: " + txy.SecEnvironments[envID].SensitivityReason
+			}
+			if sdEnv.DefCriticality == "" && sdEnv.CriticalityReason == "" {
+				sdEnv.DefCriticality = txy.SecEnvironments[envID].DefCriticality
+				sdEnv.CriticalityReason = "Inherited: " + txy.SecEnvironments[envID].CriticalityReason
+			}
+			// Inherit compliance requirements from environment if not set
+			if sdEnv.DefCompReqs == nil {
+				sdEnv.DefCompReqs = txy.SecEnvironments[envID].DefCompReqs
+			}
+			// add compliance details to compReqs var for each complaince standard listed
+			for _, compReq := range sdEnv.DefCompReqs {
+				// only add details if listed standard is valid. If not, it will be caught in validation
+				if _, ok := txy.CompReqs[compReq]; ok {
+					if sdEnv.CompReqs == nil {
+						sdEnv.CompReqs = make(map[string]CompReq)
+					}
+					sdEnv.CompReqs[compReq] = txy.CompReqs[compReq]
+				}
+			}
+			secDomain.EnvDetails[envID] = sdEnv
+		}
+	}
+}
+
+// ValidateSharedServices validates the shared-services environment.
+// Hard coding some specific checks for shared-services environment as it is an exception to the normal security domains.
+// This secenv need to meet the strictest requirements.
+func (txy *Taxonomy) ValidateSharedServices() (bool, int) {
+	valid := true
+	envName := "shared-service"
+	failures := 0
+	if _, ok := txy.SecEnvironments[envName]; !ok {
+		util.Log.Printf("%s environment not found", envName)
+		return false, 1
+	}
+	if txy.SecEnvironments[envName].DefSensitivity != SenseOrder[0] ||
+		txy.SecEnvironments[envName].DefCriticality != CritOrder[0] {
+		util.Log.Printf("%s environment does not have the highest sensitivity or criticality", envName)
+		failures++
+		valid = false
+	}
+
+	if len(txy.SecEnvironments[envName].DefCompReqs) != len(txy.CompReqs) {
+		util.Log.Printf("%s environment does not have all compliance requirements", envName)
+		failures++
+		valid = false
+	}
+	return valid, failures
+}
+
+func (txy *Taxonomy) CompleteAndValidateTaxonomy() bool {
+	// Loop through SecEnvironments and validate max risk level
+	valid := false
+	valid = txy.validateEnv()
+	if !valid {
+		return valid
+	}
+	valid, _ = txy.ValidateSharedServices()
+	if !valid {
+		return valid
+	}
+	// Apply inheritance rules
+	txy.ApplyInheritance()
+
+	// Validate the taxonomy
+	valid, _ = txy.validateSecurityDomains()
+	return valid
+}
+
+// LoadTaxonomy loads the taxonomy by loading the different files and combining them into one struct.
+// Validates the loaded data is valid and meets requirements.
+// fills in missing data based on inheritance rules
+func LoadTaxonomy() (Taxonomy, error) {
+	txy := Taxonomy{ApiVersion: ApiVersion}
+	var err error
+	dir := "./taxonomy/"
+
+	// Load security environments
+	txy.SecEnvironments, err = LoadSecEnvFiles(dir + "security-environments")
+	if err != nil {
+		util.Log.Println("Error loading security environment files, exiting")
+		return Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+	// Load risk levels
+	txy.SensitivityLevels = SenseOrder
+	txy.CriticalityLevels = CritOrder
+
+	// Load security domains
+	txy.SecDomains, err = LoadSDFiles(dir + "security-domains")
+	if err != nil {
+		util.Log.Println("Error loading security Domain files:", err)
+		return Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+
+	// Define compliance scopes
+	txy.CompReqs, err = LoadCompScope(dir + "compliance_requirements.yaml")
+	if err != nil {
+		util.Log.Println("Error loading compliance scope files:", err)
+		return Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+
+	// Validate the taxonomy
+	valid := txy.CompleteAndValidateTaxonomy()
+	// TODO validate against compliance scopes acceptable risk levels
+	if !valid {
+		util.Log.Println("Taxonomy is invalid")
+		return Taxonomy{}, errors.New("invalid Taxonomy")
+	} else {
+		// Return the taxonomy
+		return txy, nil
+	}
+}

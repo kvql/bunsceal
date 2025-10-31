@@ -1,5 +1,6 @@
+# yaml-language-server: $schema=../../schema/compliance-requirements.json
 ---
 pci-dss:
   name: "PCI DSS"
   description: "PCI DSS - Payment Card Industry Data Security Standard"
-  requirements_link: ""
+  requirements_link: "https://www.pcisecuritystandards.org/"

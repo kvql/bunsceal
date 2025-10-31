@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kvql/bunsceal/schema/taxonomy.json",
+  "title": "Taxonomy aggregate",
+  "description": "Aggregated taxonomy structure combining security environments, security domains and compliance requirements",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "v1beta1"
+    },
+    "segL1s": {
+      "type": "object",
+      "description": "Map of environment ID -> SegL1",
+      "patternProperties": {
+        "^[a-z-]{1,15}$": {
+          "$ref": "./seg-level1.json"
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "segL2s": {
+      "type": "object",
+      "description": "Map of security domain ID -> SegL2",
+      "patternProperties": {
+        "^[a-z0-9-]{1,15}$": {
+          "$ref": "./seg-level2.json"
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "sensitivityLevels": {
+      "const": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    "criticalityLevels": {
+      "const": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ]
+    },
+    "compReqs": {
+      "type": "object",
+      "patternProperties": {
+        "^[A-Za-z0-9._-]+$": {
+          "$ref": "./comp-req.json"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "apiVersion",
+    "segL1s",
+    "segL2s",
+    "sensitivityLevels",
+    "criticalityLevels",
+    "compReqs"
+  ],
+  "additionalProperties": false
+}

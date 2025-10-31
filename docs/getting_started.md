@@ -24,7 +24,7 @@ It's easier to start by thinking of this from a network perspective
 
 TLDR:  
 
-- Think of security domain as a VPC (or a group of VPCs) within an SecEnv.
+- Think of security domain as a VPC (or a group of VPCs) within an SegL1.
 - It is logical name for a segment within our Segment Level 1s
 - Why we need a name for these segments is due to them having different security and compliance requirements and we need to have some logic concept to map those requirements too.
 

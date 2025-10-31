@@ -53,7 +53,7 @@ func PrepTaxonomy(txy *tx.Taxonomy) map[string]EnvImageData {
 			envData := data[envId]
 			envData.SegL2s[sd.ID] = det
 			envData.SegL2Names[sd.ID] = sd.Name
-			envData.Criticalities[det.DefCriticality] = true
+			envData.Criticalities[det.Criticality] = true
 			envData.SortedSegL2s = append(data[envId].SortedSegL2s, sd.ID)
 			data[envId] = envData
 		}

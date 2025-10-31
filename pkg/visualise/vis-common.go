@@ -359,8 +359,8 @@ func FormatEnvLabel(txy *tx.Taxonomy, prefix string, envID string, showClass boo
 	if showClass {
 		label = fmt.Sprintf("\"%s\\n%s\\nClassification: %s%s\"",
 			label, strings.Repeat("_", len(label)),
-			strings.ToUpper(txy.SegL1s[envID].DefSensitivity),
-			strings.ToUpper(txy.SegL1s[envID].DefCriticality),
+			strings.ToUpper(txy.SegL1s[envID].Sensitivity),
+			strings.ToUpper(txy.SegL1s[envID].Criticality),
 		)
 	} else {
 		label = fmt.Sprintf("\"%s \n%s\n(ID:%s)\"", label,
@@ -380,8 +380,8 @@ func FormatSdLabel(txy *tx.Taxonomy, prefix string, envID string, sdID string, s
 		label = fmt.Sprintf("\"%s%s\\n%s\\nClassification: %s%s%s\"",
 			strings.Repeat("\n", emphasis),
 			label, strings.Repeat("_", len(label)),
-			strings.ToUpper(txy.SegL2s[sdID].EnvDetails[envID].DefSensitivity),
-			strings.ToUpper(txy.SegL2s[sdID].EnvDetails[envID].DefCriticality),
+			strings.ToUpper(txy.SegL2s[sdID].EnvDetails[envID].Sensitivity),
+			strings.ToUpper(txy.SegL2s[sdID].EnvDetails[envID].Criticality),
 			strings.Repeat("\n", emphasis),
 		)
 	} else {

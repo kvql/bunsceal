@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kvql/bunsceal/schema/seg-level2.json",
+  "title": "SegL2",
+  "description": "Segmentation Level 2 definitions, including per-environment overrides",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "id": {
+      "$ref": "./common.json#/$defs/sdId"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "env_details": {
+      "type": "object",
+      "description": "Map of environment ID -> EnvDetails",
+      "patternProperties": {
+        "^[a-z-]{1,15}$": {
+          "$ref": "./env-details.json"
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "name",
+    "id",
+    "description",
+    "env_details"
+  ],
+  "additionalProperties": false
+}

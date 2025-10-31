@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kvql/bunsceal/schema/env-details.json",
+  "title": "Environment details for a Security Domain (EnvDetails)",
+  "description": "Per-environment overrides for sensitivity, criticality and compliance requirements",
+  "type": "object",
+  "properties": {
+    "sensitivity": {
+      "$ref": "./common.json#/$defs/sensitivityCode"
+    },
+    "sensitivity_rationale": {
+      "$ref": "./common.json#/$defs/longDescription"
+    },
+    "criticality": {
+      "$ref": "./common.json#/$defs/criticalityCode"
+    },
+    "criticality_rationale": {
+      "$ref": "./common.json#/$defs/longDescription"
+    },
+    "compliance_reqs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "compReqs": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "./comp-req.json"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "sensitivity": { "type": "string" }
+        },
+        "required": ["sensitivity"]
+      },
+      "then": {
+        "required": ["sensitivity_rationale"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "sensitivity_rationale": { "type": "string" }
+        },
+        "required": ["sensitivity_rationale"]
+      },
+      "then": {
+        "required": ["sensitivity"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "criticality": { "type": "string" }
+        },
+        "required": ["criticality"]
+      },
+      "then": {
+        "required": ["criticality_rationale"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "criticality_rationale": { "type": "string" }
+        },
+        "required": ["criticality_rationale"]
+      },
+      "then": {
+        "required": ["criticality"]
+      }
+    }
+  ]
+}

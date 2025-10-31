@@ -62,7 +62,7 @@ func GraphEnvs(txy *tx.Taxonomy) (*gographviz.Graph, error) {
 		envIds := rowsMap[row]
 		for _, envId := range envIds {
 			label := FormatEnvLabel(txy, "Segment Level 1 - ", envId, true)
-			envNodeAtt := FormatNode(label, txy.SegL1s[envId].DefSensitivity)
+			envNodeAtt := FormatNode(label, txy.SegL1s[envId].Sensitivity)
 			envNodeAtt["fontsize"] = "\"16\""
 			envNodeName := fmt.Sprintf("\"env_node_%s\"", strings.ReplaceAll(envId, "-", "_"))
 			err := g.AddNode(rowSubGraphName, envNodeName, envNodeAtt)
@@ -175,7 +175,7 @@ func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gog
 
 			for _, sdId := range imageData[envId].SortedSegL2s {
 				sdEnvDet := imageData[envId].SegL2s[sdId]
-				crit := sdEnvDet.DefCriticality
+				crit := sdEnvDet.Criticality
 				// Setup batch subgraphs and bump when necessary
 				if batch.Count[crit] > batch.Limit || batch.Count[crit] == 0 {
 					batchNodeName, err := batch.BumpBatch(crit, g)
@@ -189,7 +189,7 @@ func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gog
 				// -------------------------
 				// Add emphasis to the label (map returns 0 if not found)
 				label := FormatSdLabel(txy, "", envId, sdId, showClass, sdEmphasis[sdId])
-				sdNodeAtt := FormatNode(label, sdEnvDet.DefSensitivity) // attributes to format the node
+				sdNodeAtt := FormatNode(label, sdEnvDet.Sensitivity) // attributes to format the node
 				sdNodeName := fmt.Sprintf("\"sd_node_%s_%s\"", strings.ReplaceAll(envId, "-", "_"), strings.ReplaceAll(sdId, "-", "_"))
 				// Add security domain node to the batch subgraph
 				err := g.AddNode(batch.CurrentSGName(crit), sdNodeName, sdNodeAtt)
@@ -296,7 +296,7 @@ func GraphCompliance(txy *tx.Taxonomy, compName string, showOutOfScope bool) (*g
 				}
 				if showOutOfScope || scope == "in" {
 					sdEnvDet := imageData[envId].SegL2s[sdId]
-					//crit := sdEnvDet.DefCriticality
+					//crit := sdEnvDet.Criticality
 					// Setup batch subgraphs and bump when necessary
 					if batch.Count[scope] > batch.Limit || batch.Count[scope] == 0 {
 						batchNodeName, err := batch.BumpBatch(scope, g)
@@ -310,7 +310,7 @@ func GraphCompliance(txy *tx.Taxonomy, compName string, showOutOfScope bool) (*g
 					// -------------------------
 					// Add emphasis to the label (map returns 0 if not found)
 					label := FormatSdLabel(txy, "", envId, sdId, false, sdEmphasis[sdId])
-					sdNodeAtt := FormatNode(label, sdEnvDet.DefSensitivity) // attributes to format the node
+					sdNodeAtt := FormatNode(label, sdEnvDet.Sensitivity) // attributes to format the node
 					// Make out of scope nodes less visible in the graph by removing filled style (font needs to be bright if fill removed)
 					if scope == "out" {
 						sdNodeAtt["fontcolor"] = sdNodeAtt["color"]

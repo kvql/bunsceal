@@ -21,7 +21,7 @@ Segmentation Level 2: Second level segment which breaks up tier 1 segments.
 
 ## Taxonomy Files
 
-The SecEnvs and SegL2s are defined in individual files under the `taxonomy` directory. For full detail on any specific SegL1or SegL2 this is the source of truth.
+The SegL1s and SegL2s are defined in individual files under the `taxonomy` directory. For full detail on any specific SegL1or SegL2 this is the source of truth.
 
 ### Example Segment Level 1 File
 
@@ -67,7 +67,7 @@ env_details:
 ```
 
 > [!NOTE]  
-> For Segment Level 2 properties under any listed SecEnv, where the property is missing or blank, the values will be inherited from the Segment Level 1.
+> For Segment Level 2 properties under any listed SegL1, where the property is missing or blank, the values will be inherited from the Segment Level 1.
 >
 > e.g for sandbox in the above example, the SegL2 will be list as being under the Sandbox SegL1with the same properties. 
 

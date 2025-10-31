@@ -12,7 +12,7 @@ func TestValidateRows(t *testing.T) {
 		1: []string{"shared-service"},
 	}
 	tx := &tx.Taxonomy{
-		SegL1s: map[string]tx.SecEnv{
+		SegL1s: map[string]tx.SegL1{
 			"shared-service": {},
 			"production":     {},
 			"ci":             {},
@@ -33,7 +33,7 @@ func TestValidateRowsPass(t *testing.T) {
 		1: []string{"shared-service"},
 	}
 	tx := &tx.Taxonomy{
-		SegL1s: map[string]tx.SecEnv{
+		SegL1s: map[string]tx.SegL1{
 			"shared-service": {},
 			"production":     {},
 			"ci":             {},
@@ -55,7 +55,7 @@ func TestValidateRowCount(t *testing.T) {
 		1: []string{"shared-service"},
 	}
 	tx := &tx.Taxonomy{
-		SegL1s: map[string]tx.SecEnv{
+		SegL1s: map[string]tx.SegL1{
 			"shared-service": {},
 			"production":     {},
 			"ci":             {},

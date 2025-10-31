@@ -7,7 +7,7 @@ import (
 func TestTaxonomy_ValidateSharedServices(t *testing.T) {
 	t.Run("Shared service environment not found", func(t *testing.T) {
 		txy := &Taxonomy{
-			SegL1s: make(map[string]SecEnv),
+			SegL1s: make(map[string]SegL1),
 		}
 		valid, _ := txy.ValidateSharedServices()
 		if valid {
@@ -17,11 +17,11 @@ func TestTaxonomy_ValidateSharedServices(t *testing.T) {
 
 	t.Run("Shared service environment with incorrect sensitivity, criticality and comp requirements", func(t *testing.T) {
 		txy := &Taxonomy{
-			SegL1s: map[string]SecEnv{
+			SegL1s: map[string]SegL1{
 				"shared-service": {
-					DefSensitivity: "b",
-					DefCriticality: "2",
-					DefCompReqs:    []string{"req1", "req2"},
+					Sensitivity:    "b",
+					Criticality:    "2",
+					ComplianceReqs: []string{"req1", "req2"},
 				},
 			},
 			CompReqs: map[string]CompReq{
@@ -41,11 +41,11 @@ func TestTaxonomy_ValidateSharedServices(t *testing.T) {
 
 	t.Run("Valid shared service environment", func(t *testing.T) {
 		txy := &Taxonomy{
-			SegL1s: map[string]SecEnv{
+			SegL1s: map[string]SegL1{
 				"shared-service": {
-					DefSensitivity: SenseOrder[0],
-					DefCriticality: CritOrder[0],
-					DefCompReqs:    []string{"req1", "req2"},
+					Sensitivity:    SenseOrder[0],
+					Criticality:    CritOrder[0],
+					ComplianceReqs: []string{"req1", "req2"},
 				},
 			},
 			CompReqs: map[string]CompReq{

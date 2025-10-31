@@ -5,111 +5,76 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 
 	"github.com/kvql/bunsceal/pkg/util"
 	"gopkg.in/yaml.v3"
 )
 
-type SegL1struct {
-	Name              string   `yaml:"name"`
-	ID                string   `yaml:"id"`
-	Description       string   `yaml:"description"`
-	DefSensitivity    string   `yaml:"def_sensitivity"`
-	SensitivityReason string   `yaml:"sensitivity_reason"`
-	DefCriticality    string   `yaml:"def_criticality"`
-	CriticalityReason string   `yaml:"criticality_reason"`
-	DefCompReqs       []string `yaml:"def_compliance_reqs"`
+type SegL1 struct {
+	Name                 string   `yaml:"name"`
+	ID                   string   `yaml:"id"`
+	Description          string   `yaml:"description"`
+	Sensitivity          string   `yaml:"sensitivity"`
+	SensitivityRationale string   `yaml:"sensitivity_rationale"`
+	Criticality          string   `yaml:"criticality"`
+	CriticalityRationale string   `yaml:"criticality_rationale"`
+	ComplianceReqs       []string `yaml:"compliance_reqs"`
 }
 
-var envPattern = "^[a-z-]{1,15}$"
-
-var envRex = regexp.MustCompile(envPattern)
-
-// Validate the security environment struct to ensure required fields are present and meet any expected formats
-func (env SecEnv) Validate() (bool, []string) {
-	var tests []string
-	outcome := true
-	if env.Name == "" {
-		tests = append(tests, "Name is empty")
-		outcome = false
-	}
-	if !envRex.MatchString(env.ID) {
-		tests = append(tests, fmt.Sprintf("ID (%s) does not match (%s)", env.ID, envPattern))
-		outcome = false
-	}
-	if !descRex.MatchString(env.Description) {
-		tests = append(tests, "Description is empty")
-		outcome = false
-	}
-	if _, ok := SensitivityLevels[env.DefSensitivity]; !ok {
-		tests = append(tests, fmt.Sprintf("Default sensitivity level (%s) is not a valid level", env.DefSensitivity))
-		outcome = false
-	}
-	if !descRex.MatchString(env.SensitivityReason) {
-		tests = append(tests, fmt.Sprintf("Sensitivity reason does not meet requirement %s", descPattern))
-		outcome = false
-	}
-	if _, ok := CriticalityLevels[env.DefCriticality]; !ok {
-		tests = append(tests, fmt.Sprintf("Default criticality level (%s) is not a valid level", env.DefCriticality))
-		outcome = false
-	}
-	if !descRex.MatchString(env.CriticalityReason) {
-		tests = append(tests, fmt.Sprintf("Criticality reason does not meet requirement %s", descPattern))
-		outcome = false
-	}
-	return outcome, tests
-}
-
-// LoadSecEnvFiles Parse all security environment files from the provided directory,
+// LoadSegL1Files Parse all security environment files from the provided directory,
 // validate and return a map of SegL1structs
-func LoadSecEnvFiles(secEnvDir string) (map[string]SecEnv, error) {
-	files, err := os.ReadDir(secEnvDir)
+func LoadSegL1Files(segL1Dir string) (map[string]SegL1, error) {
+	// Initialize schema validator
+	schemaValidator, err := NewSchemaValidator("./schema")
+	if err != nil {
+		util.Log.Printf("Error initializing schema validator: %v\n", err)
+		return nil, errors.New("failed to initialize schema validator")
+	}
+
+	files, err := os.ReadDir(segL1Dir)
 	if err != nil {
 		return nil, err
 	}
 	valid := true
-	secEnvs := make(map[string]SecEnv)
+	segL1s := make(map[string]SegL1)
 	for _, file := range files {
 		if !file.IsDir() {
-			filePath := filepath.Join(secEnvDir, file.Name())
+			filePath := filepath.Join(segL1Dir, file.Name())
 			// Load the file and parse it into a SegL1struct
-			secEnv, err := parseSecEnvFile(filePath)
+			segL1, err := parseSegL1File(filePath, schemaValidator)
 			if err != nil {
 				util.Log.Printf("Error parsing file: %s\n", filePath)
 				valid = false
 			}
-			secEnvs[secEnv.ID] = secEnv
+			segL1s[segL1.ID] = segL1
 		}
 	}
 	if valid {
-		return secEnvs, nil
+		return segL1s, nil
 	} else {
 		return nil, errors.New("loading security environments failed")
 	}
 }
 
-func parseSecEnvFile(filePath string) (SecEnv, error) {
+func parseSegL1File(filePath string, schemaValidator *SchemaValidator) (SegL1, error) {
 	// Read the file
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return SecEnv{}, err
+		return SegL1{}, err
+	}
+
+	// Validate against JSON schema first
+	if err := schemaValidator.ValidateYAML(data, "seg-level1.json"); err != nil {
+		util.Log.Printf("Schema validation failed for %s: %v\n", filePath, err)
+		return SegL1{}, fmt.Errorf("schema validation failed for %s: %w", filePath, err)
 	}
 
 	// Unmarshal the YAML data into a SegL1struct
-	var secEnv SecEnv
-	err = yaml.Unmarshal(data, &secEnv)
+	var segL1 SegL1
+	err = yaml.Unmarshal(data, &segL1)
 	if err != nil {
-		return SecEnv{}, err
+		return SegL1{}, err
 	}
 
-	pass, results := secEnv.Validate()
-	if !pass {
-		for _, result := range results {
-			util.Log.Println(result)
-		}
-		return SecEnv{}, errors.New("Security environment validation failed, file: " + filePath)
-	}
-
-	return secEnv, nil
+	return segL1, nil
 }

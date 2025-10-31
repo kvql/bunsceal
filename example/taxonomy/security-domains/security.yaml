@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../schema/seg-level2.json
 ---
 version: "1.0"
 name: Security
@@ -5,31 +6,31 @@ id: sec
 description: The "Security" security domain is where the majority of the resources deployed are for security tooling.
 env_details:
   production:
-    def_sensitivity: B
-    sensitivity_reason: |
+    sensitivity: "B"
+    sensitivity_rationale: |
       The security domain is where all security resources are deployed and security logs often contain sensitive data.
       This domain does not have the ability to directly transfer money however and therefore doesn't meet the highest sensitivity level.
-    def_criticality: 2
-    criticality_reason: |
-      Loss of availability for security monitoring can result in missed alerts or compliance issues with process that depend on the security monitoring stack. 
-      No impact on the ability of customers to use the product. 
+    criticality: "2"
+    criticality_rationale: |
+      Loss of availability for security monitoring can result in missed alerts or compliance issues with process that depend on the security monitoring stack.
+      No impact on the ability of customers to use the product.
   staging:
-    def_sensitivity: D
-    sensitivity_reason: |
+    sensitivity: "D"
+    sensitivity_rationale: |
       Staging environment is used for testing and development purposes and hence will not have strict security controls.
       Any service requiring production data even for staging purposes (eg: audit logs) must be categorised under the shared service environment.
-    def_criticality: 5
-    criticality_reason: |
+    criticality: "5"
+    criticality_rationale: |
       Staging security environment is important for testing changes prior to deployment to production grade workloads, therefore any downtime can cost engineering hours through lost development time.
       However there is no direct impact on customers and hence doesn't meet the higher criticality levels.
   shared-service:
-    def_sensitivity: A
-    sensitivity_reason: |
+    sensitivity: "A"
+    sensitivity_rationale: |
       Shared services are the highest risk worklaods from a lateral movement/data leak perspective.
       They could act as the bridge between low security environments and high security environments.
-    def_criticality: 2
-    criticality_reason: |
-      Loss of availability for security monitoring can result in missed alerts or compliance issues with process that depend on the security monitoring stack. 
-      No impact on the ability of customers to use the product. 
-    def_compliance_reqs:
+    criticality: "2"
+    criticality_rationale: |
+      Loss of availability for security monitoring can result in missed alerts or compliance issues with process that depend on the security monitoring stack.
+      No impact on the ability of customers to use the product.
+    compliance_reqs:
       - pci-dss

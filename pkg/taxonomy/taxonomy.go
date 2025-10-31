@@ -2,7 +2,6 @@ package taxonomy
 
 import (
 	"errors"
-	"regexp"
 
 	"github.com/kvql/bunsceal/pkg/util"
 )
@@ -12,7 +11,7 @@ const ApiVersion = "v1beta1"
 
 type Taxonomy struct {
 	ApiVersion        string
-	SegL1s            map[string]SecEnv
+	SegL1s            map[string]SegL1
 	SegL2s            map[string]SegL2
 	SensitivityLevels []string
 	CriticalityLevels []string
@@ -40,9 +39,6 @@ var CriticalityLevels map[string]string = map[string]string{
 var SenseOrder = []string{"A", "B", "C", "D"}
 var CritOrder = []string{"1", "2", "3", "4", "5"}
 
-var descPattern = "(?s).{70,}"
-var descRex = regexp.MustCompile(descPattern)
-
 func (txy *Taxonomy) validateSecurityDomains() (bool, int) {
 	valid := true
 	failures := 0
@@ -50,7 +46,7 @@ func (txy *Taxonomy) validateSecurityDomains() (bool, int) {
 	for _, secDomain := range txy.SegL2s {
 		for envID, sdEnv := range secDomain.EnvDetails {
 			// validate compliance scope for each SD
-			for _, compReq := range sdEnv.DefCompReqs {
+			for _, compReq := range sdEnv.ComplianceReqs {
 				if _, ok := txy.CompReqs[compReq]; !ok {
 					util.Log.Printf("Invalid compliance scope(%s) for SegL1(%s) in SD (%s)", compReq, envID, secDomain.Name)
 					failures++
@@ -73,7 +69,7 @@ func (txy *Taxonomy) validateEnv() bool {
 	// Loop through environments and validate
 	for _, env := range txy.SegL1s {
 		// validate compliance scope for each SD
-		for _, compReq := range env.DefCompReqs {
+		for _, compReq := range env.ComplianceReqs {
 			if _, ok := txy.CompReqs[compReq]; !ok {
 				util.Log.Printf("Invalid compliance scope (%s) for env(%s)", env.ID, compReq)
 				valid = false
@@ -87,20 +83,20 @@ func (txy *Taxonomy) ApplyInheritance() {
 	// Loop through env details for each security domain and update risk compliance if not set based on env default
 	for _, secDomain := range txy.SegL2s {
 		for envID, sdEnv := range secDomain.EnvDetails {
-			if sdEnv.DefSensitivity == "" && sdEnv.SensitivityReason == "" {
-				sdEnv.DefSensitivity = txy.SegL1s[envID].DefSensitivity
-				sdEnv.SensitivityReason = "Inherited: " + txy.SegL1s[envID].SensitivityReason
+			if sdEnv.Sensitivity == "" && sdEnv.SensitivityRationale == "" {
+				sdEnv.Sensitivity = txy.SegL1s[envID].Sensitivity
+				sdEnv.SensitivityRationale = "Inherited: " + txy.SegL1s[envID].SensitivityRationale
 			}
-			if sdEnv.DefCriticality == "" && sdEnv.CriticalityReason == "" {
-				sdEnv.DefCriticality = txy.SegL1s[envID].DefCriticality
-				sdEnv.CriticalityReason = "Inherited: " + txy.SegL1s[envID].CriticalityReason
+			if sdEnv.Criticality == "" && sdEnv.CriticalityRationale == "" {
+				sdEnv.Criticality = txy.SegL1s[envID].Criticality
+				sdEnv.CriticalityRationale = "Inherited: " + txy.SegL1s[envID].CriticalityRationale
 			}
 			// Inherit compliance requirements from environment if not set
-			if sdEnv.DefCompReqs == nil {
-				sdEnv.DefCompReqs = txy.SegL1s[envID].DefCompReqs
+			if sdEnv.ComplianceReqs == nil {
+				sdEnv.ComplianceReqs = txy.SegL1s[envID].ComplianceReqs
 			}
 			// add compliance details to compReqs var for each complaince standard listed
-			for _, compReq := range sdEnv.DefCompReqs {
+			for _, compReq := range sdEnv.ComplianceReqs {
 				// only add details if listed standard is valid. If not, it will be caught in validation
 				if _, ok := txy.CompReqs[compReq]; ok {
 					if sdEnv.CompReqs == nil {
@@ -125,14 +121,14 @@ func (txy *Taxonomy) ValidateSharedServices() (bool, int) {
 		util.Log.Printf("%s environment not found", envName)
 		return false, 1
 	}
-	if txy.SegL1s[envName].DefSensitivity != SenseOrder[0] ||
-		txy.SegL1s[envName].DefCriticality != CritOrder[0] {
+	if txy.SegL1s[envName].Sensitivity != SenseOrder[0] ||
+		txy.SegL1s[envName].Criticality != CritOrder[0] {
 		util.Log.Printf("%s environment does not have the highest sensitivity or criticality", envName)
 		failures++
 		valid = false
 	}
 
-	if len(txy.SegL1s[envName].DefCompReqs) != len(txy.CompReqs) {
+	if len(txy.SegL1s[envName].ComplianceReqs) != len(txy.CompReqs) {
 		util.Log.Printf("%s environment does not have all compliance requirements", envName)
 		failures++
 		valid = false
@@ -168,7 +164,7 @@ func LoadTaxonomy() (Taxonomy, error) {
 	dir := "./taxonomy/"
 
 	// Load security environments
-	txy.SegL1s, err = LoadSecEnvFiles(dir + "security-environments")
+	txy.SegL1s, err = LoadSegL1Files(dir + "security-environments")
 	if err != nil {
 		util.Log.Println("Error loading security environment files, exiting")
 		return Taxonomy{}, errors.New("invalid Taxonomy")
@@ -178,7 +174,7 @@ func LoadTaxonomy() (Taxonomy, error) {
 	txy.CriticalityLevels = CritOrder
 
 	// Load security domains
-	txy.SegL2s, err = LoadSDFiles(dir + "security-domains")
+	txy.SegL2s, err = LoadSegL2Files(dir + "security-domains")
 	if err != nil {
 		util.Log.Println("Error loading security Domain files:", err)
 		return Taxonomy{}, errors.New("invalid Taxonomy")

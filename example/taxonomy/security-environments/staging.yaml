@@ -1,15 +1,16 @@
+# yaml-language-server: $schema=../../../schema/seg-level1.json
 ---
 name: Staging
 id: staging
 description: |
    Staging security environment where all pre production versions of our production resources are deployed.
    Envionment will not have strict security controls and hence now production/regulated data should be stored or processed here.
-def_sensitivity: D
-sensitivity_reason: |
+sensitivity: "D"
+sensitivity_rationale: |
    Staging environment is used for testing and development purposes and hence will not have strict security controls.
    Regulated data must not be processed or stored in this environment.
-def_criticality: 5
-criticality_reason: |
+criticality: "5"
+criticality_rationale: |
    Staging security environment is important for testing changes prior to deployment to production grade workloads,
    therefore any downtime can cost engineering hours through lost development time. However there is no direct impact on customers and hence doesn't
    meet the higher criticality levels.

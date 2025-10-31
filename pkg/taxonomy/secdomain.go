@@ -5,19 +5,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 
 	"github.com/kvql/bunsceal/pkg/util"
 	"gopkg.in/yaml.v3"
 )
 
 type EnvDetails struct {
-	DefSensitivity    string   `yaml:"def_sensitivity"`
-	SensitivityReason string   `yaml:"sensitivity_reason"`
-	DefCriticality    string   `yaml:"def_criticality"`
-	CriticalityReason string   `yaml:"criticality_reason"`
-	DefCompReqs       []string `yaml:"def_compliance_reqs"`
-	CompReqs          map[string]CompReq
+	Sensitivity          string   `yaml:"sensitivity"`
+	SensitivityRationale string   `yaml:"sensitivity_rationale"`
+	Criticality          string   `yaml:"criticality"`
+	CriticalityRationale string   `yaml:"criticality_rationale"`
+	ComplianceReqs       []string `yaml:"compliance_reqs"`
+	CompReqs             map[string]CompReq
 }
 type version struct {
 	Version string `yaml:"version"`
@@ -30,72 +29,27 @@ type SegL2 struct {
 	EnvDetails  map[string]EnvDetails `yaml:"env_details"`
 }
 
-const sdidPattern = "^[a-z0-9-]{1,15}$"
-
-var rexSdId = regexp.MustCompile(sdidPattern)
-
-func (sd SegL2) Validate() (bool, []string) {
-	var tests []string
-	outcome := true
-	if sd.Name == "" {
-		tests = append(tests, "Name is empty")
-		outcome = false
-	}
-	if sd.Description == "" {
-		tests = append(tests, "Description is empty")
-		outcome = false
-	}
-	if sd.EnvDetails == nil {
-		tests = append(tests, "Environment details are empty")
-		outcome = false
-	}
-	if !rexSdId.MatchString(sd.ID) {
-		tests = append(tests, "ID does not meet requirement "+sdidPattern)
-		outcome = false
-	}
-	// Loop through each environment the SD is defined in and validate details
-	for envID, env := range sd.EnvDetails {
-		// if Sensitivity or reason is provided, validate values
-		if env.DefSensitivity != "" || env.SensitivityReason != "" {
-			if _, ok := SensitivityLevels[env.DefSensitivity]; !ok {
-				outcome = false
-				tests = append(tests, fmt.Sprintf("Invalid Sensitivity level (%s) SegL1(%s) defined in SD (%s)", env.DefSensitivity, envID, sd.ID))
-			}
-			if !descRex.MatchString(env.SensitivityReason) {
-				outcome = false
-				tests = append(tests, fmt.Sprintf("Sensitivity reason does not meet requirement %s", descPattern))
-			}
-		}
-		// If Criticality or reason is provided, validate values
-		if env.DefCriticality != "" || env.CriticalityReason != "" {
-			if _, ok := CriticalityLevels[env.DefCriticality]; !ok {
-				outcome = false
-				tests = append(tests, fmt.Sprintf("Invalid Criticality level (%s) SegL1(%s) defined in SD (%s)", env.DefSensitivity, envID, sd.ID))
-			}
-			if !descRex.MatchString(env.CriticalityReason) {
-				outcome = false
-				tests = append(tests, fmt.Sprintf("Criticality reason does not meet requirement %s", descPattern))
-			}
-		}
+// LoadSegL2Files loads all security domain files from the given directory
+func LoadSegL2Files(segL2Dir string) (map[string]SegL2, error) {
+	// Initialize schema validator
+	schemaValidator, err := NewSchemaValidator("./schema")
+	if err != nil {
+		util.Log.Printf("Error initializing schema validator: %v\n", err)
+		return nil, errors.New("failed to initialize schema validator")
 	}
 
-	return outcome, tests
-}
-
-// LoadSDFiles loads all security domain files from the given directory
-func LoadSDFiles(secDomainDir string) (map[string]SegL2, error) {
-	secDomains := make(map[string]SegL2)
-	err := filepath.WalkDir(secDomainDir, func(path string, d os.DirEntry, err error) error {
+	segL2s := make(map[string]SegL2)
+	err = filepath.WalkDir(segL2Dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if !d.IsDir() {
 			// Load the file and parse it into a SegL2 struct
-			secDomain, err := parseSDFile(path)
+			segL2, err := parseSDFile(path, schemaValidator)
 			if err != nil {
 				return err
 			}
-			secDomains[secDomain.ID] = secDomain
+			segL2s[segL2.ID] = segL2
 		}
 		return nil
 	})
@@ -107,25 +61,25 @@ func LoadSDFiles(secDomainDir string) (map[string]SegL2, error) {
 	validations := make([]string, 0)
 	idMap := make(map[string]bool) //used to validate that the security domain id is unique
 	outcome := true
-	for _, sd := range secDomains {
-		if _, ok := idMap[sd.ID]; ok {
-			validations = append(validations, "ID for "+sd.Name+"is not unique: "+sd.ID)
+	for _, segL2 := range segL2s {
+		if _, ok := idMap[segL2.ID]; ok {
+			validations = append(validations, "ID for "+segL2.Name+"is not unique: "+segL2.ID)
 			outcome = false
 		} else {
-			idMap[sd.ID] = true
+			idMap[segL2.ID] = true
 		}
 	}
 	if !outcome {
 		for _, result := range validations {
 			util.Log.Println(result)
 		}
-		return nil, errors.New("Security domain validation failed, directory: " + secDomainDir)
+		return nil, errors.New("Security domain validation failed, directory: " + segL2Dir)
 	}
 
-	return secDomains, nil
+	return segL2s, nil
 }
 
-func parseSDFile(filePath string) (SegL2, error) {
+func parseSDFile(filePath string, schemaValidator *SchemaValidator) (SegL2, error) {
 	// Read the file
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -138,22 +92,19 @@ func parseSDFile(filePath string) (SegL2, error) {
 	}
 	switch fileVersion.Version {
 	case "1.0":
-		// Unmarshal the YAML data into a SegL2 struct
-		var secDomain SegL2
-		err = yaml.Unmarshal(data, &secDomain)
-		if err != nil {
+		// Validate against JSON schema first
+		if err := schemaValidator.ValidateYAML(data, "seg-level2.json"); err != nil {
+			util.Log.Printf("Schema validation failed for %s: %v\n", filePath, err)
+			return SegL2{}, fmt.Errorf("schema validation failed for %s: %w", filePath, err)
+		}
 
+		// Unmarshal the YAML data into a SegL2 struct
+		var segL2 SegL2
+		err = yaml.Unmarshal(data, &segL2)
+		if err != nil {
 			return SegL2{}, errors.New("Failed to parse file" + filePath + err.Error())
 		}
-		// Validate the Security domain file content
-		pass, results := secDomain.Validate()
-		if !pass {
-			for line := range results {
-				util.Log.Println(results[line])
-			}
-			return SegL2{}, errors.New("Security domain validation failed, file: " + filePath)
-		}
-		return secDomain, nil
+		return segL2, nil
 	default:
 		return SegL2{}, errors.New("Unsupported security domain file version: " + filePath + fileVersion.Version)
 	}

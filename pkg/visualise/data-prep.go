@@ -8,9 +8,9 @@ import (
 )
 
 type EnvImageData struct {
-	SecDoms       map[string]tx.EnvDetails
-	SecDomNames   map[string]string
-	SortedSecDoms []string
+	SegL2s        map[string]tx.EnvDetails
+	SegL2Names    map[string]string
+	SortedSegL2s  []string
 	Criticalities map[string]bool
 }
 
@@ -26,10 +26,10 @@ func validateRows(txy *tx.Taxonomy, rowsMap map[int][]string) error {
 	for _, r := range rowsMap {
 		rowTotal += len(r)
 	}
-	if len(txy.SecEnvironments) != rowTotal {
+	if len(txy.SegL1s) != rowTotal {
 		return fmt.Errorf("Number of environments in taxonomy does not match number of environments in rows")
 	}
-	for env, _ := range txy.SecEnvironments {
+	for env, _ := range txy.SegL1s {
 		if _, ok := rowMap[env]; !ok {
 			return fmt.Errorf("environment %s not found in rows", env)
 		}
@@ -39,27 +39,27 @@ func validateRows(txy *tx.Taxonomy, rowsMap map[int][]string) error {
 
 func PrepTaxonomy(txy *tx.Taxonomy) map[string]EnvImageData {
 	data := make(map[string]EnvImageData)
-	for envId, _ := range txy.SecEnvironments {
+	for envId, _ := range txy.SegL1s {
 		data[envId] = EnvImageData{
-			SecDoms:       make(map[string]tx.EnvDetails),
-			SecDomNames:   make(map[string]string),
+			SegL2s:        make(map[string]tx.EnvDetails),
+			SegL2Names:    make(map[string]string),
 			Criticalities: make(map[string]bool),
-			SortedSecDoms: make([]string, 0),
+			SortedSegL2s:  make([]string, 0),
 		}
 	}
 
-	for _, sd := range txy.SecDomains {
+	for _, sd := range txy.SegL2s {
 		for envId, det := range sd.EnvDetails {
 			envData := data[envId]
-			envData.SecDoms[sd.ID] = det
-			envData.SecDomNames[sd.ID] = sd.Name
+			envData.SegL2s[sd.ID] = det
+			envData.SegL2Names[sd.ID] = sd.Name
 			envData.Criticalities[det.DefCriticality] = true
-			envData.SortedSecDoms = append(data[envId].SortedSecDoms, sd.ID)
+			envData.SortedSegL2s = append(data[envId].SortedSegL2s, sd.ID)
 			data[envId] = envData
 		}
 	}
 	for _, envData := range data {
-		sort.Strings(envData.SortedSecDoms)
+		sort.Strings(envData.SortedSegL2s)
 	}
 	return data
 }

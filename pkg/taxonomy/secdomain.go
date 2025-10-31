@@ -23,7 +23,7 @@ type version struct {
 	Version string `yaml:"version"`
 }
 
-type SecDomain struct {
+type SegL2 struct {
 	Name        string                `yaml:"name"`
 	ID          string                `yaml:"id"`
 	Description string                `yaml:"description"`
@@ -34,7 +34,7 @@ const sdidPattern = "^[a-z0-9-]{1,15}$"
 
 var rexSdId = regexp.MustCompile(sdidPattern)
 
-func (sd SecDomain) Validate() (bool, []string) {
+func (sd SegL2) Validate() (bool, []string) {
 	var tests []string
 	outcome := true
 	if sd.Name == "" {
@@ -59,7 +59,7 @@ func (sd SecDomain) Validate() (bool, []string) {
 		if env.DefSensitivity != "" || env.SensitivityReason != "" {
 			if _, ok := SensitivityLevels[env.DefSensitivity]; !ok {
 				outcome = false
-				tests = append(tests, fmt.Sprintf("Invalid Sensitivity level (%s) SecEnv (%s) defined in SD (%s)", env.DefSensitivity, envID, sd.ID))
+				tests = append(tests, fmt.Sprintf("Invalid Sensitivity level (%s) SegL1(%s) defined in SD (%s)", env.DefSensitivity, envID, sd.ID))
 			}
 			if !descRex.MatchString(env.SensitivityReason) {
 				outcome = false
@@ -70,7 +70,7 @@ func (sd SecDomain) Validate() (bool, []string) {
 		if env.DefCriticality != "" || env.CriticalityReason != "" {
 			if _, ok := CriticalityLevels[env.DefCriticality]; !ok {
 				outcome = false
-				tests = append(tests, fmt.Sprintf("Invalid Criticality level (%s) SecEnv (%s) defined in SD (%s)", env.DefSensitivity, envID, sd.ID))
+				tests = append(tests, fmt.Sprintf("Invalid Criticality level (%s) SegL1(%s) defined in SD (%s)", env.DefSensitivity, envID, sd.ID))
 			}
 			if !descRex.MatchString(env.CriticalityReason) {
 				outcome = false
@@ -83,14 +83,14 @@ func (sd SecDomain) Validate() (bool, []string) {
 }
 
 // LoadSDFiles loads all security domain files from the given directory
-func LoadSDFiles(secDomainDir string) (map[string]SecDomain, error) {
-	secDomains := make(map[string]SecDomain)
+func LoadSDFiles(secDomainDir string) (map[string]SegL2, error) {
+	secDomains := make(map[string]SegL2)
 	err := filepath.WalkDir(secDomainDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if !d.IsDir() {
-			// Load the file and parse it into a SecDomain struct
+			// Load the file and parse it into a SegL2 struct
 			secDomain, err := parseSDFile(path)
 			if err != nil {
 				return err
@@ -125,25 +125,25 @@ func LoadSDFiles(secDomainDir string) (map[string]SecDomain, error) {
 	return secDomains, nil
 }
 
-func parseSDFile(filePath string) (SecDomain, error) {
+func parseSDFile(filePath string) (SegL2, error) {
 	// Read the file
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return SecDomain{}, errors.New("Failed to parse file" + filePath + err.Error())
+		return SegL2{}, errors.New("Failed to parse file" + filePath + err.Error())
 	}
 	var fileVersion version
 	err = yaml.Unmarshal(data, &fileVersion)
 	if err != nil {
-		return SecDomain{}, errors.New("Failed to parse file" + filePath + err.Error())
+		return SegL2{}, errors.New("Failed to parse file" + filePath + err.Error())
 	}
 	switch fileVersion.Version {
 	case "1.0":
-		// Unmarshal the YAML data into a SecDomain struct
-		var secDomain SecDomain
+		// Unmarshal the YAML data into a SegL2 struct
+		var secDomain SegL2
 		err = yaml.Unmarshal(data, &secDomain)
 		if err != nil {
 
-			return SecDomain{}, errors.New("Failed to parse file" + filePath + err.Error())
+			return SegL2{}, errors.New("Failed to parse file" + filePath + err.Error())
 		}
 		// Validate the Security domain file content
 		pass, results := secDomain.Validate()
@@ -151,10 +151,10 @@ func parseSDFile(filePath string) (SecDomain, error) {
 			for line := range results {
 				util.Log.Println(results[line])
 			}
-			return SecDomain{}, errors.New("Security domain validation failed, file: " + filePath)
+			return SegL2{}, errors.New("Security domain validation failed, file: " + filePath)
 		}
 		return secDomain, nil
 	default:
-		return SecDomain{}, errors.New("Unsupported security domain file version: " + filePath + fileVersion.Version)
+		return SegL2{}, errors.New("Unsupported security domain file version: " + filePath + fileVersion.Version)
 	}
 }

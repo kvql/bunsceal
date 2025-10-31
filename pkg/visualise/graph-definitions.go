@@ -10,7 +10,7 @@ import (
 
 // Layout Variables
 // ----------------
-// variable to increase the size of listed security domains. key is the Security Domain ID, value is the number of new lines to add above and below the label.
+// variable to increase the size of listed security domains. key is the Segment Level 2 ID, value is the number of new lines to add above and below the label.
 // This is used to make the listed security domains more visible in the graph.
 // no validation is done on the keys but this won't cause any SD to be missed in the image
 var sdEmphasis = map[string]int{
@@ -26,7 +26,7 @@ var rowsMap = map[int][]string{
 }
 
 // ################################
-// Function to Security Environment Graph
+// Function to Segment Level 1 Graph
 // ################################
 
 // See the GraphSDs function for more comments explaining how the graph is generated. That is the more complex function and therefore has more comments than GraphEnvs
@@ -34,7 +34,7 @@ var rowsMap = map[int][]string{
 func GraphEnvs(txy *tx.Taxonomy) (*gographviz.Graph, error) {
 	// Setup the top level graph object
 	validateRows(txy, rowsMap)
-	title := "Security Environments Overview"
+	title := "Segment Level 1s Overview"
 	g := BaselineGraph(title, "")
 
 	// // Add legend to the graph
@@ -61,8 +61,8 @@ func GraphEnvs(txy *tx.Taxonomy) (*gographviz.Graph, error) {
 		// Environment subgraphs
 		envIds := rowsMap[row]
 		for _, envId := range envIds {
-			label := FormatEnvLabel(txy, "Security Environment - ", envId, true)
-			envNodeAtt := FormatNode(label, txy.SecEnvironments[envId].DefSensitivity)
+			label := FormatEnvLabel(txy, "Segment Level 1 - ", envId, true)
+			envNodeAtt := FormatNode(label, txy.SegL1s[envId].DefSensitivity)
 			envNodeAtt["fontsize"] = "\"16\""
 			envNodeName := fmt.Sprintf("\"env_node_%s\"", strings.ReplaceAll(envId, "-", "_"))
 			err := g.AddNode(rowSubGraphName, envNodeName, envNodeAtt)
@@ -84,15 +84,15 @@ func GraphEnvs(txy *tx.Taxonomy) (*gographviz.Graph, error) {
 }
 
 // ################################
-// Function to Security Domain Graphs
+// Function to Segment Level 2 Graphs
 // ################################
 
 func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
 	validateRows(txy, rowsMap)
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
-	title := "Security Environment & Security Domain Layout"
-	subHeading := "Overview of Security Domains grouped by their respective Security Environments"
+	title := "Segment Level 1 & Segment Level 2 Layout"
+	subHeading := "Overview of Segment Level 2s grouped by their respective Segment Level 1s"
 	g := BaselineGraph(title, subHeading)
 
 	// Following code will create subgraphs for each row and add security environments as subgraphs to those rows
@@ -121,7 +121,7 @@ func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gog
 		// --------------------
 		// Now that rows have been setup, we can add the image components for each environment
 		// The rowMap[] are slices which are ordered and therefore we can iterate over them in order,
-		// tx.SecEnvironments is a map and therefore iterating over that would give a different order each time
+		// tx.SegL1s is a map and therefore iterating over that would give a different order each time
 		envIds := rowsMap[row]
 		for _, envId := range envIds {
 			orderNodes[envId] = map[string][]string{}
@@ -130,7 +130,7 @@ func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gog
 			if highlightCriticality {
 				showEnvClass = true // if highlighting criticality, we need to show the classification for the environment
 			}
-			label := FormatEnvLabel(txy, "Security Environment - ", envId, showEnvClass)
+			label := FormatEnvLabel(txy, "Segment Level 1 - ", envId, showEnvClass)
 			envGraphAtt := FormatGraph(label, "")
 			err := g.AddSubGraph(rowSubGraphName, envSubGraphName(envId), envGraphAtt)
 			if err != nil {
@@ -167,14 +167,14 @@ func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gog
 				}
 			}
 
-			// Add batch subgraphs & Security Domain nodes
+			// Add batch subgraphs & Segment Level 2 nodes
 			// ------------------------------------------
 			// Setup batch struct
 			// Loop through security domains in the current environment
 			batch := NewBatchVars(envId)
 
-			for _, sdId := range imageData[envId].SortedSecDoms {
-				sdEnvDet := imageData[envId].SecDoms[sdId]
+			for _, sdId := range imageData[envId].SortedSegL2s {
+				sdEnvDet := imageData[envId].SegL2s[sdId]
 				crit := sdEnvDet.DefCriticality
 				// Setup batch subgraphs and bump when necessary
 				if batch.Count[crit] > batch.Limit || batch.Count[crit] == 0 {
@@ -231,7 +231,7 @@ func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gog
 }
 
 // ################################
-// Function to Security Domain Graphs
+// Function to Segment Level 2 Graphs
 // ################################
 // GraphCompliance  showOut is used control if out of scope domains are added to the graph
 func GraphCompliance(txy *tx.Taxonomy, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
@@ -242,7 +242,7 @@ func GraphCompliance(txy *tx.Taxonomy, compName string, showOutOfScope bool) (*g
 
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
-	title := "Security Environment & Security Domain Layout"
+	title := "Segment Level 1 & Segment Level 2 Layout"
 	subHeading := fmt.Sprintf("Compliance Standard: %s", txy.CompReqs[compName].Name)
 	g := BaselineGraph(title, subHeading)
 
@@ -262,7 +262,7 @@ func GraphCompliance(txy *tx.Taxonomy, compName string, showOutOfScope bool) (*g
 		envIds := rowsMap[row]
 		for _, envId := range envIds {
 			orderNodes[envId] = map[string][]string{}
-			label := FormatEnvLabel(txy, "Security Environment - ", envId, false)
+			label := FormatEnvLabel(txy, "Segment Level 1 - ", envId, false)
 			envGraphAtt := FormatGraph(label, "")
 			err := g.AddSubGraph(rowSubGraphName, envSubGraphName(envId), envGraphAtt)
 			if err != nil {
@@ -285,17 +285,17 @@ func GraphCompliance(txy *tx.Taxonomy, compName string, showOutOfScope bool) (*g
 			name = focusSGName(envId, "out")
 			g.AddSubGraph(envSubGraphName(envId), name, compGraphAtt)
 
-			// Add batch subgraphs & Security Domain nodes
+			// Add batch subgraphs & Segment Level 2 nodes
 			// ------------------------------------------
 			batch := NewBatchVars(envId)
 
-			for _, sdId := range imageData[envId].SortedSecDoms {
+			for _, sdId := range imageData[envId].SortedSegL2s {
 				scope := "out"
-				if _, ok := imageData[envId].SecDoms[sdId].CompReqs[compName]; ok {
+				if _, ok := imageData[envId].SegL2s[sdId].CompReqs[compName]; ok {
 					scope = "in"
 				}
 				if showOutOfScope || scope == "in" {
-					sdEnvDet := imageData[envId].SecDoms[sdId]
+					sdEnvDet := imageData[envId].SegL2s[sdId]
 					//crit := sdEnvDet.DefCriticality
 					// Setup batch subgraphs and bump when necessary
 					if batch.Count[scope] > batch.Limit || batch.Count[scope] == 0 {

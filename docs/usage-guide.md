@@ -1,7 +1,7 @@
 # Contribution Steps
 
 > [!TIP]  
-> **Do you need to define a new Security Domain?**
+> **Do you need to define a new Segment Level 2?**
 > Check [here](new_secdom.md) first to see if you need to define new domain
 
 1. Create a new file under the relevant directory under the taxonomy directory

@@ -168,7 +168,7 @@ func envSubGraphName(envID string) string {
 	return fmt.Sprintf("\"cluster_%s\"", strings.ReplaceAll(envID, "-", "_"))
 }
 
-// FocusSGName returns the name of the subgraph for grouping Security Domains within an environment by a particular focus. e.g criticality, compliance scope.
+// FocusSGName returns the name of the subgraph for grouping Segment Level 2s within an environment by a particular focus. e.g criticality, compliance scope.
 // cluster name doesn't include what the focus is as it just needs to be predicable and unique not human readable. graphviz displays the label not the graph name
 func focusSGName(envID string, focusValue string) string {
 	return fmt.Sprintf("\"cluster_focus_%s_%s\"", strings.ReplaceAll(envID, "-", "_"), focusValue)
@@ -354,18 +354,18 @@ func FormatLabel(name string, sense string, crit string) string {
 func FormatEnvLabel(txy *tx.Taxonomy, prefix string, envID string, showClass bool) string {
 
 	// graph without Compliance reqs until process around them is finalised
-	label := prefix + txy.SecEnvironments[envID].Name
+	label := prefix + txy.SegL1s[envID].Name
 
 	if showClass {
 		label = fmt.Sprintf("\"%s\\n%s\\nClassification: %s%s\"",
 			label, strings.Repeat("_", len(label)),
-			strings.ToUpper(txy.SecEnvironments[envID].DefSensitivity),
-			strings.ToUpper(txy.SecEnvironments[envID].DefCriticality),
+			strings.ToUpper(txy.SegL1s[envID].DefSensitivity),
+			strings.ToUpper(txy.SegL1s[envID].DefCriticality),
 		)
 	} else {
 		label = fmt.Sprintf("\"%s \n%s\n(ID:%s)\"", label,
 			strings.Repeat("_", len(label)),
-			txy.SecEnvironments[envID].ID)
+			txy.SegL1s[envID].ID)
 	}
 	return label
 }
@@ -374,18 +374,18 @@ func FormatEnvLabel(txy *tx.Taxonomy, prefix string, envID string, showClass boo
 func FormatSdLabel(txy *tx.Taxonomy, prefix string, envID string, sdID string, showClass bool, emphasis int) string {
 
 	// graph without Compliance reqs until process around them is finalised
-	label := fmt.Sprintf("%s%s", prefix, txy.SecDomains[sdID].Name)
+	label := fmt.Sprintf("%s%s", prefix, txy.SegL2s[sdID].Name)
 
 	if showClass {
 		label = fmt.Sprintf("\"%s%s\\n%s\\nClassification: %s%s%s\"",
 			strings.Repeat("\n", emphasis),
 			label, strings.Repeat("_", len(label)),
-			strings.ToUpper(txy.SecDomains[sdID].EnvDetails[envID].DefSensitivity),
-			strings.ToUpper(txy.SecDomains[sdID].EnvDetails[envID].DefCriticality),
+			strings.ToUpper(txy.SegL2s[sdID].EnvDetails[envID].DefSensitivity),
+			strings.ToUpper(txy.SegL2s[sdID].EnvDetails[envID].DefCriticality),
 			strings.Repeat("\n", emphasis),
 		)
 	} else {
-		label = fmt.Sprintf("\"%s%s (%s)%s\"", strings.Repeat("\n", emphasis), label, txy.SecDomains[sdID].ID, strings.Repeat("\n", emphasis))
+		label = fmt.Sprintf("\"%s%s (%s)%s\"", strings.Repeat("\n", emphasis), label, txy.SegL2s[sdID].ID, strings.Repeat("\n", emphasis))
 	}
 	return label
 }

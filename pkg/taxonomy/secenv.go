@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type SecEnv struct {
+type SegL1struct {
 	Name              string   `yaml:"name"`
 	ID                string   `yaml:"id"`
 	Description       string   `yaml:"description"`
@@ -62,7 +62,7 @@ func (env SecEnv) Validate() (bool, []string) {
 }
 
 // LoadSecEnvFiles Parse all security environment files from the provided directory,
-// validate and return a map of SecEnv structs
+// validate and return a map of SegL1structs
 func LoadSecEnvFiles(secEnvDir string) (map[string]SecEnv, error) {
 	files, err := os.ReadDir(secEnvDir)
 	if err != nil {
@@ -73,7 +73,7 @@ func LoadSecEnvFiles(secEnvDir string) (map[string]SecEnv, error) {
 	for _, file := range files {
 		if !file.IsDir() {
 			filePath := filepath.Join(secEnvDir, file.Name())
-			// Load the file and parse it into a SecEnv struct
+			// Load the file and parse it into a SegL1struct
 			secEnv, err := parseSecEnvFile(filePath)
 			if err != nil {
 				util.Log.Printf("Error parsing file: %s\n", filePath)
@@ -96,7 +96,7 @@ func parseSecEnvFile(filePath string) (SecEnv, error) {
 		return SecEnv{}, err
 	}
 
-	// Unmarshal the YAML data into a SecEnv struct
+	// Unmarshal the YAML data into a SegL1struct
 	var secEnv SecEnv
 	err = yaml.Unmarshal(data, &secEnv)
 	if err != nil {

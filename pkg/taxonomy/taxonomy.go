@@ -147,6 +147,9 @@ func (txy *Taxonomy) CompleteAndValidateTaxonomy() bool {
 	return valid
 }
 
+var InitTaxonomy interface{
+	Load()
+}
 // LoadTaxonomy loads the taxonomy by loading the different files and combining them into one struct.
 // Validates the loaded data is valid and meets requirements.
 // fills in missing data based on inheritance rules

@@ -31,10 +31,10 @@ var rowsMap = map[int][]string{
 
 // See the GraphSDs function for more comments explaining how the graph is generated. That is the more complex function and therefore has more comments than GraphEnvs
 
-func GraphEnvs(txy *tx.Taxonomy) (*gographviz.Graph, error) {
+func GraphEnvs(txy *tx.Taxonomy, cfg *tx.Config) (*gographviz.Graph, error) {
 	// Setup the top level graph object
 	validateRows(txy, rowsMap)
-	title := txy.Config.Terminology.L1.Plural + " Overview"
+	title := cfg.Terminology.L1.Plural + " Overview"
 	g := BaselineGraph(title, "")
 
 	// // Add legend to the graph
@@ -61,7 +61,7 @@ func GraphEnvs(txy *tx.Taxonomy) (*gographviz.Graph, error) {
 		// Environment subgraphs
 		envIds := rowsMap[row]
 		for _, envId := range envIds {
-			label := FormatEnvLabel(txy, txy.Config.Terminology.L1.Singular+" - ", envId, true)
+			label := FormatEnvLabel(txy, cfg.Terminology.L1.Singular+" - ", envId, true)
 			envNodeAtt := FormatNode(label, txy.SegL1s[envId].Sensitivity)
 			envNodeAtt["fontsize"] = "\"16\""
 			envNodeName := fmt.Sprintf("\"env_node_%s\"", strings.ReplaceAll(envId, "-", "_"))
@@ -87,11 +87,11 @@ func GraphEnvs(txy *tx.Taxonomy) (*gographviz.Graph, error) {
 // Function to Segment Level 2 Graphs
 // ################################
 
-func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
+func GraphSDs(txy *tx.Taxonomy, cfg *tx.Config, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
 	validateRows(txy, rowsMap)
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
-	term := txy.Config.Terminology
+	term := cfg.Terminology
 	title := term.L1.Plural + " & " + term.L2.Plural + " Layout"
 	subHeading := "Overview of " + term.L2.Plural + " grouped by their respective " + term.L1.Plural
 	g := BaselineGraph(title, subHeading)
@@ -235,15 +235,15 @@ func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gog
 // Function to Segment Level 2 Graphs
 // ################################
 // GraphCompliance  showOut is used control if out of scope domains are added to the graph
-func GraphCompliance(txy *tx.Taxonomy, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
+func GraphCompliance(txy *tx.Taxonomy,cfg *tx.Config, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
 	validateRows(txy, rowsMap)
 	if _, ok := txy.CompReqs[compName]; !ok {
-		return nil, fmt.Errorf("Compliance standard %s not found in taxonomy", compName)
+		return nil, fmt.Errorf("compliance standard %s not found in taxonomy", compName)
 	}
 
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
-	term := txy.Config.Terminology
+	term := cfg.Terminology
 	title := term.L1.Plural + " & " + term.L2.Plural + " Layout"
 	subHeading := fmt.Sprintf("Compliance Standard: %s", txy.CompReqs[compName].Name)
 	g := BaselineGraph(title, subHeading)

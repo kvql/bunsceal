@@ -82,3 +82,17 @@ env_details:
 - web api to allow for quering the taxononmy
 - web api to allow for image generation
 - MCP server for LLM queries to web API
+
+## Metadata Inheritance
+
+Interitance flows down the levels, therefore l2 defined under L1 will inherit the metadata of it's L1.
+
+Metadata Precedence:
+
+Lower level taxes precedence of upder levels, eg. L2 metadata takes precedence over inherited L1 metadata.
+
+## Naming and plugins
+
+L1 and L2 names are configurable
+
+terminology.json

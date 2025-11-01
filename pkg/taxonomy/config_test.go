@@ -127,7 +127,6 @@ func TestLoadConfig_CompleteConfig(t *testing.T) {
 
 func TestLoadConfig_PartialL1Config(t *testing.T) {
 	t.Run("Falls back to defaults when L1 missing singular", func(t *testing.T) {
-		defaults := DefaultConfig()
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
 
@@ -142,30 +141,13 @@ func TestLoadConfig_PartialL1Config(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		cfg, err := LoadConfig(configPath, "")
-		if err != nil {
-			t.Fatalf("Expected successful load, got error: %v", err)
-		}
-
-		// L1 should use defaults (incomplete)
-		if cfg.Terminology.L1.Singular != defaults.Terminology.L1.Singular {
-			t.Errorf("Expected default L1 singular '%s', got '%s'", defaults.Terminology.L1.Singular, cfg.Terminology.L1.Singular)
-		}
-		if cfg.Terminology.L1.Plural != defaults.Terminology.L1.Plural {
-			t.Errorf("Expected default L1 plural '%s', got '%s'", defaults.Terminology.L1.Plural, cfg.Terminology.L1.Plural)
-		}
-
-		// L2 should use custom values (complete)
-		if cfg.Terminology.L2.Singular != "Application" {
-			t.Errorf("Expected L2 singular 'Application', got '%s'", cfg.Terminology.L2.Singular)
-		}
-		if cfg.Terminology.L2.Plural != "Applications" {
-			t.Errorf("Expected L2 plural 'Applications', got '%s'", cfg.Terminology.L2.Plural)
+		_, err := LoadConfig(configPath, "")
+		if err == nil {
+			t.Errorf("Expected error on load for not defining singular value")
 		}
 	})
 
 	t.Run("Falls back to defaults when L1 missing plural", func(t *testing.T) {
-		defaults := DefaultConfig()
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
 
@@ -180,29 +162,15 @@ func TestLoadConfig_PartialL1Config(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		cfg, err := LoadConfig(configPath, "")
-		if err != nil {
-			t.Fatalf("Expected successful load, got error: %v", err)
-		}
-
-		// L1 should use defaults (incomplete)
-		if cfg.Terminology.L1.Singular != defaults.Terminology.L1.Singular {
-			t.Errorf("Expected default L1 singular '%s', got '%s'", defaults.Terminology.L1.Singular, cfg.Terminology.L1.Singular)
-		}
-		if cfg.Terminology.L1.Plural != defaults.Terminology.L1.Plural {
-			t.Errorf("Expected default L1 plural '%s', got '%s'", defaults.Terminology.L1.Plural, cfg.Terminology.L1.Plural)
-		}
-
-		// L2 should use custom values
-		if cfg.Terminology.L2.Singular != "Application" {
-			t.Errorf("Expected L2 singular 'Application', got '%s'", cfg.Terminology.L2.Singular)
+		_, err := LoadConfig(configPath, "")
+		if err == nil {
+			t.Errorf("Expected error for not defining plural values, go no error")
 		}
 	})
 }
 
 func TestLoadConfig_PartialL2Config(t *testing.T) {
 	t.Run("Falls back to defaults when L2 incomplete", func(t *testing.T) {
-		defaults := DefaultConfig()
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
 
@@ -218,25 +186,9 @@ func TestLoadConfig_PartialL2Config(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		cfg, err := LoadConfig(configPath, "")
-		if err != nil {
-			t.Fatalf("Expected successful load, got error: %v", err)
-		}
-
-		// L1 should use custom values
-		if cfg.Terminology.L1.Singular != "Zone" {
-			t.Errorf("Expected L1 singular 'Zone', got '%s'", cfg.Terminology.L1.Singular)
-		}
-		if cfg.Terminology.L1.Plural != "Zones" {
-			t.Errorf("Expected L1 plural 'Zones', got '%s'", cfg.Terminology.L1.Plural)
-		}
-
-		// L2 should use defaults (incomplete)
-		if cfg.Terminology.L2.Singular != defaults.Terminology.L2.Singular {
-			t.Errorf("Expected default L2 singular '%s', got '%s'", defaults.Terminology.L2.Singular, cfg.Terminology.L2.Singular)
-		}
-		if cfg.Terminology.L2.Plural != defaults.Terminology.L2.Plural {
-			t.Errorf("Expected default L2 plural '%s', got '%s'", defaults.Terminology.L2.Plural, cfg.Terminology.L2.Plural)
+		_, err := LoadConfig(configPath, "")
+		if err == nil {
+			t.Errorf("Expected error on load for not defining singular value")
 		}
 	})
 }

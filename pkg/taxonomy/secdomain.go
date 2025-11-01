@@ -10,24 +10,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type EnvDetails struct {
-	Sensitivity          string   `yaml:"sensitivity"`
-	SensitivityRationale string   `yaml:"sensitivity_rationale"`
-	Criticality          string   `yaml:"criticality"`
-	CriticalityRationale string   `yaml:"criticality_rationale"`
-	ComplianceReqs       []string `yaml:"compliance_reqs"`
-	CompReqs             map[string]CompReq
-}
 type version struct {
 	Version string `yaml:"version"`
 }
 
-type SegL2 struct {
-	Name        string                `yaml:"name"`
-	ID          string                `yaml:"id"`
-	Description string                `yaml:"description"`
-	L1Overrides map[string]EnvDetails `yaml:"l1_overrides"`
-}
 
 // LoadSegL2Files loads all security domain files from the given directory
 func LoadSegL2Files(segL2Dir string) (map[string]SegL2, error) {

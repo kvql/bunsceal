@@ -99,7 +99,7 @@ func TestValidateSecurityDomains(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain for core business services",
-					L1Overrides: map[string]EnvDetails{
+					L1Overrides: map[string]L1Overrides{
 						"prod": {
 							Sensitivity:          "A",
 							SensitivityRationale: "Applications handle customer PII and payment information requiring highest protection level.",
@@ -134,7 +134,7 @@ func TestValidateSecurityDomains(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
-					L1Overrides: map[string]EnvDetails{
+					L1Overrides: map[string]L1Overrides{
 						"prod": {
 							ComplianceReqs: []string{"invalid-scope"},
 						},
@@ -163,7 +163,7 @@ func TestValidateSecurityDomains(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
-					L1Overrides: map[string]EnvDetails{
+					L1Overrides: map[string]L1Overrides{
 						"invalid-env": {
 							Sensitivity:          "A",
 							SensitivityRationale: "Test rationale with sufficient length to meet minimum requirements for validation.",
@@ -195,7 +195,7 @@ func TestValidateSecurityDomains(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
-					L1Overrides: map[string]EnvDetails{
+					L1Overrides: map[string]L1Overrides{
 						"prod": {
 							ComplianceReqs: []string{"invalid1", "invalid2"},
 						},
@@ -250,7 +250,7 @@ func TestCompleteAndValidateTaxonomy(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain for core business services",
-					L1Overrides: map[string]EnvDetails{
+					L1Overrides: map[string]L1Overrides{
 						"prod": {
 							Sensitivity:          "A",
 							SensitivityRationale: "Applications handle customer PII and payment information requiring highest protection level.",
@@ -341,7 +341,7 @@ func TestCompleteAndValidateTaxonomy(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
-					L1Overrides: map[string]EnvDetails{
+					L1Overrides: map[string]L1Overrides{
 						"invalid-env": {
 							Sensitivity:          "A",
 							SensitivityRationale: "Test rationale with sufficient length to meet minimum requirements for validation.",

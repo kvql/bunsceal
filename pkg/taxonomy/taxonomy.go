@@ -10,16 +10,6 @@ import (
 // Use this to test compatibility in clients
 const ApiVersion = "v1beta1"
 
-type Taxonomy struct {
-	ApiVersion        string
-	SegL1s            map[string]SegL1
-	SegL2s            map[string]SegL2
-	SensitivityLevels []string
-	CriticalityLevels []string
-	CompReqs          map[string]CompReq
-	Config            Config
-}
-
 // Define sensitivity levels
 var SensitivityLevels = map[string]string{
 	"A": "High",
@@ -164,7 +154,6 @@ func (txy *Taxonomy) CompleteAndValidateTaxonomy() bool {
 func LoadTaxonomy(taxDir string, cfg Config) (Taxonomy, error) {
 	txy := Taxonomy{
 		ApiVersion: ApiVersion,
-		Config:     cfg,
 	}
 	var err error
 

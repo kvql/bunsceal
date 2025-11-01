@@ -30,6 +30,7 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 		"comp-req.json",
 		"compliance-requirements.json",
 		"taxonomy.json",
+		"config.json",
 	}
 
 	// Add all schemas to compiler - must resolve to absolute paths

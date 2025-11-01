@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kvql/bunsceal/pkg/util"
+	"errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -67,12 +68,18 @@ func LoadConfig(configPath string, taxDir string) (Config, error) {
 
 	// Validate completeness - both singular and plural required for each level
 	// If either field is missing, use the entire default for that level
-	if cfg.Terminology.L1.Singular == "" || cfg.Terminology.L1.Plural == "" {
-		util.Log.Printf("Incomplete L1 terminology configuration, using defaults\n")
+	if cfg.Terminology.L1.Singular != "" || cfg.Terminology.L1.Plural != "" {
+		if cfg.Terminology.L1.Singular == "" || cfg.Terminology.L1.Plural == "" {
+			return Config{}, errors.New("incomplete L1 Terminology definition, singular and plural forms required if either is set")
+		}
+	}else {
 		cfg.Terminology.L1 = defaults.Terminology.L1
 	}
-	if cfg.Terminology.L2.Singular == "" || cfg.Terminology.L2.Plural == "" {
-		util.Log.Printf("Incomplete L2 terminology configuration, using defaults\n")
+	if cfg.Terminology.L2.Singular != "" || cfg.Terminology.L2.Plural != "" {
+		if cfg.Terminology.L2.Singular == "" || cfg.Terminology.L2.Plural == "" {
+			return Config{}, errors.New("incomplete L2 Terminology definition, singular and plural forms required if either is set")
+		}
+	}else {
 		cfg.Terminology.L2 = defaults.Terminology.L2
 	}
 

@@ -10,7 +10,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-
 // LoadSegL1Files Parse all security environment files from the provided directory,
 // validate and return a map of SegL1structs
 func LoadSegL1Files(segL1Dir string) (map[string]SegL1, error) {

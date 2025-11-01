@@ -1,0 +1,72 @@
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: ['--unsafe']  # Allow custom YAML tags
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: detect-private-key
+
+  # Go formatting
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+        args: ['-s']  # Simplify code
+      - id: go-imports
+      - id: go-vet
+      - id: go-unit-tests
+        args: ['-short']  # Run quick tests only
+      - id: go-build
+      - id: go-mod-tidy
+
+  # golangci-lint - run a faster subset for pre-commit
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.55.2
+    hooks:
+      - id: golangci-lint
+        name: golangci-lint (fast)
+        args:
+          - --fast
+          - --timeout=5m
+          - --config=.golangci.yml
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        args: ['-d', '{extends: default, rules: {line-length: {max: 120}, document-start: disable}}']
+
+# Configuration
+default_language_version:
+  python: python3
+
+fail_fast: false
+
+# Exclude directories
+exclude: |
+  (?x)^(
+    vendor/|
+    testdata/|
+    .git/|
+    bin/|
+    coverage\.out|
+    coverage\.html
+  )$

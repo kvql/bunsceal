@@ -29,7 +29,7 @@ func validateRows(txy *tx.Taxonomy, rowsMap map[int][]string) error {
 	if len(txy.SegL1s) != rowTotal {
 		return fmt.Errorf("Number of environments in taxonomy does not match number of environments in rows")
 	}
-	for env, _ := range txy.SegL1s {
+	for env := range txy.SegL1s {
 		if _, ok := rowMap[env]; !ok {
 			return fmt.Errorf("environment %s not found in rows", env)
 		}
@@ -39,7 +39,7 @@ func validateRows(txy *tx.Taxonomy, rowsMap map[int][]string) error {
 
 func PrepTaxonomy(txy *tx.Taxonomy) map[string]EnvImageData {
 	data := make(map[string]EnvImageData)
-	for envId, _ := range txy.SegL1s {
+	for envId := range txy.SegL1s {
 		data[envId] = EnvImageData{
 			SegL2s:        make(map[string]tx.L1Overrides),
 			SegL2Names:    make(map[string]string),

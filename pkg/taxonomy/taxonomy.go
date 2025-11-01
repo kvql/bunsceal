@@ -154,7 +154,7 @@ func (txy *Taxonomy) CompleteAndValidateTaxonomy() bool {
 func LoadTaxonomy(taxDir string, cfg Config) (Taxonomy, error) {
 	txy := Taxonomy{
 		ApiVersion: ApiVersion,
-		Config: cfg,
+		Config:     cfg,
 	}
 	var err error
 

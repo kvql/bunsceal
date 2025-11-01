@@ -27,7 +27,7 @@ type SegL2 struct {
 	Name        string                 `yaml:"name"`
 	ID          string                 `yaml:"id"`
 	Description string                 `yaml:"description"`
-	L1Overrides  map[string]L1Overrides `yaml:"l1_overrides"`
+	L1Overrides map[string]L1Overrides `yaml:"l1_overrides"`
 }
 
 type CompReq struct {
@@ -71,7 +71,7 @@ var InvalidConfigSchema = InvalidConfig{
 	Terminology: InvalidTermConfig{
 		L4: TermDef{
 			Singular: "dfas",
-			Plural: "fdasdfas",
+			Plural:   "fdasdfas",
 		},
 	},
 }
@@ -79,11 +79,10 @@ var ValidConfigSchema = Config{
 	Terminology: TermConfig{
 		L1: TermDef{
 			Singular: "dfas",
-			Plural: "fdasdfas",
+			Plural:   "fdasdfas",
 		},
 	},
 }
-
 
 var ValidSegL1Production = SegL1{
 	Name:                 "Production",
@@ -256,7 +255,7 @@ var InvalidSegL2_NoL1Overrides = SegL2{
 	Name:        "No Environments",
 	ID:          "no-env",
 	Description: "Security domain with no environment details defined",
-	L1Overrides:  map[string]L1Overrides{},
+	L1Overrides: map[string]L1Overrides{},
 }
 
 // Valid CompReq Fixtures

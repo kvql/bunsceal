@@ -194,7 +194,7 @@ func TestLoadConfig_PartialL2Config(t *testing.T) {
 }
 
 func TestLoadConfig_L2DefinedButBlank(t *testing.T) {
-	t.Run("Uses defaults for L2 when only L1 defined", func(t *testing.T) {
+	t.Run("Fail when blank terms defined", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
 

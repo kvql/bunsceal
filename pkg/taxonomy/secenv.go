@@ -25,6 +25,7 @@ type SegL1 struct {
 // validate and return a map of SegL1structs
 func LoadSegL1Files(segL1Dir string) (map[string]SegL1, error) {
 	// Initialize schema validator
+	// TODO: Refactor to accept schema path as parameter for testability
 	schemaValidator, err := NewSchemaValidator("./schema")
 	if err != nil {
 		util.Log.Printf("Error initializing schema validator: %v\n", err)
@@ -64,7 +65,7 @@ func parseSegL1File(filePath string, schemaValidator *SchemaValidator) (SegL1, e
 	}
 
 	// Validate against JSON schema first
-	if err := schemaValidator.ValidateYAML(data, "seg-level1.json"); err != nil {
+	if err := schemaValidator.ValidateData(data, "seg-level1.json"); err != nil {
 		util.Log.Printf("Schema validation failed for %s: %v\n", filePath, err)
 		return SegL1{}, fmt.Errorf("schema validation failed for %s: %w", filePath, err)
 	}

@@ -15,6 +15,7 @@ type CompReq struct {
 
 func LoadCompScope(filePath string) (map[string]CompReq, error) {
 	// Initialize schema validator
+	// TODO: Refactor to accept schema path as parameter for testability
 	schemaValidator, err := NewSchemaValidator("./schema")
 	if err != nil {
 		util.Log.Printf("Error initializing schema validator: %v\n", err)
@@ -29,7 +30,7 @@ func LoadCompScope(filePath string) (map[string]CompReq, error) {
 	}
 
 	// Validate against JSON schema first
-	if err := schemaValidator.ValidateYAML(data, "compliance-requirements.json"); err != nil {
+	if err := schemaValidator.ValidateData(data, "compliance-requirements.json"); err != nil {
 		util.Log.Printf("Schema validation failed for %s: %v\n", filePath, err)
 		return nil, err
 	}

@@ -32,6 +32,7 @@ type SegL2 struct {
 // LoadSegL2Files loads all security domain files from the given directory
 func LoadSegL2Files(segL2Dir string) (map[string]SegL2, error) {
 	// Initialize schema validator
+	// TODO: Refactor to accept schema path as parameter for testability
 	schemaValidator, err := NewSchemaValidator("./schema")
 	if err != nil {
 		util.Log.Printf("Error initializing schema validator: %v\n", err)
@@ -93,7 +94,7 @@ func parseSDFile(filePath string, schemaValidator *SchemaValidator) (SegL2, erro
 	switch fileVersion.Version {
 	case "1.0":
 		// Validate against JSON schema first
-		if err := schemaValidator.ValidateYAML(data, "seg-level2.json"); err != nil {
+		if err := schemaValidator.ValidateData(data, "seg-level2.json"); err != nil {
 			util.Log.Printf("Schema validation failed for %s: %v\n", filePath, err)
 			return SegL2{}, fmt.Errorf("schema validation failed for %s: %w", filePath, err)
 		}

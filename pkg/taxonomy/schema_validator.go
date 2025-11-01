@@ -26,7 +26,7 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 		"common.json",
 		"seg-level1.json",
 		"seg-level2.json",
-		"env-details.json",
+		"l1-overrides.json",
 		"comp-req.json",
 		"compliance-requirements.json",
 		"taxonomy.json",
@@ -40,7 +40,6 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 
 	for _, file := range schemaFiles {
 		schemaPath := filepath.Join(absSchemaDir, file)
-		schemaURL := fmt.Sprintf("file://%s", schemaPath)
 
 		// Read schema file
 		data, err := os.ReadFile(schemaPath)
@@ -54,16 +53,30 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 			return nil, fmt.Errorf("failed to parse schema %s: %w", file, err)
 		}
 
-		if err := compiler.AddResource(schemaURL, schemaDoc); err != nil {
-			return nil, fmt.Errorf("failed to add schema %s: %w", file, err)
+		// Register schema using its $id if present, otherwise use file URL
+		// This allows relative $ref paths in schemas to resolve correctly
+		if schemaMap, ok := schemaDoc.(map[string]interface{}); ok {
+			if id, ok := schemaMap["$id"].(string); ok {
+				// Register with the $id URL so relative refs work
+				if err := compiler.AddResource(id, schemaDoc); err != nil {
+					return nil, fmt.Errorf("failed to add schema %s: %w", file, err)
+				}
+			} else {
+				// Fallback to file URL if no $id
+				schemaURL := fmt.Sprintf("file://%s", schemaPath)
+				if err := compiler.AddResource(schemaURL, schemaDoc); err != nil {
+					return nil, fmt.Errorf("failed to add schema %s: %w", file, err)
+				}
+			}
 		}
 	}
 
 	// Pre-compile schemas for performance
+	// Compile using the base schema directory URL for resolution
 	schemas := make(map[string]*jsonschema.Schema)
+	schemaBaseURL := fmt.Sprintf("https://github.com/kvql/bunsceal/schema/")
 	for _, file := range schemaFiles {
-		schemaPath := filepath.Join(absSchemaDir, file)
-		schemaURL := fmt.Sprintf("file://%s", schemaPath)
+		schemaURL := schemaBaseURL + file
 		schema, err := compiler.Compile(schemaURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compile schema %s: %w", file, err)
@@ -77,16 +90,17 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 	}, nil
 }
 
-// ValidateYAML validates YAML data against the specified schema file
-func (sv *SchemaValidator) ValidateYAML(yamlData []byte, schemaFile string) error {
-	// Convert YAML to JSON for validation
-	var data interface{}
-	if err := yaml.Unmarshal(yamlData, &data); err != nil {
-		return fmt.Errorf("failed to parse YAML: %w", err)
+// ValidateData validates data (YAML/JSON) against the specified schema file
+// Accepts raw bytes in YAML or JSON format and validates against JSON Schema
+func (sv *SchemaValidator) ValidateData(data []byte, schemaFile string) error {
+	// Parse data (supports both YAML and JSON via yaml.v3)
+	var parsedData interface{}
+	if err := yaml.Unmarshal(data, &parsedData); err != nil {
+		return fmt.Errorf("failed to parse data: %w", err)
 	}
 
 	// Convert to JSON-compatible format (yaml.v3 uses map[string]interface{} but we need proper JSON types)
-	data = convertYAMLToJSON(data)
+	parsedData = convertYAMLToJSON(parsedData)
 
 	// Get the compiled schema
 	schema, ok := sv.schemas[schemaFile]
@@ -95,7 +109,7 @@ func (sv *SchemaValidator) ValidateYAML(yamlData []byte, schemaFile string) erro
 	}
 
 	// Validate
-	if err := schema.Validate(data); err != nil {
+	if err := schema.Validate(parsedData); err != nil {
 		return formatValidationError(err)
 	}
 

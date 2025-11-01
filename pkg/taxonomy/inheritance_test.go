@@ -23,7 +23,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Infrastructure",
 					ID:          "infra",
 					Description: "Infrastructure domain",
-					EnvDetails: map[string]EnvDetails{
+					L1Overrides: map[string]EnvDetails{
 						"prod": {
 							// Empty sensitivity and rationale - should inherit
 							Criticality:          "2",
@@ -37,7 +37,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		txy.ApplyInheritance()
 
-		envDetails := txy.SegL2s["infra"].EnvDetails["prod"]
+		envDetails := txy.SegL2s["infra"].L1Overrides["prod"]
 		if envDetails.Sensitivity != "A" {
 			t.Errorf("Expected sensitivity 'A', got %s", envDetails.Sensitivity)
 		}
@@ -66,7 +66,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
-					EnvDetails: map[string]EnvDetails{
+					L1Overrides: map[string]EnvDetails{
 						"staging": {
 							Sensitivity:          "C",
 							SensitivityRationale: "Custom sensitivity for application staging.",
@@ -80,7 +80,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		txy.ApplyInheritance()
 
-		envDetails := txy.SegL2s["app"].EnvDetails["staging"]
+		envDetails := txy.SegL2s["app"].L1Overrides["staging"]
 		if envDetails.Criticality != "5" {
 			t.Errorf("Expected criticality '5', got %s", envDetails.Criticality)
 		}
@@ -103,7 +103,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Security",
 					ID:          "sec",
 					Description: "Security domain",
-					EnvDetails: map[string]EnvDetails{
+					L1Overrides: map[string]EnvDetails{
 						"prod": {
 							Sensitivity:          "B",
 							SensitivityRationale: "Custom sensitivity for security domain.",
@@ -116,7 +116,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		txy.ApplyInheritance()
 
-		envDetails := txy.SegL2s["sec"].EnvDetails["prod"]
+		envDetails := txy.SegL2s["sec"].L1Overrides["prod"]
 		if envDetails.Sensitivity != "B" {
 			t.Errorf("Expected sensitivity to remain 'B', got %s", envDetails.Sensitivity)
 		}
@@ -138,7 +138,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
-					EnvDetails: map[string]EnvDetails{
+					L1Overrides: map[string]EnvDetails{
 						"prod": {
 							// nil ComplianceReqs - should inherit
 							Sensitivity:          "A",
@@ -155,7 +155,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		txy.ApplyInheritance()
 
-		envDetails := txy.SegL2s["app"].EnvDetails["prod"]
+		envDetails := txy.SegL2s["app"].L1Overrides["prod"]
 		if len(envDetails.ComplianceReqs) != 2 {
 			t.Errorf("Expected 2 inherited compliance reqs, got %d", len(envDetails.ComplianceReqs))
 		}
@@ -177,7 +177,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
-					EnvDetails: map[string]EnvDetails{
+					L1Overrides: map[string]EnvDetails{
 						"prod": {
 							ComplianceReqs:       []string{"pci-dss"}, // Custom subset
 							Sensitivity:          "A",
@@ -195,7 +195,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		txy.ApplyInheritance()
 
-		envDetails := txy.SegL2s["app"].EnvDetails["prod"]
+		envDetails := txy.SegL2s["app"].L1Overrides["prod"]
 		if len(envDetails.ComplianceReqs) != 1 {
 			t.Errorf("Expected custom compliance reqs to remain (1 item), got %d", len(envDetails.ComplianceReqs))
 		}
@@ -216,7 +216,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
-					EnvDetails: map[string]EnvDetails{
+					L1Overrides: map[string]EnvDetails{
 						"prod": {
 							ComplianceReqs:       []string{"pci-dss", "sox"},
 							Sensitivity:          "A",
@@ -233,7 +233,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		txy.ApplyInheritance()
 
-		envDetails := txy.SegL2s["app"].EnvDetails["prod"]
+		envDetails := txy.SegL2s["app"].L1Overrides["prod"]
 		if len(envDetails.CompReqs) != 2 {
 			t.Errorf("Expected 2 entries in CompReqs map, got %d", len(envDetails.CompReqs))
 		}
@@ -265,7 +265,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
-					EnvDetails: map[string]EnvDetails{
+					L1Overrides: map[string]EnvDetails{
 						"prod": {
 							ComplianceReqs:       []string{"pci-dss", "invalid-scope"},
 							Sensitivity:          "A",
@@ -281,7 +281,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		txy.ApplyInheritance()
 
-		envDetails := txy.SegL2s["app"].EnvDetails["prod"]
+		envDetails := txy.SegL2s["app"].L1Overrides["prod"]
 		if len(envDetails.CompReqs) != 1 {
 			t.Errorf("Expected only 1 valid entry in CompReqs map, got %d", len(envDetails.CompReqs))
 		}
@@ -313,7 +313,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
-					EnvDetails: map[string]EnvDetails{
+					L1Overrides: map[string]EnvDetails{
 						"prod": {
 							// Should inherit from prod SegL1
 						},
@@ -328,12 +328,12 @@ func TestApplyInheritance(t *testing.T) {
 
 		txy.ApplyInheritance()
 
-		prodDetails := txy.SegL2s["app"].EnvDetails["prod"]
+		prodDetails := txy.SegL2s["app"].L1Overrides["prod"]
 		if prodDetails.Sensitivity != "A" {
 			t.Errorf("Expected prod to inherit 'A', got %s", prodDetails.Sensitivity)
 		}
 
-		stagingDetails := txy.SegL2s["app"].EnvDetails["staging"]
+		stagingDetails := txy.SegL2s["app"].L1Overrides["staging"]
 		if stagingDetails.Sensitivity != "D" {
 			t.Errorf("Expected staging to inherit 'D', got %s", stagingDetails.Sensitivity)
 		}

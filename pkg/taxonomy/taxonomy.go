@@ -17,6 +17,7 @@ type Taxonomy struct {
 	SensitivityLevels []string
 	CriticalityLevels []string
 	CompReqs          map[string]CompReq
+	Config            Config
 }
 
 // Define sensitivity levels
@@ -45,7 +46,7 @@ func (txy *Taxonomy) validateSecurityDomains() (bool, int) {
 	failures := 0
 	// Loop through SegL2s and validate default risk levels
 	for _, secDomain := range txy.SegL2s {
-		for envID, sdEnv := range secDomain.EnvDetails {
+		for envID, sdEnv := range secDomain.L1Overrides {
 			// validate compliance scope for each SD
 			for _, compReq := range sdEnv.ComplianceReqs {
 				if _, ok := txy.CompReqs[compReq]; !ok {
@@ -83,7 +84,7 @@ func (txy *Taxonomy) validateEnv() bool {
 func (txy *Taxonomy) ApplyInheritance() {
 	// Loop through env details for each security domain and update risk compliance if not set based on env default
 	for _, secDomain := range txy.SegL2s {
-		for envID, sdEnv := range secDomain.EnvDetails {
+		for envID, sdEnv := range secDomain.L1Overrides {
 			if sdEnv.Sensitivity == "" && sdEnv.SensitivityRationale == "" {
 				sdEnv.Sensitivity = txy.SegL1s[envID].Sensitivity
 				sdEnv.SensitivityRationale = "Inherited: " + txy.SegL1s[envID].SensitivityRationale
@@ -106,7 +107,7 @@ func (txy *Taxonomy) ApplyInheritance() {
 					sdEnv.CompReqs[compReq] = txy.CompReqs[compReq]
 				}
 			}
-			secDomain.EnvDetails[envID] = sdEnv
+			secDomain.L1Overrides[envID] = sdEnv
 		}
 	}
 }
@@ -159,28 +160,35 @@ func (txy *Taxonomy) CompleteAndValidateTaxonomy() bool {
 // LoadTaxonomy loads the taxonomy by loading the different files and combining them into one struct.
 // Validates the loaded data is valid and meets requirements.
 // fills in missing data based on inheritance rules
-// TODO: Refactor to accept base directory and schema path as parameters for testability
-func LoadTaxonomy(taxDir string) (Taxonomy, error) {
-txy := Taxonomy{ApiVersion: ApiVersion}
-var err error
-	
+// cfg parameter provides terminology configuration for directory resolution
+func LoadTaxonomy(taxDir string, cfg Config) (Taxonomy, error) {
+	txy := Taxonomy{
+		ApiVersion: ApiVersion,
+		Config:     cfg,
+	}
+	var err error
+
 	if !strings.HasSuffix(taxDir, "/") {
 		taxDir = taxDir + "/"
 	}
-	// Load security environments
-	txy.SegL1s, err = LoadSegL1Files(taxDir + "security-environments")
+
+	// Load L1 segments using configured directory name
+	l1Dir := taxDir + cfg.Terminology.L1.DirName()
+	txy.SegL1s, err = LoadSegL1Files(l1Dir)
 	if err != nil {
-		util.Log.Println("Error loading security environment files, exiting")
+		util.Log.Printf("Error loading L1 files from %s, exiting\n", l1Dir)
 		return Taxonomy{}, errors.New("invalid Taxonomy")
 	}
+
 	// Load risk levels
 	txy.SensitivityLevels = SenseOrder
 	txy.CriticalityLevels = CritOrder
 
-	// Load security domains
-	txy.SegL2s, err = LoadSegL2Files(taxDir + "security-domains")
+	// Load L2 segments using configured directory name
+	l2Dir := taxDir + cfg.Terminology.L2.DirName()
+	txy.SegL2s, err = LoadSegL2Files(l2Dir)
 	if err != nil {
-		util.Log.Println("Error loading security Domain files:", err)
+		util.Log.Printf("Error loading L2 files from %s: %v\n", l2Dir, err)
 		return Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 

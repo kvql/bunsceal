@@ -262,7 +262,7 @@ func TestParseSDFile(t *testing.T) {
 name: "Test Domain"
 id: "test"
 description: "Test security domain"
-env_details:
+l1_overrides:
   production:
     sensitivity: "A"
     sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."

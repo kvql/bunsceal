@@ -26,7 +26,7 @@ type SegL2 struct {
 	Name        string                `yaml:"name"`
 	ID          string                `yaml:"id"`
 	Description string                `yaml:"description"`
-	EnvDetails  map[string]EnvDetails `yaml:"env_details"`
+	L1Overrides map[string]EnvDetails `yaml:"l1_overrides"`
 }
 
 // LoadSegL2Files loads all security domain files from the given directory

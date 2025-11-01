@@ -49,7 +49,7 @@ func PrepTaxonomy(txy *tx.Taxonomy) map[string]EnvImageData {
 	}
 
 	for _, sd := range txy.SegL2s {
-		for envId, det := range sd.EnvDetails {
+		for envId, det := range sd.L1Overrides {
 			envData := data[envId]
 			envData.SegL2s[sd.ID] = det
 			envData.SegL2Names[sd.ID] = sd.Name

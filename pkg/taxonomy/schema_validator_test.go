@@ -155,18 +155,18 @@ func TestValidateData_SegL2(t *testing.T) {
 	t.Run("Valid SegL2 Security passes validation", func(t *testing.T) {
 		// Marshal the fixture directly - it has the correct structure
 		type segL2WithVersion struct {
-			Version    string                    `yaml:"version"`
-			Name       string                    `yaml:"name"`
-			ID         string                    `yaml:"id"`
-			Description string                   `yaml:"description"`
-			EnvDetails map[string]testdata.EnvDetails `yaml:"env_details"`
+			Version     string                         `yaml:"version"`
+			Name        string                         `yaml:"name"`
+			ID          string                         `yaml:"id"`
+			Description string                         `yaml:"description"`
+			L1Overrides map[string]testdata.EnvDetails `yaml:"l1_overrides"`
 		}
 		withVersion := segL2WithVersion{
-			Version:    "1.0",
-			Name:       testdata.ValidSegL2Security.Name,
-			ID:         testdata.ValidSegL2Security.ID,
+			Version:     "1.0",
+			Name:        testdata.ValidSegL2Security.Name,
+			ID:          testdata.ValidSegL2Security.ID,
 			Description: testdata.ValidSegL2Security.Description,
-			EnvDetails: testdata.ValidSegL2Security.EnvDetails,
+			L1Overrides: testdata.ValidSegL2Security.EnvDetails,
 		}
 		data, err := yaml.Marshal(withVersion)
 		if err != nil {
@@ -181,18 +181,18 @@ func TestValidateData_SegL2(t *testing.T) {
 
 	t.Run("Valid SegL2 Application passes validation", func(t *testing.T) {
 		type segL2WithVersion struct {
-			Version     string                    `yaml:"version"`
-			Name        string                    `yaml:"name"`
-			ID          string                    `yaml:"id"`
-			Description string                    `yaml:"description"`
-			EnvDetails  map[string]testdata.EnvDetails `yaml:"env_details"`
+			Version     string                         `yaml:"version"`
+			Name        string                         `yaml:"name"`
+			ID          string                         `yaml:"id"`
+			Description string                         `yaml:"description"`
+			L1Overrides map[string]testdata.EnvDetails `yaml:"l1_overrides"`
 		}
 		withVersion := segL2WithVersion{
 			Version:     "1.0",
 			Name:        testdata.ValidSegL2Application.Name,
 			ID:          testdata.ValidSegL2Application.ID,
 			Description: testdata.ValidSegL2Application.Description,
-			EnvDetails:  testdata.ValidSegL2Application.EnvDetails,
+			L1Overrides: testdata.ValidSegL2Application.EnvDetails,
 		}
 		data, err := yaml.Marshal(withVersion)
 		if err != nil {
@@ -207,18 +207,18 @@ func TestValidateData_SegL2(t *testing.T) {
 
 	t.Run("Missing required name field fails validation", func(t *testing.T) {
 		type segL2WithVersion struct {
-			Version     string                    `yaml:"version"`
-			Name        string                    `yaml:"name,omitempty"`
-			ID          string                    `yaml:"id"`
-			Description string                    `yaml:"description"`
-			EnvDetails  map[string]testdata.EnvDetails `yaml:"env_details"`
+			Version     string                         `yaml:"version"`
+			Name        string                         `yaml:"name,omitempty"`
+			ID          string                         `yaml:"id"`
+			Description string                         `yaml:"description"`
+			L1Overrides map[string]testdata.EnvDetails `yaml:"l1_overrides"`
 		}
 		withVersion := segL2WithVersion{
 			Version:     "1.0",
 			Name:        testdata.InvalidSegL2_MissingName.Name, // empty string
 			ID:          testdata.InvalidSegL2_MissingName.ID,
 			Description: testdata.InvalidSegL2_MissingName.Description,
-			EnvDetails:  testdata.InvalidSegL2_MissingName.EnvDetails,
+			L1Overrides: testdata.InvalidSegL2_MissingName.EnvDetails,
 		}
 		data, err := yaml.Marshal(withVersion)
 		if err != nil {
@@ -233,18 +233,18 @@ func TestValidateData_SegL2(t *testing.T) {
 
 	t.Run("Invalid ID pattern fails validation", func(t *testing.T) {
 		type segL2WithVersion struct {
-			Version     string                    `yaml:"version"`
-			Name        string                    `yaml:"name"`
-			ID          string                    `yaml:"id"`
-			Description string                    `yaml:"description"`
-			EnvDetails  map[string]testdata.EnvDetails `yaml:"env_details"`
+			Version     string                         `yaml:"version"`
+			Name        string                         `yaml:"name"`
+			ID          string                         `yaml:"id"`
+			Description string                         `yaml:"description"`
+			L1Overrides map[string]testdata.EnvDetails `yaml:"l1_overrides"`
 		}
 		withVersion := segL2WithVersion{
 			Version:     "1.0",
 			Name:        testdata.InvalidSegL2_InvalidID.Name,
 			ID:          testdata.InvalidSegL2_InvalidID.ID,
 			Description: testdata.InvalidSegL2_InvalidID.Description,
-			EnvDetails:  testdata.InvalidSegL2_InvalidID.EnvDetails,
+			L1Overrides: testdata.InvalidSegL2_InvalidID.EnvDetails,
 		}
 		data, err := yaml.Marshal(withVersion)
 		if err != nil {
@@ -259,18 +259,18 @@ func TestValidateData_SegL2(t *testing.T) {
 
 	t.Run("Empty environment details fails validation", func(t *testing.T) {
 		type segL2WithVersion struct {
-			Version     string                    `yaml:"version"`
-			Name        string                    `yaml:"name"`
-			ID          string                    `yaml:"id"`
-			Description string                    `yaml:"description"`
-			EnvDetails  map[string]testdata.EnvDetails `yaml:"env_details"`
+			Version     string                         `yaml:"version"`
+			Name        string                         `yaml:"name"`
+			ID          string                         `yaml:"id"`
+			Description string                         `yaml:"description"`
+			L1Overrides map[string]testdata.EnvDetails `yaml:"l1_overrides"`
 		}
 		withVersion := segL2WithVersion{
 			Version:     "1.0",
 			Name:        testdata.InvalidSegL2_NoEnvDetails.Name,
 			ID:          testdata.InvalidSegL2_NoEnvDetails.ID,
 			Description: testdata.InvalidSegL2_NoEnvDetails.Description,
-			EnvDetails:  testdata.InvalidSegL2_NoEnvDetails.EnvDetails,
+			L1Overrides: testdata.InvalidSegL2_NoEnvDetails.EnvDetails,
 		}
 		data, err := yaml.Marshal(withVersion)
 		if err != nil {
@@ -279,7 +279,7 @@ func TestValidateData_SegL2(t *testing.T) {
 
 		err = validator.ValidateData(data, "seg-level2.json")
 		if err == nil {
-			t.Error("Expected validation to fail for empty env_details")
+			t.Error("Expected validation to fail for empty l1_overrides")
 		}
 	})
 }

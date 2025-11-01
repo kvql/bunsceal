@@ -28,7 +28,7 @@ type SegL2 struct {
 	Name        string                `yaml:"name"`
 	ID          string                `yaml:"id"`
 	Description string                `yaml:"description"`
-	EnvDetails  map[string]EnvDetails `yaml:"env_details"`
+	EnvDetails  map[string]EnvDetails `yaml:"l1_overrides"`
 }
 
 type CompReq struct {

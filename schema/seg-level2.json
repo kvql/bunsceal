@@ -5,6 +5,11 @@
   "description": "Segmentation Level 2 definitions, including per-environment overrides",
   "type": "object",
   "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version identifier"
+    },
     "name": {
       "type": "string",
       "minLength": 1
@@ -21,7 +26,7 @@
       "description": "Map of environment ID -> EnvDetails",
       "patternProperties": {
         "^[a-z-]{1,15}$": {
-          "$ref": "./env-details.json"
+          "$ref": "./l1-overrides.json"
         }
       },
       "minProperties": 1,

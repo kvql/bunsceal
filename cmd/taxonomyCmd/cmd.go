@@ -15,13 +15,14 @@ func Execute() {
 	verify := flag.Bool("verify", false, "Validate the taxonomy")
 	graph := flag.Bool("graph", false, "Generate diagrams to visualise the taxonomy")
 	graphDir := flag.String("graphDir", ".tmp", "Directory for the graph visualizations")
+	taxDir := flag.String("taxDir", "taxonomy", "Directory where the taxonomy files are located")
 
 	// Parse command line flags
 	flag.Parse()
 
 	// Validate and Load the taxonomy and validate it
 	// required for all actions
-	tax, err := tx.LoadTaxonomy()
+	tax, err := tx.LoadTaxonomy(*taxDir)
 
 	if err != nil {
 		util.Log.Println("Taxonomy content is not valid")

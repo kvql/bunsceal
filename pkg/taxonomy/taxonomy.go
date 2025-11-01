@@ -2,6 +2,7 @@ package taxonomy
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/kvql/bunsceal/pkg/util"
 )
@@ -158,13 +159,16 @@ func (txy *Taxonomy) CompleteAndValidateTaxonomy() bool {
 // LoadTaxonomy loads the taxonomy by loading the different files and combining them into one struct.
 // Validates the loaded data is valid and meets requirements.
 // fills in missing data based on inheritance rules
-func LoadTaxonomy() (Taxonomy, error) {
-	txy := Taxonomy{ApiVersion: ApiVersion}
-	var err error
-	dir := "./taxonomy/"
-
+// TODO: Refactor to accept base directory and schema path as parameters for testability
+func LoadTaxonomy(taxDir string) (Taxonomy, error) {
+txy := Taxonomy{ApiVersion: ApiVersion}
+var err error
+	
+	if !strings.HasSuffix(taxDir, "/") {
+		taxDir = taxDir + "/"
+	}
 	// Load security environments
-	txy.SegL1s, err = LoadSegL1Files(dir + "security-environments")
+	txy.SegL1s, err = LoadSegL1Files(taxDir + "security-environments")
 	if err != nil {
 		util.Log.Println("Error loading security environment files, exiting")
 		return Taxonomy{}, errors.New("invalid Taxonomy")
@@ -174,14 +178,14 @@ func LoadTaxonomy() (Taxonomy, error) {
 	txy.CriticalityLevels = CritOrder
 
 	// Load security domains
-	txy.SegL2s, err = LoadSegL2Files(dir + "security-domains")
+	txy.SegL2s, err = LoadSegL2Files(taxDir + "security-domains")
 	if err != nil {
 		util.Log.Println("Error loading security Domain files:", err)
 		return Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
 	// Define compliance scopes
-	txy.CompReqs, err = LoadCompScope(dir + "compliance_requirements.yaml")
+	txy.CompReqs, err = LoadCompScope(taxDir + "compliance_requirements.yaml")
 	if err != nil {
 		util.Log.Println("Error loading compliance scope files:", err)
 		return Taxonomy{}, errors.New("invalid Taxonomy")

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/kvql/bunsceal/schema/env-details.json",
-  "title": "Environment details for a Security Domain (EnvDetails)",
-  "description": "Per-environment overrides for sensitivity, criticality and compliance requirements",
+  "$id": "https://github.com/kvql/bunsceal/schema/l1-overrides.json",
+  "title": "L1 overridable properties for L2 definitions",
+  "description": "Overrides for sensitivity, criticality and compliance requirements",
   "type": "object",
   "properties": {
     "sensitivity": {

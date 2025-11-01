@@ -4,52 +4,21 @@
   "title": "Taxonomy Configuration",
   "description": "Configuration for taxonomy terminology and customization",
   "type": "object",
+  "required": ["terminology"],
+  "additionalProperties": false,
   "properties": {
     "terminology": {
       "type": "object",
       "description": "Terminology configuration for L1 and L2 segments",
       "properties": {
         "l1": {
-          "type": "object",
-          "description": "Level 1 segment terminology (e.g., Environment, Zone)",
-          "properties": {
-            "singular": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Singular form of L1 segment name"
-            },
-            "plural": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Plural form of L1 segment name"
-            }
-          },
-          "required": ["singular", "plural"],
-          "additionalProperties": false
+          "$ref": "./common.json#/$defs/termDef" 
         },
         "l2": {
-          "type": "object",
-          "description": "Level 2 segment terminology (e.g., Segment, Application)",
-          "properties": {
-            "singular": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Singular form of L2 segment name"
-            },
-            "plural": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Plural form of L2 segment name"
-            }
-          },
-          "required": ["singular", "plural"],
-          "additionalProperties": false
+          "$ref": "./common.json#/$defs/termDef" 
         }
       },
-      "required": ["l1", "l2"],
       "additionalProperties": false
     }
-  },
-  "required": ["terminology"],
-  "additionalProperties": false
+  }
 }

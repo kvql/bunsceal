@@ -31,6 +31,37 @@ func TestNewSchemaValidator(t *testing.T) {
 	})
 }
 
+func TestValidateData_Config(t *testing.T) {
+	validator, err := NewSchemaValidator("../../schema")
+	if err != nil {
+		t.Fatalf("Failed to create validator: %v", err)
+	}
+
+	t.Run("Valid config level keys", func(t *testing.T) {
+		data, err := yaml.Marshal(testdata.ValidConfigSchema)
+		if err != nil {
+			t.Fatalf("Failed to marshal fixture: %v", err)
+		}
+
+		err = validator.ValidateData(data, "config.json")
+		if err != nil {
+			t.Errorf("Expected valid data to pass, got error: %v", err)
+		}
+	})
+
+	t.Run("Invalid level key fails validation", func(t *testing.T) {
+		data, err := yaml.Marshal(testdata.InvalidConfigSchema)
+		if err != nil {
+			t.Fatalf("Failed to marshal fixture: %v", err)
+		}
+
+		err = validator.ValidateData(data, "config.json")
+		if err == nil {
+			t.Error("Expected validation to fail for invalid config level key")
+		}
+	})
+}
+
 func TestValidateData_SegL1(t *testing.T) {
 	validator, err := NewSchemaValidator("../../schema")
 	if err != nil {

@@ -45,6 +45,45 @@ type Taxonomy struct {
 	CompReqs          map[string]CompReq `yaml:"comp_reqs"`
 }
 
+type Config struct {
+	Terminology TermConfig `yaml:"terminology"`
+}
+type InvalidConfig struct {
+	Terminology InvalidTermConfig `yaml:"terminology"`
+}
+
+// TermConfig holds terminology configuration for L1 and L2 segments
+type TermConfig struct {
+	L1 TermDef `yaml:"l1,omitempty"`
+	L2 TermDef `yaml:"l2,omitempty"`
+}
+type InvalidTermConfig struct {
+	L4 TermDef `yaml:"l4"`
+}
+
+// TermDef defines singular and plural forms for a segment level
+type TermDef struct {
+	Singular string `yaml:"singular"`
+	Plural   string `yaml:"plural"`
+}
+
+var InvalidConfigSchema = InvalidConfig{
+	Terminology: InvalidTermConfig{
+		L4: TermDef{
+			Singular: "dfas",
+			Plural: "fdasdfas",
+		},
+	},
+}
+var ValidConfigSchema = Config{
+	Terminology: TermConfig{
+		L1: TermDef{
+			Singular: "dfas",
+			Plural: "fdasdfas",
+		},
+	},
+}
+
 
 var ValidSegL1Production = SegL1{
 	Name:                 "Production",

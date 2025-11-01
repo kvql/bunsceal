@@ -24,7 +24,7 @@ type SegL2 struct {
 	Name        string                 `yaml:"name"`
 	ID          string                 `yaml:"id"`
 	Description string                 `yaml:"description"`
-	L1Overrides  map[string]L1Overrides `yaml:"l1_overrides"`
+	L1Overrides map[string]L1Overrides `yaml:"l1_overrides"`
 }
 
 type CompReq struct {
@@ -34,10 +34,11 @@ type CompReq struct {
 }
 
 type Taxonomy struct {
-	ApiVersion        string             `yaml:"api_version"`
-	SegL1s            map[string]SegL1   `yaml:"seg_l1s"`
-	SegL2s            map[string]SegL2   `yaml:"seg_l2s"`
-	SensitivityLevels []string           `yaml:"sensitivity_levels"`
-	CriticalityLevels []string           `yaml:"criticality_levels"`
-	CompReqs          map[string]CompReq `yaml:"comp_reqs"`
+	ApiVersion        string
+	SegL1s            map[string]SegL1
+	SegL2s            map[string]SegL2
+	SensitivityLevels []string
+	CriticalityLevels []string
+	CompReqs          map[string]CompReq
+	Config            Config
 }

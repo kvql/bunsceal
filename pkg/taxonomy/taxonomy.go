@@ -74,30 +74,30 @@ func (txy *Taxonomy) validateEnv() bool {
 func (txy *Taxonomy) ApplyInheritance() {
 	// Loop through env details for each security domain and update risk compliance if not set based on env default
 	for _, secDomain := range txy.SegL2s {
-		for envID, sdEnv := range secDomain.L1Overrides {
-			if sdEnv.Sensitivity == "" && sdEnv.SensitivityRationale == "" {
-				sdEnv.Sensitivity = txy.SegL1s[envID].Sensitivity
-				sdEnv.SensitivityRationale = "Inherited: " + txy.SegL1s[envID].SensitivityRationale
+		for l1ID, l1Override := range secDomain.L1Overrides {
+			if l1Override.Sensitivity == "" && l1Override.SensitivityRationale == "" {
+				l1Override.Sensitivity = txy.SegL1s[l1ID].Sensitivity
+				l1Override.SensitivityRationale = "Inherited: " + txy.SegL1s[l1ID].SensitivityRationale
 			}
-			if sdEnv.Criticality == "" && sdEnv.CriticalityRationale == "" {
-				sdEnv.Criticality = txy.SegL1s[envID].Criticality
-				sdEnv.CriticalityRationale = "Inherited: " + txy.SegL1s[envID].CriticalityRationale
+			if l1Override.Criticality == "" && l1Override.CriticalityRationale == "" {
+				l1Override.Criticality = txy.SegL1s[l1ID].Criticality
+				l1Override.CriticalityRationale = "Inherited: " + txy.SegL1s[l1ID].CriticalityRationale
 			}
 			// Inherit compliance requirements from environment if not set
-			if sdEnv.ComplianceReqs == nil {
-				sdEnv.ComplianceReqs = txy.SegL1s[envID].ComplianceReqs
+			if l1Override.ComplianceReqs == nil {
+				l1Override.ComplianceReqs = txy.SegL1s[l1ID].ComplianceReqs
 			}
 			// add compliance details to compReqs var for each complaince standard listed
-			for _, compReq := range sdEnv.ComplianceReqs {
+			for _, compReq := range l1Override.ComplianceReqs {
 				// only add details if listed standard is valid. If not, it will be caught in validation
 				if _, ok := txy.CompReqs[compReq]; ok {
-					if sdEnv.CompReqs == nil {
-						sdEnv.CompReqs = make(map[string]CompReq)
+					if l1Override.CompReqs == nil {
+						l1Override.CompReqs = make(map[string]CompReq)
 					}
-					sdEnv.CompReqs[compReq] = txy.CompReqs[compReq]
+					l1Override.CompReqs[compReq] = txy.CompReqs[compReq]
 				}
 			}
-			secDomain.L1Overrides[envID] = sdEnv
+			secDomain.L1Overrides[l1ID] = l1Override
 		}
 	}
 }
@@ -154,6 +154,7 @@ func (txy *Taxonomy) CompleteAndValidateTaxonomy() bool {
 func LoadTaxonomy(taxDir string, cfg Config) (Taxonomy, error) {
 	txy := Taxonomy{
 		ApiVersion: ApiVersion,
+		Config: cfg,
 	}
 	var err error
 

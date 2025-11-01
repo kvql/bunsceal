@@ -75,7 +75,7 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 	// Pre-compile schemas for performance
 	// Compile using the base schema directory URL for resolution
 	schemas := make(map[string]*jsonschema.Schema)
-	schemaBaseURL := fmt.Sprintf("https://github.com/kvql/bunsceal/schema/")
+	schemaBaseURL := "https://github.com/kvql/bunsceal/schema/"
 	for _, file := range schemaFiles {
 		schemaURL := schemaBaseURL + file
 		schema, err := compiler.Compile(schemaURL)

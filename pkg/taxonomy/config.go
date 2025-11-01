@@ -17,14 +17,34 @@ type Config struct {
 
 // TermConfig holds terminology configuration for L1 and L2 segments
 type TermConfig struct {
-	L1 TermDef `yaml:"l1"`
-	L2 TermDef `yaml:"l2"`
+	L1 TermDef `yaml:"l1,omitempty"`
+	L2 TermDef `yaml:"l2,omitempty"`
 }
 
 // TermDef defines singular and plural forms for a segment level
 type TermDef struct {
 	Singular string `yaml:"singular"`
 	Plural   string `yaml:"plural"`
+}
+
+// Merge merges this TermDef with defaults, using defaults for any blank fields
+func (td TermDef) Merge(defaults TermDef) TermDef {
+	result := defaults
+	if td.Singular != "" {
+		result.Singular = td.Singular
+	}
+	if td.Plural != "" {
+		result.Plural = td.Plural
+	}
+	return result
+}
+
+// Merge merges this TermConfig with defaults, using defaults for any blank fields
+func (tc TermConfig) Merge(defaults TermConfig) TermConfig {
+	return TermConfig{
+		L1: tc.L1.Merge(defaults.L1),
+		L2: tc.L2.Merge(defaults.L2),
+	}
 }
 
 // DefaultConfig returns the default configuration
@@ -49,6 +69,11 @@ func DefaultConfig() Config {
 func LoadConfig(configPath string, taxDir string) (Config, error) {
 	defaults := DefaultConfig()
 
+	schemaValidator, err := NewSchemaValidator("../../schema")
+	if err != nil {
+		util.Log.Printf("Error initializing schema validator: %v\n", err)
+		return Config{}, errors.New("failed to initialize schema validator")
+	}
 	// Determine config file location
 	if configPath == "" {
 		configPath = filepath.Join(taxDir, "config.yaml")
@@ -60,30 +85,22 @@ func LoadConfig(configPath string, taxDir string) (Config, error) {
 		util.Log.Printf("Config file not found at %s, using defaults\n", configPath)
 		return defaults, nil
 	}
+	if err := schemaValidator.ValidateData(data, "config.json"); err != nil {
+		util.Log.Printf("Schema validation failed for Config")
+		return Config{}, errors.New("schema validation failed for Config")
+	}
 
-	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+	var loadedConfig Config
+	if err := yaml.Unmarshal(data, &loadedConfig); err != nil {
 		return Config{}, err
 	}
 
-	// Validate completeness - both singular and plural required for each level
-	// If either field is missing, use the entire default for that level
-	if cfg.Terminology.L1.Singular != "" || cfg.Terminology.L1.Plural != "" {
-		if cfg.Terminology.L1.Singular == "" || cfg.Terminology.L1.Plural == "" {
-			return Config{}, errors.New("incomplete L1 Terminology definition, singular and plural forms required if either is set")
-		}
-	}else {
-		cfg.Terminology.L1 = defaults.Terminology.L1
-	}
-	if cfg.Terminology.L2.Singular != "" || cfg.Terminology.L2.Plural != "" {
-		if cfg.Terminology.L2.Singular == "" || cfg.Terminology.L2.Plural == "" {
-			return Config{}, errors.New("incomplete L2 Terminology definition, singular and plural forms required if either is set")
-		}
-	}else {
-		cfg.Terminology.L2 = defaults.Terminology.L2
+	// Merge loaded config with defaults
+	merged := Config{
+		Terminology: loadedConfig.Terminology.Merge(defaults.Terminology),
 	}
 
-	return cfg, nil
+	return merged, nil
 }
 
 // DirName converts the plural form to a kebab-case directory name

@@ -94,15 +94,14 @@ env_details:
 
 ### In Progress
 
-- Refactor file loading functions to accept configurable paths for better testability
+- Make business logic configurable, implement rules in go, default status for some on/some off, override in config file
+- change terminology from security environment to hierarchy levels
 
 ### Planned
 
-- change terminology from security environment to hierarchy levels
-- Allow terminology to be defined in the YAML with updated JSON schema
+- Refactor file loading functions to accept configurable paths for better testability
 - Allow sensitivity and criticality levels to be defined in yaml
 - evaluate metadata extension model for sen, crit, etc.
-- Make business logic configurable, implement rules in go, default status for some on/some off, override in config file
 - colour config in yaml (with default values)
 - refactor rendering code to not hard code the diagrams
 - web api to allow for querying the taxonomy

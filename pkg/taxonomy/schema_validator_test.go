@@ -1,13 +1,34 @@
 package taxonomy
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/kvql/bunsceal/pkg/taxonomy/testdata"
 	"gopkg.in/yaml.v3"
 )
+
+// Helper type and function to eliminate duplication in SegL2 tests
+type segL2TestData struct {
+	Version     string                          `yaml:"version"`
+	Name        string                          `yaml:"name,omitempty"`
+	ID          string                          `yaml:"id"`
+	Description string                          `yaml:"description"`
+	L1Overrides map[string]testdata.L1Overrides `yaml:"l1_overrides,omitempty"`
+}
+
+func marshalSegL2(seg testdata.SegL2) ([]byte, error) {
+	return yaml.Marshal(segL2TestData{
+		Version:     "1.0",
+		Name:        seg.Name,
+		ID:          seg.ID,
+		Description: seg.Description,
+		L1Overrides: seg.L1Overrides,
+	})
+}
 
 func TestNewSchemaValidator(t *testing.T) {
 	t.Run("Successfully creates validator with valid schema directory", func(t *testing.T) {
@@ -27,6 +48,37 @@ func TestNewSchemaValidator(t *testing.T) {
 		_, err := NewSchemaValidator("/non/existent/path")
 		if err == nil {
 			t.Error("Expected error for non-existent directory")
+		}
+	})
+}
+
+func TestValidateData_Config(t *testing.T) {
+	validator, err := NewSchemaValidator("../../schema")
+	if err != nil {
+		t.Fatalf("Failed to create validator: %v", err)
+	}
+
+	t.Run("Valid config level keys", func(t *testing.T) {
+		data, err := yaml.Marshal(testdata.ValidConfigSchema)
+		if err != nil {
+			t.Fatalf("Failed to marshal fixture: %v", err)
+		}
+
+		err = validator.ValidateData(data, "config.json")
+		if err != nil {
+			t.Errorf("Expected valid data to pass, got error: %v", err)
+		}
+	})
+
+	t.Run("Invalid level key fails validation", func(t *testing.T) {
+		data, err := yaml.Marshal(testdata.InvalidConfigSchema)
+		if err != nil {
+			t.Fatalf("Failed to marshal fixture: %v", err)
+		}
+
+		err = validator.ValidateData(data, "config.json")
+		if err == nil {
+			t.Error("Expected validation to fail for invalid config level key")
 		}
 	})
 }
@@ -153,22 +205,7 @@ func TestValidateData_SegL2(t *testing.T) {
 	}
 
 	t.Run("Valid SegL2 Security passes validation", func(t *testing.T) {
-		// Marshal the fixture directly - it has the correct structure
-		type segL2WithVersion struct {
-			Version    string                    `yaml:"version"`
-			Name       string                    `yaml:"name"`
-			ID         string                    `yaml:"id"`
-			Description string                   `yaml:"description"`
-			EnvDetails map[string]testdata.EnvDetails `yaml:"env_details"`
-		}
-		withVersion := segL2WithVersion{
-			Version:    "1.0",
-			Name:       testdata.ValidSegL2Security.Name,
-			ID:         testdata.ValidSegL2Security.ID,
-			Description: testdata.ValidSegL2Security.Description,
-			EnvDetails: testdata.ValidSegL2Security.EnvDetails,
-		}
-		data, err := yaml.Marshal(withVersion)
+		data, err := marshalSegL2(testdata.ValidSegL2Security)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
@@ -180,21 +217,7 @@ func TestValidateData_SegL2(t *testing.T) {
 	})
 
 	t.Run("Valid SegL2 Application passes validation", func(t *testing.T) {
-		type segL2WithVersion struct {
-			Version     string                    `yaml:"version"`
-			Name        string                    `yaml:"name"`
-			ID          string                    `yaml:"id"`
-			Description string                    `yaml:"description"`
-			EnvDetails  map[string]testdata.EnvDetails `yaml:"env_details"`
-		}
-		withVersion := segL2WithVersion{
-			Version:     "1.0",
-			Name:        testdata.ValidSegL2Application.Name,
-			ID:          testdata.ValidSegL2Application.ID,
-			Description: testdata.ValidSegL2Application.Description,
-			EnvDetails:  testdata.ValidSegL2Application.EnvDetails,
-		}
-		data, err := yaml.Marshal(withVersion)
+		data, err := marshalSegL2(testdata.ValidSegL2Application)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
@@ -206,21 +229,7 @@ func TestValidateData_SegL2(t *testing.T) {
 	})
 
 	t.Run("Missing required name field fails validation", func(t *testing.T) {
-		type segL2WithVersion struct {
-			Version     string                    `yaml:"version"`
-			Name        string                    `yaml:"name,omitempty"`
-			ID          string                    `yaml:"id"`
-			Description string                    `yaml:"description"`
-			EnvDetails  map[string]testdata.EnvDetails `yaml:"env_details"`
-		}
-		withVersion := segL2WithVersion{
-			Version:     "1.0",
-			Name:        testdata.InvalidSegL2_MissingName.Name, // empty string
-			ID:          testdata.InvalidSegL2_MissingName.ID,
-			Description: testdata.InvalidSegL2_MissingName.Description,
-			EnvDetails:  testdata.InvalidSegL2_MissingName.EnvDetails,
-		}
-		data, err := yaml.Marshal(withVersion)
+		data, err := marshalSegL2(testdata.InvalidSegL2_MissingName)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
@@ -232,21 +241,7 @@ func TestValidateData_SegL2(t *testing.T) {
 	})
 
 	t.Run("Invalid ID pattern fails validation", func(t *testing.T) {
-		type segL2WithVersion struct {
-			Version     string                    `yaml:"version"`
-			Name        string                    `yaml:"name"`
-			ID          string                    `yaml:"id"`
-			Description string                    `yaml:"description"`
-			EnvDetails  map[string]testdata.EnvDetails `yaml:"env_details"`
-		}
-		withVersion := segL2WithVersion{
-			Version:     "1.0",
-			Name:        testdata.InvalidSegL2_InvalidID.Name,
-			ID:          testdata.InvalidSegL2_InvalidID.ID,
-			Description: testdata.InvalidSegL2_InvalidID.Description,
-			EnvDetails:  testdata.InvalidSegL2_InvalidID.EnvDetails,
-		}
-		data, err := yaml.Marshal(withVersion)
+		data, err := marshalSegL2(testdata.InvalidSegL2_InvalidID)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
@@ -258,28 +253,14 @@ func TestValidateData_SegL2(t *testing.T) {
 	})
 
 	t.Run("Empty environment details fails validation", func(t *testing.T) {
-		type segL2WithVersion struct {
-			Version     string                    `yaml:"version"`
-			Name        string                    `yaml:"name"`
-			ID          string                    `yaml:"id"`
-			Description string                    `yaml:"description"`
-			EnvDetails  map[string]testdata.EnvDetails `yaml:"env_details"`
-		}
-		withVersion := segL2WithVersion{
-			Version:     "1.0",
-			Name:        testdata.InvalidSegL2_NoEnvDetails.Name,
-			ID:          testdata.InvalidSegL2_NoEnvDetails.ID,
-			Description: testdata.InvalidSegL2_NoEnvDetails.Description,
-			EnvDetails:  testdata.InvalidSegL2_NoEnvDetails.EnvDetails,
-		}
-		data, err := yaml.Marshal(withVersion)
+		data, err := marshalSegL2(testdata.InvalidSegL2_NoL1Overrides)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
 
 		err = validator.ValidateData(data, "seg-level2.json")
 		if err == nil {
-			t.Error("Expected validation to fail for empty env_details")
+			t.Error("Expected validation to fail for empty l1_overrides")
 		}
 	})
 }
@@ -474,13 +455,13 @@ func TestFormatValidationError(t *testing.T) {
 
 		// Check that error message is formatted
 		errMsg := err.Error()
-		if !contains(errMsg, "schema validation failed") {
+		if !strings.Contains(errMsg, "schema validation failed") {
 			t.Errorf("Expected formatted error message, got: %s", errMsg)
 		}
 	})
 
 	t.Run("Returns non-ValidationError unchanged", func(t *testing.T) {
-		testErr := formatValidationError(err("test error"))
+		testErr := formatValidationError(errors.New("test error"))
 		if testErr.Error() != "test error" {
 			t.Errorf("Expected unchanged error message, got: %s", testErr.Error())
 		}
@@ -507,30 +488,4 @@ func TestNewSchemaValidator_ErrorCases(t *testing.T) {
 			t.Error("Expected error for invalid JSON schema")
 		}
 	})
-}
-
-// Helper functions
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && containsHelper(s, substr))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}
-
-func err(msg string) error {
-	return &customError{msg: msg}
-}
-
-type customError struct {
-	msg string
-}
-
-func (e *customError) Error() string {
-	return e.msg
 }

@@ -31,6 +31,19 @@ This tooling follows a 2 level heirarchy for segmenting infrastructure.
 Segmentation Level 1: top level segment which contains tier 2 segments.
 Segmentation Level 2: Second level segment which breaks up tier 1 segments.
 
+## Metadata Inheritance
+
+Interitance flows down the levels, therefore l2 defined under L1 will inherit the metadata of it's L1.
+
+Metadata Precedence:
+
+Lower level taxes precedence of upder levels, eg. L2 metadata takes precedence over inherited L1 metadata.
+
+## Naming and plugins
+
+L1 and L2 names are configurable
+
+terminology.json
 ## Taxonomy Files
 
 The SegL1s and SegL2s are defined in individual files under the `taxonomy` directory. For full detail on any specific SegL1or SegL2 this is the source of truth.
@@ -107,3 +120,5 @@ env_details:
 - web api to allow for querying the taxonomy
 - web api to allow for image generation
 - MCP server for LLM queries to web API
+
+

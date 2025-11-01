@@ -41,6 +41,27 @@
       "type": "string",
       "pattern": "^[A-Za-z0-9._-]+$",
       "description": "Key for compliance requirement entries"
+    },
+    "termDef": {
+      "type": "object",
+      "description": "terminology Override to utilise terminology that is understandable to your audience",
+      "properties": {
+        "singular": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Singular form of the term"
+        },
+        "plural": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plural form of the term"
+        }
+      },
+      "required": [
+        "singular",
+        "plural"
+      ],
+      "additionalProperties": false
     }
   }
 }

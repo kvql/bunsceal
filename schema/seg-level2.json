@@ -21,9 +21,9 @@
       "type": "string",
       "minLength": 1
     },
-    "env_details": {
+    "l1_overrides": {
       "type": "object",
-      "description": "Map of environment ID -> EnvDetails",
+      "description": "Map of L1 segment ID -> L1 override details",
       "patternProperties": {
         "^[a-z-]{1,15}$": {
           "$ref": "./l1-overrides.json"
@@ -38,7 +38,7 @@
     "name",
     "id",
     "description",
-    "env_details"
+    "l1_overrides"
   ],
   "additionalProperties": false
 }

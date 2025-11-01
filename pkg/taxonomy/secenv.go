@@ -10,16 +10,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type SegL1 struct {
-	Name                 string   `yaml:"name"`
-	ID                   string   `yaml:"id"`
-	Description          string   `yaml:"description"`
-	Sensitivity          string   `yaml:"sensitivity"`
-	SensitivityRationale string   `yaml:"sensitivity_rationale"`
-	Criticality          string   `yaml:"criticality"`
-	CriticalityRationale string   `yaml:"criticality_rationale"`
-	ComplianceReqs       []string `yaml:"compliance_reqs"`
-}
 
 // LoadSegL1Files Parse all security environment files from the provided directory,
 // validate and return a map of SegL1structs

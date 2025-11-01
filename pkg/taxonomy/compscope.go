@@ -7,12 +7,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type CompReq struct {
-	Name        string `yaml:"name"`
-	Description string `yaml:"description"`
-	ReqsLink    string `yaml:"requirements_link"`
-}
-
 func LoadCompScope(filePath string) (map[string]CompReq, error) {
 	// Initialize schema validator
 	// TODO: Refactor to accept schema path as parameter for testability

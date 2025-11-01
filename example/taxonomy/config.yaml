@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../schema/config.json
+---
+terminology:
+  l1:
+    singular: "Environment"
+    plural: "Environments"
+  l2:
+    singular: "Segment"
+    plural: "Segments"

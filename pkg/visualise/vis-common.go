@@ -380,8 +380,8 @@ func FormatSdLabel(txy *tx.Taxonomy, prefix string, envID string, sdID string, s
 		label = fmt.Sprintf("\"%s%s\\n%s\\nClassification: %s%s%s\"",
 			strings.Repeat("\n", emphasis),
 			label, strings.Repeat("_", len(label)),
-			strings.ToUpper(txy.SegL2s[sdID].EnvDetails[envID].Sensitivity),
-			strings.ToUpper(txy.SegL2s[sdID].EnvDetails[envID].Criticality),
+			strings.ToUpper(txy.SegL2s[sdID].L1Overrides[envID].Sensitivity),
+			strings.ToUpper(txy.SegL2s[sdID].L1Overrides[envID].Criticality),
 			strings.Repeat("\n", emphasis),
 		)
 	} else {

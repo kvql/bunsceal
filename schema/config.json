@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kvql/bunsceal/schema/config.json",
+  "title": "Taxonomy Configuration",
+  "description": "Configuration for taxonomy terminology and customization",
+  "type": "object",
+  "required": ["terminology"],
+  "additionalProperties": false,
+  "properties": {
+    "terminology": {
+      "type": "object",
+      "description": "Terminology configuration for L1 and L2 segments",
+      "properties": {
+        "l1": {
+          "$ref": "./common.json#/$defs/termDef" 
+        },
+        "l2": {
+          "$ref": "./common.json#/$defs/termDef" 
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

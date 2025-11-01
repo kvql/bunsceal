@@ -34,7 +34,7 @@ var rowsMap = map[int][]string{
 func GraphEnvs(txy *tx.Taxonomy) (*gographviz.Graph, error) {
 	// Setup the top level graph object
 	validateRows(txy, rowsMap)
-	title := "Segment Level 1s Overview"
+	title := txy.Config.Terminology.L1.Plural + " Overview"
 	g := BaselineGraph(title, "")
 
 	// // Add legend to the graph
@@ -61,7 +61,7 @@ func GraphEnvs(txy *tx.Taxonomy) (*gographviz.Graph, error) {
 		// Environment subgraphs
 		envIds := rowsMap[row]
 		for _, envId := range envIds {
-			label := FormatEnvLabel(txy, "Segment Level 1 - ", envId, true)
+			label := FormatEnvLabel(txy, txy.Config.Terminology.L1.Singular+" - ", envId, true)
 			envNodeAtt := FormatNode(label, txy.SegL1s[envId].Sensitivity)
 			envNodeAtt["fontsize"] = "\"16\""
 			envNodeName := fmt.Sprintf("\"env_node_%s\"", strings.ReplaceAll(envId, "-", "_"))
@@ -91,8 +91,9 @@ func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gog
 	validateRows(txy, rowsMap)
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
-	title := "Segment Level 1 & Segment Level 2 Layout"
-	subHeading := "Overview of Segment Level 2s grouped by their respective Segment Level 1s"
+	term := txy.Config.Terminology
+	title := term.L1.Plural + " & " + term.L2.Plural + " Layout"
+	subHeading := "Overview of " + term.L2.Plural + " grouped by their respective " + term.L1.Plural
 	g := BaselineGraph(title, subHeading)
 
 	// Following code will create subgraphs for each row and add security environments as subgraphs to those rows
@@ -130,7 +131,7 @@ func GraphSDs(txy *tx.Taxonomy, highlightCriticality bool, showClass bool) (*gog
 			if highlightCriticality {
 				showEnvClass = true // if highlighting criticality, we need to show the classification for the environment
 			}
-			label := FormatEnvLabel(txy, "Segment Level 1 - ", envId, showEnvClass)
+			label := FormatEnvLabel(txy, term.L1.Singular+" - ", envId, showEnvClass)
 			envGraphAtt := FormatGraph(label, "")
 			err := g.AddSubGraph(rowSubGraphName, envSubGraphName(envId), envGraphAtt)
 			if err != nil {
@@ -242,7 +243,8 @@ func GraphCompliance(txy *tx.Taxonomy, compName string, showOutOfScope bool) (*g
 
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
-	title := "Segment Level 1 & Segment Level 2 Layout"
+	term := txy.Config.Terminology
+	title := term.L1.Plural + " & " + term.L2.Plural + " Layout"
 	subHeading := fmt.Sprintf("Compliance Standard: %s", txy.CompReqs[compName].Name)
 	g := BaselineGraph(title, subHeading)
 
@@ -262,7 +264,7 @@ func GraphCompliance(txy *tx.Taxonomy, compName string, showOutOfScope bool) (*g
 		envIds := rowsMap[row]
 		for _, envId := range envIds {
 			orderNodes[envId] = map[string][]string{}
-			label := FormatEnvLabel(txy, "Segment Level 1 - ", envId, false)
+			label := FormatEnvLabel(txy, term.L1.Singular+" - ", envId, false)
 			envGraphAtt := FormatGraph(label, "")
 			err := g.AddSubGraph(rowSubGraphName, envSubGraphName(envId), envGraphAtt)
 			if err != nil {

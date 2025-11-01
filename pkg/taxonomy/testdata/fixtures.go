@@ -3,7 +3,6 @@ package testdata
 // Valid SegL1 Fixtures
 // These represent correctly structured security environments
 // Note: These use the generic types to avoid import cycles
-
 type SegL1 struct {
 	Name                 string   `yaml:"name"`
 	ID                   string   `yaml:"id"`
@@ -15,7 +14,7 @@ type SegL1 struct {
 	ComplianceReqs       []string `yaml:"compliance_reqs"`
 }
 
-type EnvDetails struct {
+type L1Overrides struct {
 	Sensitivity          string             `yaml:"sensitivity"`
 	SensitivityRationale string             `yaml:"sensitivity_rationale"`
 	Criticality          string             `yaml:"criticality"`
@@ -25,10 +24,10 @@ type EnvDetails struct {
 }
 
 type SegL2 struct {
-	Name        string                `yaml:"name"`
-	ID          string                `yaml:"id"`
-	Description string                `yaml:"description"`
-	EnvDetails  map[string]EnvDetails `yaml:"env_details"`
+	Name        string                 `yaml:"name"`
+	ID          string                 `yaml:"id"`
+	Description string                 `yaml:"description"`
+	L1Overrides  map[string]L1Overrides `yaml:"l1_overrides"`
 }
 
 type CompReq struct {
@@ -45,6 +44,46 @@ type Taxonomy struct {
 	CriticalityLevels []string           `yaml:"criticality_levels"`
 	CompReqs          map[string]CompReq `yaml:"comp_reqs"`
 }
+
+type Config struct {
+	Terminology TermConfig `yaml:"terminology"`
+}
+type InvalidConfig struct {
+	Terminology InvalidTermConfig `yaml:"terminology"`
+}
+
+// TermConfig holds terminology configuration for L1 and L2 segments
+type TermConfig struct {
+	L1 TermDef `yaml:"l1,omitempty"`
+	L2 TermDef `yaml:"l2,omitempty"`
+}
+type InvalidTermConfig struct {
+	L4 TermDef `yaml:"l4"`
+}
+
+// TermDef defines singular and plural forms for a segment level
+type TermDef struct {
+	Singular string `yaml:"singular"`
+	Plural   string `yaml:"plural"`
+}
+
+var InvalidConfigSchema = InvalidConfig{
+	Terminology: InvalidTermConfig{
+		L4: TermDef{
+			Singular: "dfas",
+			Plural: "fdasdfas",
+		},
+	},
+}
+var ValidConfigSchema = Config{
+	Terminology: TermConfig{
+		L1: TermDef{
+			Singular: "dfas",
+			Plural: "fdasdfas",
+		},
+	},
+}
+
 
 var ValidSegL1Production = SegL1{
 	Name:                 "Production",
@@ -146,7 +185,7 @@ var ValidSegL2Security = SegL2{
 	Name:        "Security",
 	ID:          "sec",
 	Description: "Security domain for security tooling and monitoring infrastructure",
-	EnvDetails: map[string]EnvDetails{
+	L1Overrides: map[string]L1Overrides{
 		"production": {
 			Sensitivity:          "B",
 			SensitivityRationale: "Security logs contain sensitive metadata but not direct customer PII or financial data requiring lower classification.",
@@ -168,7 +207,7 @@ var ValidSegL2Application = SegL2{
 	Name:        "Application",
 	ID:          "app",
 	Description: "Application domain for core business application services",
-	EnvDetails: map[string]EnvDetails{
+	L1Overrides: map[string]L1Overrides{
 		"production": {
 			Sensitivity:          "A",
 			SensitivityRationale: "Production applications handle customer PII, payment information, and other regulated data requiring highest protection.",
@@ -184,7 +223,7 @@ var ValidSegL2WithInheritance = SegL2{
 	Name:        "Infrastructure",
 	ID:          "infra",
 	Description: "Infrastructure domain that inherits all settings from environments",
-	EnvDetails: map[string]EnvDetails{
+	L1Overrides: map[string]L1Overrides{
 		"production": {
 			// Empty - should inherit from production SegL1
 		},
@@ -199,7 +238,7 @@ var ValidSegL2WithInheritance = SegL2{
 var InvalidSegL2_MissingName = SegL2{
 	ID:          "invalid",
 	Description: "Missing name field",
-	EnvDetails: map[string]EnvDetails{
+	L1Overrides: map[string]L1Overrides{
 		"production": {},
 	},
 }
@@ -208,35 +247,35 @@ var InvalidSegL2_InvalidID = SegL2{
 	Name:        "Invalid ID",
 	ID:          "Invalid_ID!",
 	Description: "ID contains invalid characters",
-	EnvDetails: map[string]EnvDetails{
+	L1Overrides: map[string]L1Overrides{
 		"production": {},
 	},
 }
 
-var InvalidSegL2_NoEnvDetails = SegL2{
+var InvalidSegL2_NoL1Overrides = SegL2{
 	Name:        "No Environments",
 	ID:          "no-env",
 	Description: "Security domain with no environment details defined",
-	EnvDetails:  map[string]EnvDetails{},
+	L1Overrides:  map[string]L1Overrides{},
 }
 
 // Valid CompReq Fixtures
 
 var ValidCompReqs = map[string]CompReq{
 	"pci-dss": {
-		Name:         "PCI DSS",
-		Description:  "Payment Card Industry Data Security Standard",
-		ReqsLink:     "https://www.pcisecuritystandards.org/",
+		Name:        "PCI DSS",
+		Description: "Payment Card Industry Data Security Standard",
+		ReqsLink:    "https://www.pcisecuritystandards.org/",
 	},
 	"sox": {
-		Name:         "SOX",
-		Description:  "Sarbanes-Oxley Act compliance requirements",
-		ReqsLink:     "https://www.sox-online.com/",
+		Name:        "SOX",
+		Description: "Sarbanes-Oxley Act compliance requirements",
+		ReqsLink:    "https://www.sox-online.com/",
 	},
 	"hipaa": {
-		Name:         "HIPAA",
-		Description:  "Health Insurance Portability and Accountability Act",
-		ReqsLink:     "https://www.hhs.gov/hipaa/",
+		Name:        "HIPAA",
+		Description: "Health Insurance Portability and Accountability Act",
+		ReqsLink:    "https://www.hhs.gov/hipaa/",
 	},
 }
 
@@ -245,9 +284,9 @@ var ValidCompReqs = map[string]CompReq{
 var ValidCompleteTaxonomy = Taxonomy{
 	ApiVersion: "v1beta1",
 	SegL1s: map[string]SegL1{
-		"production":      ValidSegL1Production,
-		"staging":         ValidSegL1Staging,
-		"shared-service":  ValidSegL1SharedService,
+		"production":     ValidSegL1Production,
+		"staging":        ValidSegL1Staging,
+		"shared-service": ValidSegL1SharedService,
 	},
 	SegL2s: map[string]SegL2{
 		"sec": ValidSegL2Security,

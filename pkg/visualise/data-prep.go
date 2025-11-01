@@ -8,7 +8,7 @@ import (
 )
 
 type EnvImageData struct {
-	SegL2s        map[string]tx.EnvDetails
+	SegL2s        map[string]tx.L1Overrides
 	SegL2Names    map[string]string
 	SortedSegL2s  []string
 	Criticalities map[string]bool
@@ -41,7 +41,7 @@ func PrepTaxonomy(txy *tx.Taxonomy) map[string]EnvImageData {
 	data := make(map[string]EnvImageData)
 	for envId, _ := range txy.SegL1s {
 		data[envId] = EnvImageData{
-			SegL2s:        make(map[string]tx.EnvDetails),
+			SegL2s:        make(map[string]tx.L1Overrides),
 			SegL2Names:    make(map[string]string),
 			Criticalities: make(map[string]bool),
 			SortedSegL2s:  make([]string, 0),
@@ -49,7 +49,7 @@ func PrepTaxonomy(txy *tx.Taxonomy) map[string]EnvImageData {
 	}
 
 	for _, sd := range txy.SegL2s {
-		for envId, det := range sd.EnvDetails {
+		for envId, det := range sd.L1Overrides {
 			envData := data[envId]
 			envData.SegL2s[sd.ID] = det
 			envData.SegL2Names[sd.ID] = sd.Name

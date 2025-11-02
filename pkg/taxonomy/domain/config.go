@@ -5,6 +5,7 @@ import "strings"
 // Config represents the taxonomy configuration
 type Config struct {
 	Terminology TermConfig `yaml:"terminology"`
+	SchemaPath  string     `yaml:"schema_path,omitempty"`
 }
 
 // TermConfig holds terminology configuration for L1 and L2 segments
@@ -39,11 +40,24 @@ func (tc TermConfig) Merge(defaults TermConfig) TermConfig {
 	}
 }
 
+// Merge merges this Config with defaults, using defaults for any blank fields
+func (c Config) Merge(defaults Config) Config {
+	result := Config{
+		Terminology: c.Terminology.Merge(defaults.Terminology),
+		SchemaPath:  defaults.SchemaPath,
+	}
+	if c.SchemaPath != "" {
+		result.SchemaPath = c.SchemaPath
+	}
+	return result
+}
+
 // DirName converts the plural form to a kebab-case directory name
 // Examples:
-//   "Environments" → "environments"
-//   "Security Environments" → "security-environments"
-//   "My Custom Zones" → "my-custom-zones"
+//
+//	"Environments" → "environments"
+//	"Security Environments" → "security-environments"
+//	"My Custom Zones" → "my-custom-zones"
 func (td TermDef) DirName() string {
 	lower := strings.ToLower(td.Plural)
 	kebab := strings.ReplaceAll(lower, " ", "-")
@@ -63,5 +77,6 @@ func DefaultConfig() Config {
 				Plural:   "Segments",
 			},
 		},
+		SchemaPath: "./schema",
 	}
 }

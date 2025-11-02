@@ -4,15 +4,7 @@ import (
 	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
 )
 
-// Common test data constants
-const (
-	ValidDescription          = "This is a valid description with sufficient length to meet minimum requirements for validation purposes."
-	ValidSensitivityRationale = "Valid sensitivity rationale with sufficient length to meet the minimum character requirement for descriptions."
-	ValidCriticalityRationale = "Valid criticality rationale with sufficient length to meet the minimum character requirement for descriptions."
-)
-
 // Taxonomy Builders
-// -----------------
 
 // NewTestTaxonomy creates a minimal valid taxonomy for testing
 func NewTestTaxonomy() *domain.Taxonomy {
@@ -120,11 +112,11 @@ func NewSegL1(id, name, sensitivity, criticality string, compReqs []string) doma
 	return domain.SegL1{
 		ID:                   id,
 		Name:                 name,
-		Description:          ValidDescription,
+		Description:          "This is a valid description with sufficient length to meet minimum requirements for validation purposes.",
 		Sensitivity:          sensitivity,
-		SensitivityRationale: ValidSensitivityRationale,
+		SensitivityRationale: "Valid sensitivity rationale with sufficient length to meet the minimum character requirement for descriptions.",
 		Criticality:          criticality,
-		CriticalityRationale: ValidCriticalityRationale,
+		CriticalityRationale: "Valid criticality rationale with sufficient length to meet the minimum character requirement for descriptions.",
 		ComplianceReqs:       compReqs,
 	}
 }
@@ -155,7 +147,7 @@ func NewSegL2(id, name string, overrides map[string]domain.L1Overrides) domain.S
 	return domain.SegL2{
 		Name:        name,
 		ID:          id,
-		Description: ValidDescription,
+		Description: "This is a valid description with sufficient length to meet minimum requirements for validation purposes.",
 		L1Overrides: overrides,
 	}
 }
@@ -164,9 +156,9 @@ func NewSegL2(id, name string, overrides map[string]domain.L1Overrides) domain.S
 func NewL1Override(sensitivity, criticality string, compReqs []string) domain.L1Overrides {
 	return domain.L1Overrides{
 		Sensitivity:          sensitivity,
-		SensitivityRationale: ValidSensitivityRationale,
+		SensitivityRationale: "Valid sensitivity rationale with sufficient length to meet the minimum character requirement for descriptions.",
 		Criticality:          criticality,
-		CriticalityRationale: ValidCriticalityRationale,
+		CriticalityRationale: "Valid criticality rationale with sufficient length to meet the minimum character requirement for descriptions.",
 		ComplianceReqs:       compReqs,
 	}
 }
@@ -197,27 +189,4 @@ func NewCompReq(name, description, link string) domain.CompReq {
 		Description: description,
 		ReqsLink:    link,
 	}
-}
-
-// Modification Helpers
-// --------------------
-
-// WithComplianceReqs sets compliance requirements on a SegL1
-func WithComplianceReqs(seg domain.SegL1, reqs []string) domain.SegL1 {
-	seg.ComplianceReqs = reqs
-	return seg
-}
-
-// WithSensitivity sets sensitivity on a SegL1
-func WithSensitivity(seg domain.SegL1, sensitivity, rationale string) domain.SegL1 {
-	seg.Sensitivity = sensitivity
-	seg.SensitivityRationale = rationale
-	return seg
-}
-
-// WithCriticality sets criticality on a SegL1
-func WithCriticality(seg domain.SegL1, criticality, rationale string) domain.SegL1 {
-	seg.Criticality = criticality
-	seg.CriticalityRationale = rationale
-	return seg
 }

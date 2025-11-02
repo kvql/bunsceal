@@ -390,4 +390,3 @@ func TestCompleteAndValidateTaxonomy(t *testing.T) {
 		AssertValidationFails(t, valid, "Invalid SegL2 environment reference")
 	})
 }
-

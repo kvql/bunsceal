@@ -9,8 +9,6 @@ import (
 	"github.com/kvql/bunsceal/pkg/util"
 )
 
-
-
 func ApplyInheritance(txy *domain.Taxonomy) {
 	// Loop through env details for each security domain and update risk compliance if not set based on env default
 	for _, segL2 := range txy.SegL2s {
@@ -41,8 +39,6 @@ func ApplyInheritance(txy *domain.Taxonomy) {
 		}
 	}
 }
-
-
 
 func CompleteAndValidateTaxonomy(txy *domain.Taxonomy) bool {
 	// Loop through SegL1s and validate max risk level
@@ -84,7 +80,14 @@ func LoadTaxonomy(taxDir string, cfg domain.Config) (domain.Taxonomy, error) {
 
 	// Load L1 segments using configured directory name
 	l1Dir := taxDir + cfg.Terminology.L1.DirName()
-	txy.SegL1s, err = LoadSegL1Files(l1Dir)
+	schemaValidator, err := validation.NewSchemaValidator(cfg.SchemaPath)
+	if err != nil {
+		util.Log.Printf("Error initializing schema validator: %v\n", err)
+		return domain.Taxonomy{}, errors.New("failed to initialize schema validator")
+	}
+	l1Repository := NewFileSegL1Repository(schemaValidator)
+	l1Service := NewSegL1Service(l1Repository)
+	txy.SegL1s, err = l1Service.LoadAndValidate(l1Dir)
 	if err != nil {
 		util.Log.Printf("Error loading L1 files from %s, exiting\n", l1Dir)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
@@ -96,7 +99,9 @@ func LoadTaxonomy(taxDir string, cfg domain.Config) (domain.Taxonomy, error) {
 
 	// Load L2 segments using configured directory name
 	l2Dir := taxDir + cfg.Terminology.L2.DirName()
-	txy.SegL2s, err = LoadSegL2Files(l2Dir)
+	l2Repository := NewFileSegL2Repository(schemaValidator)
+	l2Service := NewSegL2Service(l2Repository)
+	txy.SegL2s, err = l2Service.LoadAndValidate(l2Dir)
 	if err != nil {
 		util.Log.Printf("Error loading L2 files from %s: %v\n", l2Dir, err)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")

@@ -32,6 +32,8 @@ func TestLoadCompScope(t *testing.T) {
 		tmpFile := files.CreateYAMLFile("compliance-req", "this is not valid yaml: {[")
 
 		_, err := LoadCompScope(tmpFile)
-		testhelpers.AssertError(t, err, "Expected error for invalid YAML")
+		if err == nil {
+			t.Error("Expected error for invalid YAML but got nil")
+		}
 	})
 }

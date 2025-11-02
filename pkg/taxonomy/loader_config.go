@@ -3,6 +3,7 @@ package taxonomy
 import (
 	"errors"
 	"os"
+	"strings"
 	"path/filepath"
 
 	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
@@ -14,17 +15,17 @@ import (
 // LoadConfig loads configuration from the specified path
 // If configPath is empty, loads from taxDir/config.yaml
 // If the config file doesn't exist or has missing fields, uses defaults
-func LoadConfig(configPath string, taxDir string) (domain.Config, error) {
+func LoadConfig(configPath string, configSchemaPath string) (domain.Config, error) {
 	defaults := domain.DefaultConfig()
 
-	schemaValidator, err := validation.NewSchemaValidator("../../schema")
+	schemaValidator, err := validation.NewSchemaValidator(configSchemaPath)
 	if err != nil {
 		util.Log.Printf("Error initializing schema validator: %v\n", err)
 		return domain.Config{}, errors.New("failed to initialize schema validator")
 	}
 	// Determine config file location
 	if configPath == "" {
-		configPath = filepath.Join(taxDir, "config.yaml")
+		configPath = filepath.Join("config.yaml")
 	}
 
 	data, err := os.ReadFile(configPath)
@@ -44,9 +45,11 @@ func LoadConfig(configPath string, taxDir string) (domain.Config, error) {
 	}
 
 	// Merge loaded config with defaults
-	merged := domain.Config{
-		Terminology: loadedConfig.Terminology.Merge(defaults.Terminology),
+	merged := loadedConfig.Merge()
+	configDir := filepath.Dir(configPath)
+	
+	if merged.TaxonomyPath !="" && ( !strings.HasPrefix(merged.TaxonomyPath, "/") || !strings.HasPrefix(merged.TaxonomyPath, "\\")) {
+		merged.TaxonomyPath = filepath.Join(configDir, merged.TaxonomyPath)
 	}
-
 	return merged, nil
 }

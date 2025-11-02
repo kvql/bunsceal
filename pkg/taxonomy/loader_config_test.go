@@ -13,7 +13,7 @@ func TestLoadConfig_MissingFile(t *testing.T) {
 		defaults := domain.DefaultConfig()
 
 		// Use non-existent path
-		cfg, err := LoadConfig("", "/nonexistent/path")
+		cfg, err := LoadConfig("/nonexistent/path","../../schema")
 		if err != nil {
 			t.Errorf("Expected no error for missing config, got: %v", err)
 		}
@@ -24,6 +24,12 @@ func TestLoadConfig_MissingFile(t *testing.T) {
 		}
 		if cfg.Terminology.L2.Singular != defaults.Terminology.L2.Singular {
 			t.Errorf("Expected default L2 singular '%s', got '%s'", defaults.Terminology.L2.Singular, cfg.Terminology.L2.Singular)
+		}
+		if cfg.SchemaPath != defaults.SchemaPath {
+			t.Errorf("Expected default SchemaPath '%s', got '%s'", defaults.SchemaPath, cfg.SchemaPath)
+		}
+		if cfg.TaxonomyPath != defaults.TaxonomyPath {
+			t.Errorf("Expected default TaxonomyPath '%s', got '%s'", defaults.TaxonomyPath, cfg.TaxonomyPath)
 		}
 	})
 }
@@ -46,7 +52,7 @@ func TestLoadConfig_CompleteConfig(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		cfg, err := LoadConfig(configPath, "")
+		cfg, err := LoadConfig(configPath,"../../schema")
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
@@ -82,10 +88,11 @@ func TestLoadConfig_PartialL1Config(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		_, err := LoadConfig(configPath, "")
+		_, err := LoadConfig(configPath,"../../schema")
 		if err == nil {
 			t.Errorf("Expected error on load for not defining singular value")
 		}
+		
 	})
 
 	t.Run("Falls back to defaults when L1 missing plural", func(t *testing.T) {
@@ -103,7 +110,7 @@ func TestLoadConfig_PartialL1Config(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		_, err := LoadConfig(configPath, "")
+		_, err := LoadConfig(configPath,"../../schema")
 		if err == nil {
 			t.Errorf("Expected error for not defining plural values, go no error")
 		}
@@ -127,7 +134,7 @@ func TestLoadConfig_PartialL2Config(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		_, err := LoadConfig(configPath, "")
+		_, err := LoadConfig(configPath,"../../schema")
 		if err == nil {
 			t.Errorf("Expected error on load for not defining singular value")
 		}
@@ -151,7 +158,7 @@ func TestLoadConfig_L2DefinedButBlank(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		_, err := LoadConfig(configPath, "")
+		_, err := LoadConfig(configPath,"../../schema")
 		if err == nil {
 			t.Errorf("Expected failed load based on schema validation for blank terms")
 		}
@@ -176,7 +183,7 @@ func TestLoadConfig_DefaultLocation(t *testing.T) {
 		}
 
 		// Pass empty string for configPath, tmpDir as taxDir
-		cfg, err := LoadConfig("", tmpDir)
+		cfg, err := LoadConfig(configPath,"../../schema")
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
@@ -204,7 +211,7 @@ func TestLoadConfig_InvalidYAML(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		_, err := LoadConfig(configPath, "")
+		_, err := LoadConfig(configPath,"../../schema")
 		if err == nil {
 			t.Error("Expected error for invalid YAML, got nil")
 		}
@@ -226,12 +233,18 @@ func TestLoadConfig_missingLevel(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		cfg, err := LoadConfig(configPath, "")
+		cfg, err := LoadConfig(configPath,"../../schema")
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
 		if cfg.Terminology.L2.Singular != defaults.Terminology.L2.Singular {
 			t.Errorf("Expected default L2 singular '%s', got '%s'", defaults.Terminology.L2.Singular, cfg.Terminology.L2.Singular)
+		}
+		if cfg.SchemaPath != defaults.SchemaPath {
+			t.Errorf("Expected default SchemaPath '%s', got '%s'", defaults.SchemaPath, cfg.SchemaPath)
+		}
+		if cfg.TaxonomyPath != filepath.Join(tmpDir, defaults.TaxonomyPath) {
+			t.Errorf("Expected default TaxonomyPath '%s', got '%s'", defaults.TaxonomyPath, cfg.TaxonomyPath)
 		}
 	})
 }

@@ -15,14 +15,13 @@ func Execute() {
 	verify := flag.Bool("verify", false, "Validate the taxonomy")
 	graph := flag.Bool("graph", false, "Generate diagrams to visualise the taxonomy")
 	graphDir := flag.String("graphDir", ".tmp", "Directory for the graph visualizations")
-	taxDir := flag.String("taxDir", "taxonomy", "Directory where the taxonomy files are located")
 	configPath := flag.String("config", "", "Path to config.yaml (default: <taxDir>/config.yaml)")
 
 	// Parse command line flags
 	flag.Parse()
 
 	// Load configuration (with defaults if not found)
-	cfg, err := tx.LoadConfig(*configPath, *taxDir)
+	cfg, err := tx.LoadConfig(*configPath, "schema/")
 	if err != nil {
 		util.Log.Printf("Failed to load configuration: %v\n", err)
 		os.Exit(1)
@@ -30,7 +29,7 @@ func Execute() {
 
 	// Validate and Load the taxonomy and validate it
 	// required for all actions
-	tax, err := tx.LoadTaxonomy(*taxDir, cfg)
+	tax, err := tx.LoadTaxonomy(cfg)
 
 	if err != nil {
 		util.Log.Println("Taxonomy content is not valid")

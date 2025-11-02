@@ -67,13 +67,14 @@ var InitTaxonomy interface {
 // Validates the loaded data is valid and meets requirements.
 // fills in missing data based on inheritance rules
 // cfg parameter provides terminology configuration for directory resolution
-func LoadTaxonomy(taxDir string, cfg domain.Config) (domain.Taxonomy, error) {
+func LoadTaxonomy(cfg domain.Config) (domain.Taxonomy, error) {
 	txy := domain.Taxonomy{
 		ApiVersion: domain.ApiVersion,
 		Config:     cfg,
 	}
 	var err error
-
+	taxDir := cfg.TaxonomyPath
+	
 	if !strings.HasSuffix(taxDir, "/") {
 		taxDir = taxDir + "/"
 	}

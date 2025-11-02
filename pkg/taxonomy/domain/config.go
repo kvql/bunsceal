@@ -6,6 +6,7 @@ import "strings"
 type Config struct {
 	Terminology TermConfig `yaml:"terminology"`
 	SchemaPath  string     `yaml:"schema_path,omitempty"`
+	TaxonomyPath  string     `yaml:"taxonomy_path,omitempty"`
 }
 
 // TermConfig holds terminology configuration for L1 and L2 segments
@@ -41,13 +42,18 @@ func (tc TermConfig) Merge(defaults TermConfig) TermConfig {
 }
 
 // Merge merges this Config with defaults, using defaults for any blank fields
-func (c Config) Merge(defaults Config) Config {
+func (c Config) Merge() Config {
+	defaults := DefaultConfig()
 	result := Config{
 		Terminology: c.Terminology.Merge(defaults.Terminology),
 		SchemaPath:  defaults.SchemaPath,
+		TaxonomyPath: defaults.TaxonomyPath,
 	}
 	if c.SchemaPath != "" {
 		result.SchemaPath = c.SchemaPath
+	}
+	if c.TaxonomyPath != "" {
+		result.TaxonomyPath = c.TaxonomyPath
 	}
 	return result
 }
@@ -78,5 +84,6 @@ func DefaultConfig() Config {
 			},
 		},
 		SchemaPath: "./schema",
+		TaxonomyPath: "taxonomy",
 	}
 }

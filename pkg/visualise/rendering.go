@@ -7,7 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/awalterschulze/gographviz"
-	tx "github.com/kvql/bunsceal/pkg/taxonomy"
+	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
 	"github.com/kvql/bunsceal/pkg/util"
 )
 
@@ -74,14 +74,14 @@ func RenderGraph(g *gographviz.Graph, dir string, name string) error {
 }
 
 // RenderDiagrams generates all the diagrams for the taxonomy
-func RenderDiagrams(tax *tx.Taxonomy, dir string) error {
+func RenderDiagrams(tax *domain.Taxonomy, dir string, cfg *domain.Config) error {
 	// Generate the security domain graph
 	graphConfigs := []ImageConfig{
-		{func() (*gographviz.Graph, error) { return GraphSDs(tax, false, false) }, "security_domains.png"},
-		{func() (*gographviz.Graph, error) { return GraphEnvs(tax) }, "security_envs.png"},
-		{func() (*gographviz.Graph, error) { return GraphSDs(tax, true, false) }, "criticality_overview_all.png"},
-		{func() (*gographviz.Graph, error) { return GraphSDs(tax, false, true) }, "sensitivity_overview_all.png"},
-		{func() (*gographviz.Graph, error) { return GraphCompliance(tax, "pci-dss", true) }, "compliance_overview_pci.png"},
+		{func() (*gographviz.Graph, error) { return GraphSDs(tax, cfg, false, false) }, "security_domains.png"},
+		{func() (*gographviz.Graph, error) { return GraphEnvs(tax, cfg) }, "security_envs.png"},
+		{func() (*gographviz.Graph, error) { return GraphSDs(tax, cfg, true, false) }, "criticality_overview_all.png"},
+		{func() (*gographviz.Graph, error) { return GraphSDs(tax, cfg, false, true) }, "sensitivity_overview_all.png"},
+		{func() (*gographviz.Graph, error) { return GraphCompliance(tax, cfg, "pci-dss", true) }, "compliance_overview_pci.png"},
 	}
 
 	for _, config := range graphConfigs {

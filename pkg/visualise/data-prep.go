@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"sort"
 
-	tx "github.com/kvql/bunsceal/pkg/taxonomy"
+	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
 )
 
 type EnvImageData struct {
-	SegL2s        map[string]tx.L1Overrides
+	SegL2s        map[string]domain.L1Overrides
 	SegL2Names    map[string]string
 	SortedSegL2s  []string
 	Criticalities map[string]bool
 }
 
 // TODO: validate all envs are present in the rows
-func validateRows(txy *tx.Taxonomy, rowsMap map[int][]string) error {
+func validateRows(txy *domain.Taxonomy, rowsMap map[int][]string) error {
 	rows := append(rowsMap[0], rowsMap[1]...)
 	rows = append(rows, rowsMap[2]...)
 	rowMap := make(map[string]bool)
@@ -37,11 +37,11 @@ func validateRows(txy *tx.Taxonomy, rowsMap map[int][]string) error {
 	return nil
 }
 
-func PrepTaxonomy(txy *tx.Taxonomy) map[string]EnvImageData {
+func PrepTaxonomy(txy *domain.Taxonomy) map[string]EnvImageData {
 	data := make(map[string]EnvImageData)
 	for envId := range txy.SegL1s {
 		data[envId] = EnvImageData{
-			SegL2s:        make(map[string]tx.L1Overrides),
+			SegL2s:        make(map[string]domain.L1Overrides),
 			SegL2Names:    make(map[string]string),
 			Criticalities: make(map[string]bool),
 			SortedSegL2s:  make([]string, 0),

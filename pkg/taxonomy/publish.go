@@ -6,11 +6,12 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
 	"github.com/kvql/bunsceal/pkg/util"
 )
 
 // GenLocalTaxonomy generates a local taxonomy file
-func GenLocalTaxonomy(tx Taxonomy, dir string) error {
+func GenLocalTaxonomy(tx domain.Taxonomy, dir string) error {
 	// Check if provided directory exists
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		// Create directory if it doesn't exist

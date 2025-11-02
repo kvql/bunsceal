@@ -1,4 +1,4 @@
-package taxonomy
+package validation
 
 import (
 	"errors"
@@ -7,9 +7,54 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
 	"github.com/kvql/bunsceal/pkg/taxonomy/testdata"
 	"gopkg.in/yaml.v3"
 )
+
+// Test helpers
+func mustCreateValidator(t *testing.T, schemaPath string) *SchemaValidator {
+	t.Helper()
+	validator, err := NewSchemaValidator(schemaPath)
+	if err != nil {
+		t.Fatalf("Failed to create schema validator with path %s: %v", schemaPath, err)
+	}
+	return validator
+}
+
+func expectValidatorError(t *testing.T, schemaPath string) {
+	t.Helper()
+	_, err := NewSchemaValidator(schemaPath)
+	if err == nil {
+		t.Errorf("Expected validator creation to fail for path %s, but it succeeded", schemaPath)
+	}
+}
+
+func assertValidationPasses(t *testing.T, data interface{}, schemaFile string) {
+	t.Helper()
+	validator := mustCreateValidator(t, "../../../schema")
+	yamlData, err := yaml.Marshal(data)
+	if err != nil {
+		t.Fatalf("Failed to marshal test data to YAML: %v", err)
+	}
+	err = validator.ValidateData(yamlData, schemaFile)
+	if err != nil {
+		t.Errorf("Expected validation to pass for schema %s, got error: %v", schemaFile, err)
+	}
+}
+
+func assertValidationFails(t *testing.T, data interface{}, schemaFile string) {
+	t.Helper()
+	validator := mustCreateValidator(t, "../../../schema")
+	yamlData, err := yaml.Marshal(data)
+	if err != nil {
+		t.Fatalf("Failed to marshal test data to YAML: %v", err)
+	}
+	err = validator.ValidateData(yamlData, schemaFile)
+	if err == nil {
+		t.Errorf("Expected validation to fail for schema %s, but it passed", schemaFile)
+	}
+}
 
 // Helper type and function to eliminate duplication in SegL2 tests
 type segL2TestData struct {
@@ -32,10 +77,7 @@ func marshalSegL2(seg testdata.SegL2) ([]byte, error) {
 
 func TestNewSchemaValidator(t *testing.T) {
 	t.Run("Successfully creates validator with valid schema directory", func(t *testing.T) {
-		validator, err := NewSchemaValidator("../../schema")
-		if err != nil {
-			t.Fatalf("Expected no error, got: %v", err)
-		}
+		validator := mustCreateValidator(t, "../../../schema")
 		if validator == nil {
 			t.Fatal("Expected validator, got nil")
 		}
@@ -45,161 +87,60 @@ func TestNewSchemaValidator(t *testing.T) {
 	})
 
 	t.Run("Fails with non-existent schema directory", func(t *testing.T) {
-		_, err := NewSchemaValidator("/non/existent/path")
-		if err == nil {
-			t.Error("Expected error for non-existent directory")
-		}
+		expectValidatorError(t, "/non/existent/path")
 	})
 }
 
 func TestValidateData_Config(t *testing.T) {
-	validator, err := NewSchemaValidator("../../schema")
-	if err != nil {
-		t.Fatalf("Failed to create validator: %v", err)
-	}
-
 	t.Run("Valid config level keys", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.ValidConfigSchema)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "config.json")
-		if err != nil {
-			t.Errorf("Expected valid data to pass, got error: %v", err)
-		}
+		assertValidationPasses(t, testdata.ValidConfigSchema, "config.json")
 	})
 
 	t.Run("Invalid level key fails validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.InvalidConfigSchema)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "config.json")
-		if err == nil {
-			t.Error("Expected validation to fail for invalid config level key")
-		}
+		assertValidationFails(t, testdata.InvalidConfigSchema, "config.json")
 	})
 }
 
 func TestValidateData_SegL1(t *testing.T) {
-	validator, err := NewSchemaValidator("../../schema")
-	if err != nil {
-		t.Fatalf("Failed to create validator: %v", err)
-	}
-
 	t.Run("Valid SegL1 Production passes validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.ValidSegL1Production)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "seg-level1.json")
-		if err != nil {
-			t.Errorf("Expected valid data to pass, got error: %v", err)
-		}
+		assertValidationPasses(t, testdata.ValidSegL1Production, "seg-level1.json")
 	})
 
 	t.Run("Valid SegL1 Staging passes validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.ValidSegL1Staging)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "seg-level1.json")
-		if err != nil {
-			t.Errorf("Expected valid data to pass, got error: %v", err)
-		}
+		assertValidationPasses(t, testdata.ValidSegL1Staging, "seg-level1.json")
 	})
 
 	t.Run("Valid SegL1 SharedService passes validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.ValidSegL1SharedService)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "seg-level1.json")
-		if err != nil {
-			t.Errorf("Expected valid data to pass, got error: %v", err)
-		}
+		assertValidationPasses(t, testdata.ValidSegL1SharedService, "seg-level1.json")
 	})
 
 	t.Run("Missing required name field fails validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.InvalidSegL1_MissingName)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "seg-level1.json")
-		if err == nil {
-			t.Error("Expected validation to fail for missing name")
-		}
+		assertValidationFails(t, testdata.InvalidSegL1_MissingName, "seg-level1.json")
 	})
 
 	t.Run("Invalid ID pattern fails validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.InvalidSegL1_InvalidID)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "seg-level1.json")
-		if err == nil {
-			t.Error("Expected validation to fail for invalid ID pattern")
-		}
+		assertValidationFails(t, testdata.InvalidSegL1_InvalidID, "seg-level1.json")
 	})
 
 	t.Run("Short description fails validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.InvalidSegL1_ShortDescription)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "seg-level1.json")
-		if err == nil {
-			t.Error("Expected validation to fail for short description")
-		}
+		assertValidationFails(t, testdata.InvalidSegL1_ShortDescription, "seg-level1.json")
 	})
 
 	t.Run("Invalid sensitivity enum fails validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.InvalidSegL1_InvalidSensitivity)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "seg-level1.json")
-		if err == nil {
-			t.Error("Expected validation to fail for invalid sensitivity")
-		}
+		assertValidationFails(t, testdata.InvalidSegL1_InvalidSensitivity, "seg-level1.json")
 	})
 
 	t.Run("Invalid criticality enum fails validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.InvalidSegL1_InvalidCriticality)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "seg-level1.json")
-		if err == nil {
-			t.Error("Expected validation to fail for invalid criticality")
-		}
+		assertValidationFails(t, testdata.InvalidSegL1_InvalidCriticality, "seg-level1.json")
 	})
 
 	t.Run("Short rationale fails validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.InvalidSegL1_ShortRationale)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "seg-level1.json")
-		if err == nil {
-			t.Error("Expected validation to fail for short rationale")
-		}
+		assertValidationFails(t, testdata.InvalidSegL1_ShortRationale, "seg-level1.json")
 	})
 }
 
 func TestValidateData_SegL2(t *testing.T) {
-	validator, err := NewSchemaValidator("../../schema")
+	validator, err := NewSchemaValidator("../../../schema")
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -266,7 +207,7 @@ func TestValidateData_SegL2(t *testing.T) {
 }
 
 func TestValidateData_CompReqs(t *testing.T) {
-	validator, err := NewSchemaValidator("../../schema")
+	validator, err := NewSchemaValidator("../../../schema")
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -277,14 +218,14 @@ func TestValidateData_CompReqs(t *testing.T) {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
 
-		err = validator.ValidateData(data, "compliance-requirements.json")
+		err = validator.ValidateData(data, "compliance-reqs.json")
 		if err != nil {
 			t.Errorf("Expected valid data to pass, got error: %v", err)
 		}
 	})
 
 	t.Run("Missing required fields fails validation", func(t *testing.T) {
-		invalid := map[string]CompReq{
+		invalid := map[string]domain.CompReq{
 			"test": {
 				Name: "Test",
 				// Missing Description - required field
@@ -296,7 +237,7 @@ func TestValidateData_CompReqs(t *testing.T) {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
 
-		err = validator.ValidateData(data, "compliance-requirements.json")
+		err = validator.ValidateData(data, "compliance-reqs.json")
 		if err == nil {
 			t.Error("Expected validation to fail for missing required field")
 		}
@@ -304,7 +245,7 @@ func TestValidateData_CompReqs(t *testing.T) {
 }
 
 func TestValidateData_JSON(t *testing.T) {
-	validator, err := NewSchemaValidator("../../schema")
+	validator, err := NewSchemaValidator("../../../schema")
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -328,7 +269,7 @@ func TestValidateData_JSON(t *testing.T) {
 }
 
 func TestValidateData_ErrorHandling(t *testing.T) {
-	validator, err := NewSchemaValidator("../../schema")
+	validator, err := NewSchemaValidator("../../../schema")
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -440,7 +381,7 @@ func TestConvertYAMLToJSON(t *testing.T) {
 
 func TestFormatValidationError(t *testing.T) {
 	t.Run("Formats jsonschema.ValidationError", func(t *testing.T) {
-		validator, err := NewSchemaValidator("../../schema")
+		validator, err := NewSchemaValidator("../../../schema")
 		if err != nil {
 			t.Fatalf("Failed to create validator: %v", err)
 		}

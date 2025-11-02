@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/awalterschulze/gographviz"
-	tx "github.com/kvql/bunsceal/pkg/taxonomy"
+	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
 )
 
 type ColorFont struct {
@@ -75,8 +75,8 @@ func AddLegend(g *gographviz.Graph, font int, stack bool) error {
 	LegendGraphAtt["fontsize"] = fmt.Sprintf("\"%d\"", font-2)
 	g.AddSubGraph("top_level_graph", legSGName, LegendGraphAtt)
 	nodes := make([]string, 0)
-	for _, s := range tx.SenseOrder {
-		label := fmt.Sprintf("\"Sensitivity: %s (%s)\"", s, tx.SensitivityLevels[s])
+	for _, s := range domain.SenseOrder {
+		label := fmt.Sprintf("\"Sensitivity: %s (%s)\"", s, domain.SensitivityLevels[s])
 		nodeAtt := FormatNode(label, s)
 		nodeAtt["fontsize"] = fmt.Sprintf("\"%d\"", font-2)
 		nodeAtt["width"] = "\"\""
@@ -351,7 +351,7 @@ func FormatLabel(name string, sense string, crit string) string {
 }
 
 // FormatLabel returns a formatted label for a node with full detailsname string, sense string, crit string) string {
-func FormatEnvLabel(txy *tx.Taxonomy, prefix string, envID string, showClass bool) string {
+func FormatEnvLabel(txy *domain.Taxonomy, prefix string, envID string, showClass bool) string {
 
 	// graph without Compliance reqs until process around them is finalised
 	label := prefix + txy.SegL1s[envID].Name
@@ -371,7 +371,7 @@ func FormatEnvLabel(txy *tx.Taxonomy, prefix string, envID string, showClass boo
 }
 
 // FormatLabel returns a formatted label for a node with full detailsname string, sense string, crit string) string {
-func FormatSdLabel(txy *tx.Taxonomy, prefix string, envID string, sdID string, showClass bool, emphasis int) string {
+func FormatSdLabel(txy *domain.Taxonomy, prefix string, envID string, sdID string, showClass bool, emphasis int) string {
 
 	// graph without Compliance reqs until process around them is finalised
 	label := fmt.Sprintf("%s%s", prefix, txy.SegL2s[sdID].Name)

@@ -3,7 +3,7 @@ package visualise
 import (
 	"testing"
 
-	tx "github.com/kvql/bunsceal/pkg/taxonomy"
+	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
 )
 
 func TestValidateRows(t *testing.T) {
@@ -11,8 +11,8 @@ func TestValidateRows(t *testing.T) {
 		0: {"production", "ci", "sandbox", "staging", "dev"},
 		1: {"shared-service"},
 	}
-	tx := &tx.Taxonomy{
-		SegL1s: map[string]tx.SegL1{
+	txy := &domain.Taxonomy{
+		SegL1s: map[string]domain.SegL1{
 			"shared-service": {},
 			"production":     {},
 			"ci":             {},
@@ -22,7 +22,7 @@ func TestValidateRows(t *testing.T) {
 		},
 	}
 
-	err := validateRows(tx, rowsMap)
+	err := validateRows(txy, rowsMap)
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}
@@ -32,8 +32,8 @@ func TestValidateRowsPass(t *testing.T) {
 		0: {"production", "ci", "sandbox", "staging", "dev"},
 		1: {"shared-service"},
 	}
-	tx := &tx.Taxonomy{
-		SegL1s: map[string]tx.SegL1{
+	txy := &domain.Taxonomy{
+		SegL1s: map[string]domain.SegL1{
 			"shared-service": {},
 			"production":     {},
 			"ci":             {},
@@ -43,7 +43,7 @@ func TestValidateRowsPass(t *testing.T) {
 		},
 	}
 
-	err := validateRows(tx, rowsMap)
+	err := validateRows(txy, rowsMap)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -54,8 +54,8 @@ func TestValidateRowCount(t *testing.T) {
 		0: {"production", "ci", "sandbox", "staging", "dev"},
 		1: {"shared-service"},
 	}
-	tx := &tx.Taxonomy{
-		SegL1s: map[string]tx.SegL1{
+	txy := &domain.Taxonomy{
+		SegL1s: map[string]domain.SegL1{
 			"shared-service": {},
 			"production":     {},
 			"ci":             {},
@@ -66,7 +66,7 @@ func TestValidateRowCount(t *testing.T) {
 		},
 	}
 
-	err := validateRows(tx, rowsMap)
+	err := validateRows(txy, rowsMap)
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}

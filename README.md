@@ -161,11 +161,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and guidelines.
 - ✅ Schema validation with santhosh-tekuri/jsonschema/v6
 - ✅ Format-agnostic validation (supports YAML and JSON)
 - ✅ Comprehensive tooling for code quality and security
+- ✅ change terminology from security environment to hierarchy levels
 
 ### In Progress
 
 - Make business logic configurable, implement rules in go, default status for some on/some off, override in config file
-- change terminology from security environment to hierarchy levels
 
 ### Planned
 

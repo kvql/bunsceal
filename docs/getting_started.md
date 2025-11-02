@@ -12,7 +12,6 @@
 
 TODO OSCAL definition of requirements
 
-
 ## Criticality
 
 Before going into Segment Level 2s, it would be useful to read up on what we mean by criticality.  

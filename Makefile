@@ -21,7 +21,7 @@ help:
 	@echo "  make build            - Build the application"
 	@echo "  make clean            - Clean build artifacts and coverage"
 	@echo "  make ci               - Run all CI checks (fmt, vet, lint, sec, vulncheck, test-race, build)"
-	@echo "  make pre-commit-install - Install pre-commit hooks"
+	@echo "  make pre-commit-install - Install git pre-commit hook (uses Makefile targets, no deps required)"
 
 # Install all required tools
 install-all: goimports-install lint-install sec-install vulncheck-install
@@ -29,6 +29,8 @@ install-all: goimports-install lint-install sec-install vulncheck-install
 	@echo "All tools installed successfully!"
 	@echo "Run 'make ci' to verify your setup."
 
+#check all
+check-all: fmt-check vet lint sec vulncheck
 # Formatting
 fmt:
 	@echo "Formatting Go files..."
@@ -110,8 +112,27 @@ clean:
 ci: fmt-check vet lint sec vulncheck test-race build
 	@echo "All CI checks passed!"
 
-# Pre-commit setup
+# Git hook setup - uses built-in git hooks with Makefile targets
 pre-commit-install:
-	@echo "Installing pre-commit hooks..."
-	@pre-commit install
-	@echo "Pre-commit hooks installed. Run 'pre-commit run --all-files' to test."
+	@echo "Installing git pre-commit hook..."
+	@mkdir -p .git/hooks
+	@printf '#!/bin/sh\n' > .git/hooks/pre-commit
+	@printf '# Auto-generated git pre-commit hook\n' >> .git/hooks/pre-commit
+	@printf '# Regenerate with: make pre-commit-install\n' >> .git/hooks/pre-commit
+	@printf '# Skip with: git commit --no-verify\n\n' >> .git/hooks/pre-commit
+	@printf 'echo "Running pre-commit checks..."\n\n' >> .git/hooks/pre-commit
+	@printf '# Format code\n' >> .git/hooks/pre-commit
+	@printf 'make fmt || exit 1\n\n' >> .git/hooks/pre-commit
+	@printf '# Run linter\n' >> .git/hooks/pre-commit
+	@printf 'make lint || {\n' >> .git/hooks/pre-commit
+	@printf '  echo "✗ Linting failed. Run '\''make lint'\'' to see details"\n' >> .git/hooks/pre-commit
+	@printf '  exit 1\n' >> .git/hooks/pre-commit
+	@printf '}\n\n' >> .git/hooks/pre-commit
+	@printf 'echo "✓ Pre-commit checks passed"\n' >> .git/hooks/pre-commit
+	@chmod +x .git/hooks/pre-commit
+	@echo "✓ Git pre-commit hook installed at .git/hooks/pre-commit"
+	@echo ""
+	@echo "The hook runs: make fmt && make lint"
+	@echo ""
+	@echo "To skip: git commit --no-verify"
+	@echo "To customize: edit .git/hooks/pre-commit or regenerate with 'make pre-commit-install'"

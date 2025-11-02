@@ -9,6 +9,7 @@ import (
 	"github.com/kvql/bunsceal/pkg/util"
 )
 
+// ApplyInheritance applies inheritance rules for taxonomy segments.
 func ApplyInheritance(txy *domain.Taxonomy) {
 	// Loop through env details for each security domain and update risk compliance if not set based on env default
 	for _, segL2 := range txy.SegL2s {
@@ -25,7 +26,7 @@ func ApplyInheritance(txy *domain.Taxonomy) {
 			if l1Override.ComplianceReqs == nil {
 				l1Override.ComplianceReqs = txy.SegL1s[l1ID].ComplianceReqs
 			}
-			// add compliance details to compReqs var for each complaince standard listed
+			// add compliance details to compReqs var for each compliance standard listed
 			for _, compReq := range l1Override.ComplianceReqs {
 				// only add details if listed standard is valid. If not, it will be caught in validation
 				if _, ok := txy.CompReqs[compReq]; ok {
@@ -40,10 +41,10 @@ func ApplyInheritance(txy *domain.Taxonomy) {
 	}
 }
 
+// CompleteAndValidateTaxonomy completes and validates the taxonomy.
 func CompleteAndValidateTaxonomy(txy *domain.Taxonomy) bool {
 	// Loop through SegL1s and validate max risk level
-	valid := false
-	valid = validation.ValidateL1Definitions(txy)
+	valid := validation.ValidateL1Definitions(txy)
 	if !valid {
 		return valid
 	}
@@ -59,14 +60,15 @@ func CompleteAndValidateTaxonomy(txy *domain.Taxonomy) bool {
 	return valid
 }
 
+// InitTaxonomy defines the interface for taxonomy initialization.
 var InitTaxonomy interface {
 	Load()
 }
 
 // LoadTaxonomy loads the taxonomy by loading the different files and combining them into one struct.
 // Validates the loaded data is valid and meets requirements.
-// fills in missing data based on inheritance rules
-// cfg parameter provides terminology configuration for directory resolution
+// Fills in missing data based on inheritance rules.
+// cfg parameter provides terminology configuration for directory resolution.
 func LoadTaxonomy(cfg domain.Config) (domain.Taxonomy, error) {
 	txy := domain.Taxonomy{
 		ApiVersion: domain.ApiVersion,
@@ -74,7 +76,7 @@ func LoadTaxonomy(cfg domain.Config) (domain.Taxonomy, error) {
 	}
 	var err error
 	taxDir := cfg.TaxonomyPath
-	
+
 	if !strings.HasSuffix(taxDir, "/") {
 		taxDir = taxDir + "/"
 	}
@@ -83,8 +85,8 @@ func LoadTaxonomy(cfg domain.Config) (domain.Taxonomy, error) {
 	l1Dir := taxDir + cfg.Terminology.L1.DirName()
 	schemaValidator, err := validation.NewSchemaValidator(cfg.SchemaPath)
 	if err != nil {
-		util.Log.Printf("Error initializing schema validator: %v\n", err)
-		return domain.Taxonomy{}, errors.New("failed to initialize schema validator")
+		util.Log.Printf("Error initialising schema validator: %v\n", err)
+		return domain.Taxonomy{}, errors.New("failed to initialise schema validator")
 	}
 	l1Repository := NewFileSegL1Repository(schemaValidator)
 	l1Service := NewSegL1Service(l1Repository)
@@ -121,8 +123,7 @@ func LoadTaxonomy(cfg domain.Config) (domain.Taxonomy, error) {
 	if !valid {
 		util.Log.Println("Taxonomy is invalid")
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
-	} else {
-		// Return the taxonomy
-		return txy, nil
 	}
+	// Return the taxonomy
+	return txy, nil
 }

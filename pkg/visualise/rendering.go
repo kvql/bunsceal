@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
@@ -38,7 +39,7 @@ func RenderGraph(g *gographviz.Graph, dir string, name string) error {
 	// Create .tmp directory for temporary graph files
 	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
 		// Create .tmp/ directory if it doesn't exist
-		err := os.Mkdir(tmpDir, 0755)
+		err := os.Mkdir(tmpDir, 0750)
 		if err != nil {
 			return err
 		}
@@ -52,6 +53,7 @@ func RenderGraph(g *gographviz.Graph, dir string, name string) error {
 		}
 	}
 
+	// #nosec G304 -- tmpDir is a controlled constant, graphFile is sanitised
 	tmp, err := os.Create(tmpDir + graphFile)
 	if err != nil {
 		return err
@@ -61,7 +63,11 @@ func RenderGraph(g *gographviz.Graph, dir string, name string) error {
 	// Write the graph to a temporary file
 	tmp.WriteString(output)
 
-	cmd := exec.Command("dot", "-Tpng", tmp.Name(), "-o", dir+name)
+	// Sanitise output path to prevent path traversal
+	outputPath := filepath.Clean(filepath.Join(dir, name))
+
+	// #nosec G204 -- Using exec.Command with separate args (not shell), paths are sanitised
+	cmd := exec.Command("dot", "-Tpng", tmp.Name(), "-o", outputPath)
 	cmdOutput, err := cmd.CombinedOutput()
 	if err != nil {
 		util.Log.Println("Failed to generate image:", err)

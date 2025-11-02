@@ -67,7 +67,7 @@ criticality_rationale: "Test rationale with sufficient length to meet the minimu
 	for i, item := range items {
 		content := fmt.Sprintf(template, item.Name, item.ID, item.Sensitivity, item.Criticality)
 		filename := fmt.Sprintf("env%d.yaml", i+1)
-		if err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0600); err != nil {
 			tf.t.Fatalf("Failed to write test file %s: %v", filename, err)
 		}
 	}
@@ -101,7 +101,7 @@ l1_overrides:
 	for i, item := range items {
 		content := fmt.Sprintf(template, item.Name, item.ID)
 		filename := fmt.Sprintf("domain%d.yaml", i+1)
-		if err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0600); err != nil {
 			tf.t.Fatalf("Failed to write test file %s: %v", filename, err)
 		}
 	}

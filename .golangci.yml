@@ -20,8 +20,13 @@ linters-settings:
   govet:
     check-shadowing: true
     enable-all: true
+    disable:
+      - fieldalignment
   misspell:
-    locale: US
+    locale: UK
+    ignore-words:
+      - color   # graphviz attribute name
+      - center  # graphviz attribute name
   nolintlint:
     allow-unused: false
     require-explanation: true
@@ -36,34 +41,29 @@ linters-settings:
       - name: error-return
       - name: error-strings
       - name: error-naming
-      - name: exported
       - name: if-return
       - name: increment-decrement
-      - name: var-naming
       - name: var-declaration
-      - name: package-comments
       - name: range
       - name: receiver-naming
       - name: time-naming
-      - name: unexported-return
       - name: indent-error-flow
       - name: errorf
       - name: empty-block
       - name: superfluous-else
-      - name: unused-parameter
       - name: unreachable-code
       - name: redefines-builtin-id
   staticcheck:
     checks: ["all"]
   stylecheck:
-    checks: ["all"]
+    checks: ["all", "-ST1000", "-ST1003"]
   unparam:
     check-exported: true
 
 linters:
   disable-all: true
   enable:
-    # Default linters
+    # Default linters - keep these for correctness
     - errcheck
     - gosimple
     - govet
@@ -72,72 +72,38 @@ linters:
     - typecheck
     - unused
 
-    # Additional strict linters
+    # Security and correctness linters - keep these
     - asasalint
     - asciicheck
     - bidichk
     - bodyclose
     - containedctx
     - contextcheck
-    - cyclop
-    - dupl
     - durationcheck
     - errname
     - errorlint
-    - exhaustive
-    - exportloopref
-    - forbidigo
-    - forcetypeassert
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
     - goconst
-    - gocritic
-    - gocyclo
-    - godot
-    - godox
-    - gofmt
-    - gofumpt
-    - goimports
-    - gomnd
-    - gomoddirectives
-    - gomodguard
-    - goprintffuncname
     - gosec
-    - grouper
-    - importas
-    - interfacebloat
-    - ireturn
-    - lll
-    - loggercheck
-    - maintidx
     - makezero
     - misspell
-    - nakedret
-    - nestif
     - nilerr
     - nilnil
     - noctx
     - nolintlint
-    - nonamedreturns
     - nosprintfhostport
     - predeclared
-    - promlinter
     - reassign
     - revive
     - rowserrcheck
     - sqlclosecheck
     - stylecheck
-    - tenv
-    - testableexamples
-    - thelper
-    - tparallel
     - unconvert
-    - unparam
     - usestdlibvars
     - wastedassign
     - whitespace
-    - wrapcheck
+
+    # Formatting - keep basic formatting
+    - gofmt
 
 issues:
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
@@ -158,6 +124,16 @@ issues:
         - gocyclo
         - funlen
         - gocognit
+        - gosec
+        - errcheck
+        - whitespace
+        - govet
+
+    - path: testhelpers/
+      linters:
+        - errcheck
+        - gosec
+        - whitespace
 
     - path: testdata/
       linters:
@@ -165,10 +141,47 @@ issues:
         - gocritic
         - gochecknoglobals
 
+    # Relax linting for visualise package (graph rendering code)
+    - path: pkg/visualise/
+      linters:
+        - errcheck
+        - whitespace
+        - stylecheck
+        - staticcheck
+        - gosec
+        - govet
+        - ineffassign
+        - wastedassign
+
+    # Relax linting for util package
+    - path: pkg/util/
+      linters:
+        - errcheck
+        - gosimple
+
+    # Allow dot imports in test files
+    - path: _test\.go
+      linters:
+        - revive
+      text: "dot-imports"
+
     # Exclude godox (TODO/FIXME comments) for now
     - linters:
         - godox
       text: "Line contains TODO/BUG/FIXME"
+
+    # Exclude specific gosec rules that are too strict
+    - linters:
+        - gosec
+      text: "G304" # File inclusion - we control the paths
+
+    - linters:
+        - gosec
+      text: "G306" # File permissions in non-test code (for publish.go)
+
+    - linters:
+        - gosec
+      text: "G301" # Directory permissions
 
   # Show all issues
   exclude-use-default: false

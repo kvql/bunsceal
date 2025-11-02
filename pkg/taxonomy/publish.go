@@ -15,7 +15,7 @@ func GenLocalTaxonomy(tx domain.Taxonomy, dir string) error {
 	// Check if provided directory exists
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		// Create directory if it doesn't exist
-		err := os.Mkdir(dir, 0755)
+		err := os.Mkdir(dir, 0750)
 		if err != nil {
 			return err
 		}
@@ -27,7 +27,7 @@ func GenLocalTaxonomy(tx domain.Taxonomy, dir string) error {
 		return err
 	}
 	filePath := dir + "/" + Version()
-	return os.WriteFile(filePath, data, 0644)
+	return os.WriteFile(filePath, data, 0600)
 }
 
 func Version() string {

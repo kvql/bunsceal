@@ -1,27 +1,28 @@
+// Package domain provides core domain models and configuration for the taxonomy system.
 package domain
 
 import "strings"
 
-// Config represents the taxonomy configuration
+// Config represents the taxonomy configuration.
 type Config struct {
-	Terminology TermConfig `yaml:"terminology"`
-	SchemaPath  string     `yaml:"schema_path,omitempty"`
-	TaxonomyPath  string     `yaml:"taxonomy_path,omitempty"`
+	Terminology  TermConfig `yaml:"terminology"`
+	SchemaPath   string     `yaml:"schema_path,omitempty"`
+	TaxonomyPath string     `yaml:"taxonomy_path,omitempty"`
 }
 
-// TermConfig holds terminology configuration for L1 and L2 segments
+// TermConfig holds terminology configuration for L1 and L2 segments.
 type TermConfig struct {
 	L1 TermDef `yaml:"l1,omitempty"`
 	L2 TermDef `yaml:"l2,omitempty"`
 }
 
-// TermDef defines singular and plural forms for a segment level
+// TermDef defines singular and plural forms for a segment level.
 type TermDef struct {
 	Singular string `yaml:"singular"`
 	Plural   string `yaml:"plural"`
 }
 
-// Merge merges this TermDef with defaults, using defaults for any blank fields
+// Merge merges this TermDef with defaults, using defaults for any blank fields.
 func (td TermDef) Merge(defaults TermDef) TermDef {
 	result := defaults
 	if td.Singular != "" {
@@ -33,7 +34,7 @@ func (td TermDef) Merge(defaults TermDef) TermDef {
 	return result
 }
 
-// Merge merges this TermConfig with defaults, using defaults for any blank fields
+// Merge merges this TermConfig with defaults, using defaults for any blank fields.
 func (tc TermConfig) Merge(defaults TermConfig) TermConfig {
 	return TermConfig{
 		L1: tc.L1.Merge(defaults.L1),
@@ -41,12 +42,12 @@ func (tc TermConfig) Merge(defaults TermConfig) TermConfig {
 	}
 }
 
-// Merge merges this Config with defaults, using defaults for any blank fields
+// Merge merges this Config with defaults, using defaults for any blank fields.
 func (c Config) Merge() Config {
 	defaults := DefaultConfig()
 	result := Config{
-		Terminology: c.Terminology.Merge(defaults.Terminology),
-		SchemaPath:  defaults.SchemaPath,
+		Terminology:  c.Terminology.Merge(defaults.Terminology),
+		SchemaPath:   defaults.SchemaPath,
 		TaxonomyPath: defaults.TaxonomyPath,
 	}
 	if c.SchemaPath != "" {
@@ -70,7 +71,7 @@ func (td TermDef) DirName() string {
 	return kebab
 }
 
-// DefaultConfig returns the default configuration
+// DefaultConfig returns the default configuration.
 func DefaultConfig() Config {
 	return Config{
 		Terminology: TermConfig{
@@ -83,7 +84,7 @@ func DefaultConfig() Config {
 				Plural:   "Segments",
 			},
 		},
-		SchemaPath: "./schema",
+		SchemaPath:   "./schema",
 		TaxonomyPath: "taxonomy",
 	}
 }

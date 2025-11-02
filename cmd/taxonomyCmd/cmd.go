@@ -9,12 +9,13 @@ import (
 	vis "github.com/kvql/bunsceal/pkg/visualise"
 )
 
+// Execute runs the taxonomy command with configured flags.
 func Execute() {
 	// Define command line flags
 	localExport := flag.String("localExport", "", "Path for the taxonomy to be exported to a local JSON file")
 	verify := flag.Bool("verify", false, "Validate the taxonomy")
 	graph := flag.Bool("graph", false, "Generate diagrams to visualise the taxonomy")
-	graphDir := flag.String("graphDir", ".tmp", "Directory for the graph visualizations")
+	graphDir := flag.String("graphDir", ".tmp", "Directory for the graph visualisations")
 	configPath := flag.String("config", "", "Path to config.yaml (default: <taxDir>/config.yaml)")
 
 	// Parse command line flags
@@ -53,7 +54,7 @@ func Execute() {
 		}
 	}
 
-	// Generate taxonomy visualizations
+	// Generate taxonomy visualisations
 	if *graph {
 		err := vis.RenderDiagrams(&tax, *graphDir, &cfg)
 		if err != nil {

@@ -24,6 +24,7 @@ dist/
 *.out
 coverage.html
 coverage.txt
+coverage.out
 
 # Go workspace file
 go.work

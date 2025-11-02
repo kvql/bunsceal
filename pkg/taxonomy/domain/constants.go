@@ -1,9 +1,9 @@
 package domain
 
-// Use this to test compatibility in clients
+// ApiVersion specifies the API version for compatibility testing in clients.
 const ApiVersion = "v1beta1"
 
-// Define sensitivity levels
+// SensitivityLevels defines the available sensitivity classification levels.
 var SensitivityLevels = map[string]string{
 	"A": "High",
 	"B": "Medium",
@@ -11,8 +11,8 @@ var SensitivityLevels = map[string]string{
 	"D": "N/A",
 }
 
-// Define Criticality levels
-var CriticalityLevels map[string]string = map[string]string{
+// CriticalityLevels defines the available criticality classification levels.
+var CriticalityLevels = map[string]string{
 	"1": "Critical",
 	"2": "High",
 	"3": "Medium",
@@ -20,6 +20,8 @@ var CriticalityLevels map[string]string = map[string]string{
 	"5": "N/A",
 }
 
-// create slice of risk levels to track order
+// SenseOrder defines the ordered list of sensitivity levels.
 var SenseOrder = []string{"A", "B", "C", "D"}
+
+// CritOrder defines the ordered list of criticality levels.
 var CritOrder = []string{"1", "2", "3", "4", "5"}

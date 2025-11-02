@@ -98,7 +98,7 @@ func NewSharedServiceSegL1() domain.SegL1 {
 	return domain.SegL1{
 		ID:                   "shared-service",
 		Name:                 "Shared Service",
-		Description:          "Shared service environment hosting cross-account resources and centralized services with connectivity.",
+		Description:          "Shared service environment hosting cross-account resources and centralised services with connectivity.",
 		Sensitivity:          "A",
 		SensitivityRationale: "Shared services represent highest risk from lateral movement perspective and bridge between environments.",
 		Criticality:          "1",

@@ -34,7 +34,7 @@ func TestTermDef_DirName(t *testing.T) {
 			expected: "environments",
 		},
 		{
-			name:     "Capitalized word",
+			name:     "Capitalised word",
 			termDef:  TermDef{Plural: "Environments"},
 			expected: "environments",
 		},

@@ -2,6 +2,7 @@ package validation
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,7 +17,7 @@ type SchemaValidator struct {
 	schemas  map[string]*jsonschema.Schema
 }
 
-// NewSchemaValidator creates and initializes a schema validator with all taxonomy schemas
+// NewSchemaValidator creates and initialises a schema validator with all taxonomy schemas
 func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 	compiler := jsonschema.NewCompiler()
 	// Note: Draft version is auto-detected from $schema field in each JSON schema file
@@ -43,6 +44,7 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 		schemaPath := filepath.Join(absSchemaDir, file)
 
 		// Read schema file
+		// #nosec G304 -- schemaPath is constructed from trusted schema directory and known schema files
 		data, err := os.ReadFile(schemaPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read schema %s: %w", file, err)
@@ -137,7 +139,8 @@ func convertYAMLToJSON(i interface{}) interface{} {
 
 // formatValidationError formats jsonschema validation errors in a readable way
 func formatValidationError(err error) error {
-	if ve, ok := err.(*jsonschema.ValidationError); ok {
+	var ve *jsonschema.ValidationError
+	if errors.As(err, &ve) {
 		// v6 has built-in error formatting, but we can enhance it
 		// Use the built-in Error() method which provides good formatting
 		return fmt.Errorf("schema validation failed:\n%s", ve.Error())

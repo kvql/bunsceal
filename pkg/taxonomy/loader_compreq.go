@@ -12,14 +12,15 @@ import (
 // LoadCompScope loads compliance requirements from a YAML file and validates against schema
 // schemaPath specifies the directory containing JSON schema files for validation
 func LoadCompScope(filePath string, schemaPath string) (map[string]domain.CompReq, error) {
-	// Initialize schema validator with provided path
+	// Initialise schema validator with provided path
 	schemaValidator, err := validation.NewSchemaValidator(schemaPath)
 	if err != nil {
-		util.Log.Printf("Error initializing schema validator: %v\n", err)
+		util.Log.Printf("Error initialising schema validator: %v\n", err)
 		return nil, err
 	}
 
 	// Read the file
+	// #nosec G304 -- filePath comes from config-specified taxonomy directory, not user input
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		util.Log.Println("Error reading file:", err)
@@ -27,9 +28,9 @@ func LoadCompScope(filePath string, schemaPath string) (map[string]domain.CompRe
 	}
 
 	// Validate against JSON schema first
-	if err := schemaValidator.ValidateData(data, "compliance-reqs.json"); err != nil {
-		util.Log.Printf("Schema validation failed for %s: %v\n", filePath, err)
-		return nil, err
+	if validationErr := schemaValidator.ValidateData(data, "compliance-reqs.json"); validationErr != nil {
+		util.Log.Printf("Schema validation failed for %s: %v\n", filePath, validationErr)
+		return nil, validationErr
 	}
 
 	// Parse the file into a allCompScopes struct

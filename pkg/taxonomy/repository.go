@@ -78,13 +78,14 @@ func (r *FileSegL1Repository) parseSegL1File(filePath string) (domain.SegL1, err
 
 // parseSegL1File parses a single SegL1 file with schema validation
 func parseSegL1File(filePath string, schemaValidator *validation.SchemaValidator) (domain.SegL1, error) {
+	// #nosec G304 -- filePath comes from config-specified taxonomy directory, not user input
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return domain.SegL1{}, err
 	}
 
-	if err := schemaValidator.ValidateData(data, "seg-level1.json"); err != nil {
-		return domain.SegL1{}, fmt.Errorf("schema validation failed for %s: %w", filePath, err)
+	if validationErr := schemaValidator.ValidateData(data, "seg-level1.json"); validationErr != nil {
+		return domain.SegL1{}, fmt.Errorf("schema validation failed for %s: %w", filePath, validationErr)
 	}
 
 	var segL1 domain.SegL1
@@ -152,6 +153,7 @@ type version struct {
 
 // parseSDFile parses a single SegL2 file with schema validation and version checking
 func parseSDFile(filePath string, schemaValidator *validation.SchemaValidator) (domain.SegL2, error) {
+	// #nosec G304 -- filePath comes from config-specified taxonomy directory, not user input
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return domain.SegL2{}, fmt.Errorf("failed to read file %s: %w", filePath, err)
@@ -164,8 +166,8 @@ func parseSDFile(filePath string, schemaValidator *validation.SchemaValidator) (
 
 	switch fileVersion.Version {
 	case "1.0":
-		if err := schemaValidator.ValidateData(data, "seg-level2.json"); err != nil {
-			return domain.SegL2{}, fmt.Errorf("schema validation failed for %s: %w", filePath, err)
+		if validationErr := schemaValidator.ValidateData(data, "seg-level2.json"); validationErr != nil {
+			return domain.SegL2{}, fmt.Errorf("schema validation failed for %s: %w", filePath, validationErr)
 		}
 
 		var segL2 domain.SegL2

@@ -7,7 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/awalterschulze/gographviz"
-	tx "github.com/kvql/bunsceal/pkg/taxonomy"
+	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
 	"github.com/kvql/bunsceal/pkg/util"
 )
 
@@ -74,7 +74,7 @@ func RenderGraph(g *gographviz.Graph, dir string, name string) error {
 }
 
 // RenderDiagrams generates all the diagrams for the taxonomy
-func RenderDiagrams(tax *tx.Taxonomy, dir string, cfg *tx.Config) error {
+func RenderDiagrams(tax *domain.Taxonomy, dir string, cfg *domain.Config) error {
 	// Generate the security domain graph
 	graphConfigs := []ImageConfig{
 		{func() (*gographviz.Graph, error) { return GraphSDs(tax, cfg, false, false) }, "security_domains.png"},

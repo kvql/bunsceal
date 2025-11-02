@@ -1,4 +1,4 @@
-package taxonomy
+package validation
 
 import (
 	"encoding/json"
@@ -27,8 +27,8 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 		"seg-level1.json",
 		"seg-level2.json",
 		"l1-overrides.json",
-		"comp-req.json",
-		"compliance-requirements.json",
+		"compliance-reqs.json",
+		"compliance-req.json",
 		"taxonomy.json",
 		"config.json",
 	}

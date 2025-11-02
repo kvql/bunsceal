@@ -4,72 +4,13 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
 )
-
-func TestDefaultConfig(t *testing.T) {
-	cfg := DefaultConfig()
-
-	// Verify defaults are set (actual values defined in DefaultConfig)
-	if cfg.Terminology.L1.Singular == "" {
-		t.Error("Expected L1 singular to be set")
-	}
-	if cfg.Terminology.L1.Plural == "" {
-		t.Error("Expected L1 plural to be set")
-	}
-	if cfg.Terminology.L2.Singular == "" {
-		t.Error("Expected L2 singular to be set")
-	}
-	if cfg.Terminology.L2.Plural == "" {
-		t.Error("Expected L2 plural to be set")
-	}
-}
-
-func TestTermDef_DirName(t *testing.T) {
-	tests := []struct {
-		name     string
-		termDef  TermDef
-		expected string
-	}{
-		{
-			name:     "Simple lowercase",
-			termDef:  TermDef{Plural: "environments"},
-			expected: "environments",
-		},
-		{
-			name:     "Capitalized word",
-			termDef:  TermDef{Plural: "Environments"},
-			expected: "environments",
-		},
-		{
-			name:     "Multi-word with space",
-			termDef:  TermDef{Plural: "Security Environments"},
-			expected: "security-environments",
-		},
-		{
-			name:     "Already kebab-case",
-			termDef:  TermDef{Plural: "security-domains"},
-			expected: "security-domains",
-		},
-		{
-			name:     "Multiple spaces",
-			termDef:  TermDef{Plural: "My Custom Zones"},
-			expected: "my-custom-zones",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := tt.termDef.DirName()
-			if result != tt.expected {
-				t.Errorf("Expected '%s', got '%s'", tt.expected, result)
-			}
-		})
-	}
-}
 
 func TestLoadConfig_MissingFile(t *testing.T) {
 	t.Run("Returns defaults when config file missing", func(t *testing.T) {
-		defaults := DefaultConfig()
+		defaults := domain.DefaultConfig()
 
 		// Use non-existent path
 		cfg, err := LoadConfig("", "/nonexistent/path")
@@ -269,9 +210,10 @@ func TestLoadConfig_InvalidYAML(t *testing.T) {
 		}
 	})
 }
+
 func TestLoadConfig_missingLevel(t *testing.T) {
 	t.Run("Uses defaults for L2 when only L1 defined", func(t *testing.T) {
-		defaults := DefaultConfig()
+		defaults := domain.DefaultConfig()
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
 

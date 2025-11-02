@@ -1,4 +1,13 @@
-package taxonomy
+package domain
+
+type Identifiers struct {
+	Name string
+	ID string
+}
+
+type UnqSegKeys interface{
+	GetIdentities() Identifiers
+}
 
 type SegL1 struct {
 	Name                 string   `yaml:"name"`
@@ -10,12 +19,13 @@ type SegL1 struct {
 	CriticalityRationale string   `yaml:"criticality_rationale"`
 	ComplianceReqs       []string `yaml:"compliance_reqs"`
 }
+func (s SegL1) GetIdentities()(Identifiers) {return Identifiers{Name: s.Name, ID: s.ID}}
 
 type L1Overrides struct {
 	Sensitivity          string             `yaml:"sensitivity"`
 	SensitivityRationale string             `yaml:"sensitivity_rationale"`
 	Criticality          string             `yaml:"criticality"`
-	CriticalityRationale string             `yaml:"criticality_rationale"`
+	CriticalityRationale string   `yaml:"criticality_rationale"`
 	ComplianceReqs       []string           `yaml:"compliance_reqs"`
 	CompReqs             map[string]CompReq `yaml:"comp_reqs,omitempty"`
 }
@@ -26,6 +36,7 @@ type SegL2 struct {
 	Description string                 `yaml:"description"`
 	L1Overrides map[string]L1Overrides `yaml:"l1_overrides"`
 }
+func (s SegL2) GetIdentities()(Identifiers) {return Identifiers{Name: s.Name, ID: s.ID}}
 
 type CompReq struct {
 	Name        string `yaml:"name"`

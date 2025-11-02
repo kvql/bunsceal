@@ -27,7 +27,7 @@
     "compReqs": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "./comp-req.json"
+        "$ref": "./compliance-req.json"
       }
     }
   },

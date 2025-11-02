@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/kvql/bunsceal/schema/comp-req.json",
+  "$id": "https://github.com/kvql/bunsceal/schema/compliance-req.json",
   "title": "Compliance Requirement",
   "description": "Single compliance requirement entry",
   "type": "object",

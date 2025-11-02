@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/awalterschulze/gographviz"
-	tx "github.com/kvql/bunsceal/pkg/taxonomy"
+	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
 )
 
 // Layout Variables
@@ -31,7 +31,7 @@ var rowsMap = map[int][]string{
 
 // See the GraphSDs function for more comments explaining how the graph is generated. That is the more complex function and therefore has more comments than GraphEnvs
 
-func GraphEnvs(txy *tx.Taxonomy, cfg *tx.Config) (*gographviz.Graph, error) {
+func GraphEnvs(txy *domain.Taxonomy, cfg *domain.Config) (*gographviz.Graph, error) {
 	// Setup the top level graph object
 	validateRows(txy, rowsMap)
 	title := cfg.Terminology.L1.Plural + " Overview"
@@ -87,7 +87,7 @@ func GraphEnvs(txy *tx.Taxonomy, cfg *tx.Config) (*gographviz.Graph, error) {
 // Function to Segment Level 2 Graphs
 // ################################
 
-func GraphSDs(txy *tx.Taxonomy, cfg *tx.Config, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
+func GraphSDs(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
 	validateRows(txy, rowsMap)
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
@@ -144,12 +144,12 @@ func GraphSDs(txy *tx.Taxonomy, cfg *tx.Config, highlightCriticality bool, showC
 			// This is done by creating a subgraph for each criticality level within the environment
 			// Maps are unordered in go and therefore we need to iterate over the ordered criticality list to get a consistent image
 			critGraphNames := []string{}
-			for _, crit := range tx.CritOrder {
+			for _, crit := range domain.CritOrder {
 				critGraphName := focusSGName(envId, crit)
 				critGraphAtt := map[string]string{}
 				if highlightCriticality {
 					critGraphAtt = map[string]string{
-						"label":     fmt.Sprintf("\"Criticality: %s(%s)\"", crit, tx.CriticalityLevels[crit]),
+						"label":     fmt.Sprintf("\"Criticality: %s(%s)\"", crit, domain.CriticalityLevels[crit]),
 						"shape":     "\"box\"",
 						"color":     "\"#9FE870\"",
 						"fontcolor": "\"#9FE870\"",
@@ -208,7 +208,7 @@ func GraphSDs(txy *tx.Taxonomy, cfg *tx.Config, highlightCriticality bool, showC
 		// loop through environments and criticalities to get the order
 		// To change the order of the environments update it in the rowsMap variable in data-prep.go
 		for _, env := range envIds {
-			for _, c := range tx.CritOrder {
+			for _, c := range domain.CritOrder {
 				if _, ok := imageData[env].Criticalities[c]; ok {
 					fullOrderNodes = append(fullOrderNodes, orderNodes[env][c]...)
 				}
@@ -235,7 +235,7 @@ func GraphSDs(txy *tx.Taxonomy, cfg *tx.Config, highlightCriticality bool, showC
 // Function to Segment Level 2 Graphs
 // ################################
 // GraphCompliance  showOut is used control if out of scope domains are added to the graph
-func GraphCompliance(txy *tx.Taxonomy,cfg *tx.Config, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
+func GraphCompliance(txy *domain.Taxonomy, cfg *domain.Config, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
 	validateRows(txy, rowsMap)
 	if _, ok := txy.CompReqs[compName]; !ok {
 		return nil, fmt.Errorf("compliance standard %s not found in taxonomy", compName)

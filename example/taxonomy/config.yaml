@@ -7,3 +7,4 @@ terminology:
   l2:
     singular: "Segment"
     plural: "Segments"
+schema_path: "../../schema/"

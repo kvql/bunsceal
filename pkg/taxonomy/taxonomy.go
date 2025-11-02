@@ -108,7 +108,7 @@ func LoadTaxonomy(taxDir string, cfg domain.Config) (domain.Taxonomy, error) {
 	}
 
 	// Define compliance scopes
-	txy.CompReqs, err = LoadCompScope(taxDir + "compliance_requirements.yaml")
+	txy.CompReqs, err = LoadCompScope(taxDir+"compliance_requirements.yaml", cfg.SchemaPath)
 	if err != nil {
 		util.Log.Println("Error loading compliance scope files:", err)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")

@@ -62,6 +62,13 @@
         "plural"
       ],
       "additionalProperties": false
+    },
+    "filePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[a-zA-Z0-9._/-]+$",
+      "description": "File system path (relative or absolute). Supports forward slashes (/) for Unix/Mac. Example: './schema' or '/usr/local/schema'"
     }
   }
 }

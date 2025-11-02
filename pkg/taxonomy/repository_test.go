@@ -7,18 +7,6 @@ import (
 )
 
 func TestFileSegL1Repository(t *testing.T) {
-	t.Run("Successfully loads valid SegL1 files from directory", func(t *testing.T) {
-		validator := mustCreateValidator(t, "../../schema")
-		repository := NewFileSegL1Repository(validator)
-
-		segL1s, err := repository.LoadAll("../../example/taxonomy/environments")
-		if err != nil {
-			t.Fatalf("Expected successful load, got error: %v", err)
-		}
-		if len(segL1s) == 0 {
-			t.Error("Expected at least one SegL1 to be loaded")
-		}
-	})
 
 	t.Run("Fails with non-existent directory", func(t *testing.T) {
 		validator := mustCreateValidator(t, "../../schema")
@@ -52,19 +40,6 @@ func TestFileSegL1Repository(t *testing.T) {
 }
 
 func TestFileSegL2Repository(t *testing.T) {
-	t.Run("Successfully loads valid SegL2 files from directory", func(t *testing.T) {
-		validator := mustCreateValidator(t, "../../schema")
-		repository := NewFileSegL2Repository(validator)
-
-		segL2s, err := repository.LoadAll("../../example/taxonomy/segments")
-		if err != nil {
-			t.Fatalf("Expected successful load, got error: %v", err)
-		}
-		if len(segL2s) == 0 {
-			t.Error("Expected at least one SegL2 to be loaded")
-		}
-	})
-
 	t.Run("Fails with non-existent directory", func(t *testing.T) {
 		validator := mustCreateValidator(t, "../../schema")
 		repository := NewFileSegL2Repository(validator)

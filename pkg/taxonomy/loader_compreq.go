@@ -9,10 +9,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func LoadCompScope(filePath string) (map[string]domain.CompReq, error) {
-	// Initialize schema validator
-	// TODO: Refactor to accept schema path as parameter for testability
-	schemaValidator, err := validation.NewSchemaValidator("./schema")
+// LoadCompScope loads compliance requirements from a YAML file and validates against schema
+// schemaPath specifies the directory containing JSON schema files for validation
+func LoadCompScope(filePath string, schemaPath string) (map[string]domain.CompReq, error) {
+	// Initialize schema validator with provided path
+	schemaValidator, err := validation.NewSchemaValidator(schemaPath)
 	if err != nil {
 		util.Log.Printf("Error initializing schema validator: %v\n", err)
 		return nil, err

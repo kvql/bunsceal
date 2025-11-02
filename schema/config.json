@@ -19,6 +19,10 @@
         }
       },
       "additionalProperties": false
+    },
+    "schema_path": {
+      "$ref": "./common.json#/$defs/filePath",
+      "description": "Directory path containing JSON schema files for validation. Defaults to './schema' if not specified."
     }
   }
 }

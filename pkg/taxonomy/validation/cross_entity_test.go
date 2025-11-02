@@ -4,278 +4,154 @@ import (
 	"testing"
 
 	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	. "github.com/kvql/bunsceal/pkg/taxonomy/testhelpers"
 )
 
 func TestValidateL1Definitions(t *testing.T) {
 	t.Run("Valid compliance requirements pass", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"prod": {
-					ID:                   "prod",
-					Name:                 "Production",
-					Description:          "Production environment with strict security controls for customer-facing services and data.",
-					Sensitivity:          "A",
-					SensitivityRationale: "Production handles customer data requiring highest classification level and protection.",
-					Criticality:          "1",
-					CriticalityRationale: "Production outages directly impact customers and revenue streams requiring immediate response.",
-					ComplianceReqs:       []string{"pci-dss", "sox"},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{
-				"pci-dss": {Name: "PCI DSS", Description: "Payment Card Industry Data Security Standard", ReqsLink: "https://www.pcisecuritystandards.org/"},
-				"sox":     {Name: "SOX", Description: "Sarbanes-Oxley Act", ReqsLink: "https://www.sox-online.com/"},
-			},
-		}
+		txy := WithSegL1(
+			WithStandardCompReqs(NewTestTaxonomy()),
+			"prod",
+			NewProdSegL1(),
+		)
 
-		valid := ValidateL1Definitions(&txy)
-		if !valid {
-			t.Error("Expected validation to pass for valid compliance requirements")
-		}
+		valid := ValidateL1Definitions(txy)
+		AssertValidationPasses(t, valid, "Valid compliance requirements")
 	})
 
 	t.Run("Invalid compliance requirement fails", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"prod": {
-					ID:                   "prod",
-					Name:                 "Production",
-					Description:          "Production environment with strict security controls for customer-facing services and data.",
-					Sensitivity:          "A",
-					SensitivityRationale: "Production handles customer data requiring highest classification level and protection.",
-					Criticality:          "1",
-					CriticalityRationale: "Production outages directly impact customers and revenue streams requiring immediate response.",
-					ComplianceReqs:       []string{"invalid-scope"},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{
-				"pci-dss": {Name: "PCI DSS", Description: "Payment Card Industry Data Security Standard", ReqsLink: "https://www.pcisecuritystandards.org/"},
-			},
-		}
+		txy := WithSegL1(
+			WithCompReq(NewTestTaxonomy(), "pci-dss", NewCompReq(
+				"PCI DSS",
+				"Payment Card Industry Data Security Standard",
+				"https://www.pcisecuritystandards.org/",
+			)),
+			"prod",
+			NewSegL1("prod", "Production", "A", "1", []string{"invalid-scope"}),
+		)
 
-		valid := ValidateL1Definitions(&txy)
-		if valid {
-			t.Error("Expected validation to fail for invalid compliance requirement")
-		}
+		valid := ValidateL1Definitions(txy)
+		AssertValidationFails(t, valid, "Invalid compliance requirement")
 	})
 
 	t.Run("Empty compliance requirements pass", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"staging": {
-					ID:                   "staging",
-					Name:                 "Staging",
-					Description:          "Pre-production staging environment for final testing and validation before deployment cycles.",
-					Sensitivity:          "D",
-					SensitivityRationale: "Staging contains no production or customer data, only synthetic test data generated for validation.",
-					Criticality:          "5",
-					CriticalityRationale: "Staging downtime impacts development velocity but has no direct customer or revenue impact.",
-					ComplianceReqs:       []string{},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{},
-		}
+		txy := WithSegL1(
+			NewTestTaxonomy(),
+			"staging",
+			NewStagingSegL1(),
+		)
 
-		valid := ValidateL1Definitions(&txy)
-		if !valid {
-			t.Error("Expected validation to pass for empty compliance requirements")
-		}
+		valid := ValidateL1Definitions(txy)
+		AssertValidationPasses(t, valid, "Empty compliance requirements")
 	})
 }
 
 func TestValidateL2Definition(t *testing.T) {
 	t.Run("Valid security domains pass", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"prod": {
-					ID:                   "prod",
-					Name:                 "Production",
-					Description:          "Production environment with strict security controls for customer-facing services and data.",
-					Sensitivity:          "A",
-					SensitivityRationale: "Production handles customer data requiring highest classification level and protection.",
-					Criticality:          "1",
-					CriticalityRationale: "Production outages directly impact customers and revenue streams requiring immediate response.",
-				},
-			},
-			SegL2s: map[string]domain.SegL2{
-				"app": {
-					Name:        "Application",
-					ID:          "app",
-					Description: "Application domain for core business services",
-					L1Overrides: map[string]domain.L1Overrides{
-						"prod": {
-							Sensitivity:          "A",
-							SensitivityRationale: "Applications handle customer PII and payment information requiring highest protection level.",
-							Criticality:          "1",
-							CriticalityRationale: "Application services are customer-facing and directly generate revenue requiring maximum uptime.",
-							ComplianceReqs:       []string{"pci-dss"},
-						},
-					},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{
-				"pci-dss": {Name: "PCI DSS", Description: "Payment Card Industry Data Security Standard", ReqsLink: "https://www.pcisecuritystandards.org/"},
-			},
-		}
+		txy := WithSegL2(
+			WithSegL1(
+				WithCompReq(NewTestTaxonomy(), "pci-dss", NewCompReq(
+					"PCI DSS",
+					"Payment Card Industry Data Security Standard",
+					"https://www.pcisecuritystandards.org/",
+				)),
+				"prod",
+				NewSegL1("prod", "Production", "A", "1", []string{}),
+			),
+			"app",
+			NewAppSegL2(),
+		)
 
-		valid, failures := ValidateL2Definition(&txy)
-		if !valid {
-			t.Errorf("Expected validation to pass, got %d failures", failures)
-		}
-		if failures != 0 {
-			t.Errorf("Expected 0 failures, got %d", failures)
-		}
+		valid, failures := ValidateL2Definition(txy)
+		AssertValidationPasses(t, valid, "Valid security domains")
+		AssertFailureCount(t, failures, 0, "Valid security domains")
 	})
 
 	t.Run("Invalid compliance requirement in SegL2 fails", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"prod": {ID: "prod", Name: "Production"},
-			},
-			SegL2s: map[string]domain.SegL2{
-				"app": {
-					Name:        "Application",
-					ID:          "app",
-					Description: "Application domain",
-					L1Overrides: map[string]domain.L1Overrides{
-						"prod": {
-							ComplianceReqs: []string{"invalid-scope"},
-						},
-					},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{},
-		}
+		txy := WithSegL2(
+			WithSegL1(NewTestTaxonomy(), "prod", NewSegL1("prod", "Production", "A", "1", []string{})),
+			"app",
+			NewSegL2("app", "Application", map[string]domain.L1Overrides{
+				"prod": {ComplianceReqs: []string{"invalid-scope"}},
+			}),
+		)
 
-		valid, failures := ValidateL2Definition(&txy)
-		if valid {
-			t.Error("Expected validation to fail for invalid compliance requirement")
-		}
-		if failures == 0 {
-			t.Error("Expected at least 1 failure")
-		}
+		valid, failures := ValidateL2Definition(txy)
+		AssertValidationFails(t, valid, "Invalid compliance requirement in SegL2")
+		AssertMinFailures(t, failures, 1, "Invalid compliance requirement in SegL2")
 	})
 
 	t.Run("Invalid environment ID in SegL2 fails", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"prod": {ID: "prod", Name: "Production"},
-			},
-			SegL2s: map[string]domain.SegL2{
-				"app": {
-					Name:        "Application",
-					ID:          "app",
-					Description: "Application domain",
-					L1Overrides: map[string]domain.L1Overrides{
-						"invalid-env": {
-							Sensitivity:          "A",
-							SensitivityRationale: "Test rationale with sufficient length to meet minimum requirements for validation.",
-							Criticality:          "1",
-							CriticalityRationale: "Test rationale with sufficient length to meet minimum requirements for validation.",
-						},
-					},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{},
-		}
+		txy := WithSegL2(
+			WithSegL1(NewTestTaxonomy(), "prod", NewSegL1("prod", "Production", "A", "1", []string{})),
+			"app",
+			NewSegL2("app", "Application", map[string]domain.L1Overrides{
+				"invalid-env": NewL1Override("A", "1", []string{}),
+			}),
+		)
 
-		valid, failures := ValidateL2Definition(&txy)
-		if valid {
-			t.Error("Expected validation to fail for invalid environment ID")
-		}
-		if failures == 0 {
-			t.Error("Expected at least 1 failure")
-		}
+		valid, failures := ValidateL2Definition(txy)
+		AssertValidationFails(t, valid, "Invalid environment ID in SegL2")
+		AssertMinFailures(t, failures, 1, "Invalid environment ID in SegL2")
 	})
 
 	t.Run("Multiple validation failures counted", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"prod": {ID: "prod", Name: "Production"},
-			},
-			SegL2s: map[string]domain.SegL2{
-				"app": {
-					Name:        "Application",
-					ID:          "app",
-					Description: "Application domain",
-					L1Overrides: map[string]domain.L1Overrides{
-						"prod": {
-							ComplianceReqs: []string{"invalid1", "invalid2"},
-						},
-						"invalid-env": {
-							ComplianceReqs: []string{"invalid3"},
-						},
-					},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{},
-		}
+		txy := WithSegL2(
+			WithSegL1(NewTestTaxonomy(), "prod", NewSegL1("prod", "Production", "A", "1", []string{})),
+			"app",
+			NewSegL2("app", "Application", map[string]domain.L1Overrides{
+				"prod":        {ComplianceReqs: []string{"invalid1", "invalid2"}},
+				"invalid-env": {ComplianceReqs: []string{"invalid3"}},
+			}),
+		)
 
-		valid, failures := ValidateL2Definition(&txy)
-		if valid {
-			t.Error("Expected validation to fail")
-		}
+		valid, failures := ValidateL2Definition(txy)
+		AssertValidationFails(t, valid, "Multiple validation failures")
 		// Should have failures for: 3 invalid comp reqs + 1 invalid env = 4 failures
-		if failures < 3 {
-			t.Errorf("Expected at least 3 failures, got %d", failures)
-		}
+		AssertMinFailures(t, failures, 3, "Multiple validation failures")
 	})
 }
 
 func TestValidateSharedServices(t *testing.T) {
 	t.Run("Shared service environment not found", func(t *testing.T) {
-		txy := &domain.Taxonomy{
-			SegL1s: make(map[string]domain.SegL1),
-		}
+		txy := NewTestTaxonomy()
 		valid, _ := ValidateSharedServices(txy)
-		if valid {
-			t.Error("Expected valid to be false")
-		}
+		AssertValidationFails(t, valid, "Shared service environment not found")
 	})
 
 	t.Run("Shared service environment with incorrect sensitivity, criticality and comp requirements", func(t *testing.T) {
-		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"shared-service": {
-					Sensitivity:    "b",
-					Criticality:    "2",
-					ComplianceReqs: []string{"req1", "req2"},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{
-				"req1": {},
-				"req2": {},
-				"req3": {},
-			},
-		}
+		txy := WithSegL1(
+			WithCompReq(
+				WithCompReq(
+					WithCompReq(NewTestTaxonomy(), "req1", domain.CompReq{}),
+					"req2",
+					domain.CompReq{},
+				),
+				"req3",
+				domain.CompReq{},
+			),
+			"shared-service",
+			NewSegL1("shared-service", "Shared Service", "b", "2", []string{"req1", "req2"}),
+		)
+
 		valid, failures := ValidateSharedServices(txy)
-		if valid {
-			t.Error("Expected valid to be false")
-		}
-		if failures != 2 {
-			t.Errorf("Expected failures to be 2, got %d", failures)
-		}
+		AssertValidationFails(t, valid, "Incorrect shared service configuration")
+		AssertFailureCount(t, failures, 2, "Incorrect shared service configuration")
 	})
 
 	t.Run("Valid shared service environment", func(t *testing.T) {
-		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"shared-service": {
-					Sensitivity:    domain.SenseOrder[0],
-					Criticality:    domain.CritOrder[0],
-					ComplianceReqs: []string{"req1", "req2"},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{
-				"req1": {},
-				"req2": {},
-			},
-		}
+		txy := WithSegL1(
+			WithCompReq(
+				WithCompReq(NewTestTaxonomy(), "req1", domain.CompReq{}),
+				"req2",
+				domain.CompReq{},
+			),
+			"shared-service",
+			NewSegL1("shared-service", "Shared Service", domain.SenseOrder[0], domain.CritOrder[0], []string{"req1", "req2"}),
+		)
+
 		valid, failures := ValidateSharedServices(txy)
-		if !valid {
-			t.Error("Expected valid to be true")
-		}
-		if failures != 0 {
-			t.Errorf("Expected failures to be 0, got %d", failures)
-		}
+		AssertValidationPasses(t, valid, "Valid shared service environment")
+		AssertFailureCount(t, failures, 0, "Valid shared service environment")
 	})
 }

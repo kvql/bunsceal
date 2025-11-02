@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	. "github.com/kvql/bunsceal/pkg/taxonomy/testhelpers"
 )
 
 func TestApplyInheritance(t *testing.T) {
@@ -344,145 +345,49 @@ func TestApplyInheritance(t *testing.T) {
 
 func TestCompleteAndValidateTaxonomy(t *testing.T) {
 	t.Run("Complete valid taxonomy passes all validations", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			ApiVersion: "v1beta1",
-			SegL1s: map[string]domain.SegL1{
-				"shared-service": {
-					ID:                   "shared-service",
-					Name:                 "Shared Service",
-					Description:          "Shared service environment hosting cross-account resources and centralized services with connectivity.",
-					Sensitivity:          "A",
-					SensitivityRationale: "Shared services represent highest risk from lateral movement perspective and bridge between environments.",
-					Criticality:          "1",
-					CriticalityRationale: "All environments depend on shared services for core functionality making outages highly impactful.",
-					ComplianceReqs:       []string{"pci-dss", "sox"},
-				},
-				"prod": {
-					ID:                   "prod",
-					Name:                 "Production",
-					Description:          "Production environment with strict security controls for customer-facing services and sensitive data.",
-					Sensitivity:          "A",
-					SensitivityRationale: "Production handles customer data including PII and financial transactions requiring highest classification.",
-					Criticality:          "1",
-					CriticalityRationale: "Production outages directly impact customers and revenue streams requiring immediate incident response.",
-					ComplianceReqs:       []string{"pci-dss"},
-				},
-			},
-			SegL2s: map[string]domain.SegL2{
-				"app": {
-					Name:        "Application",
-					ID:          "app",
-					Description: "Application domain for core business services",
-					L1Overrides: map[string]domain.L1Overrides{
-						"prod": {
-							Sensitivity:          "A",
-							SensitivityRationale: "Applications handle customer PII and payment information requiring highest protection level.",
-							Criticality:          "1",
-							CriticalityRationale: "Application services are customer-facing and directly generate revenue requiring maximum uptime.",
-							ComplianceReqs:       []string{"pci-dss"},
-						},
-					},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{
-				"pci-dss": {Name: "PCI DSS", Description: "Payment Card Industry Data Security Standard", ReqsLink: "https://www.pcisecuritystandards.org/"},
-				"sox":     {Name: "SOX", Description: "Sarbanes-Oxley Act", ReqsLink: "https://www.sox-online.com/"},
-			},
-			SensitivityLevels: []string{"A", "B", "C", "D"},
-			CriticalityLevels: []string{"1", "2", "3", "4", "5"},
-		}
+		txy := WithSegL2(NewCompleteTaxonomy(), "app", NewAppSegL2())
 
-		valid := CompleteAndValidateTaxonomy(&txy)
-		if !valid {
-			t.Error("Expected complete validation to pass for valid taxonomy")
-		}
+		valid := CompleteAndValidateTaxonomy(txy)
+		AssertValidationPasses(t, valid, "Complete valid taxonomy")
 	})
 
 	t.Run("Invalid environment compliance fails", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"shared-service": {
-					ID:                   "shared-service",
-					Name:                 "Shared Service",
-					Description:          "Shared service environment hosting cross-account resources and centralized services with connectivity.",
-					Sensitivity:          "A",
-					SensitivityRationale: "Shared services represent highest risk from lateral movement perspective and bridge between environments.",
-					Criticality:          "1",
-					CriticalityRationale: "All environments depend on shared services for core functionality making outages highly impactful.",
-					ComplianceReqs:       []string{"invalid-scope"},
-				},
-			},
-			SegL2s:   map[string]domain.SegL2{},
-			CompReqs: map[string]domain.CompReq{},
-		}
+		txy := WithSegL1(
+			NewTestTaxonomy(),
+			"shared-service",
+			NewSegL1("shared-service", "Shared Service", "A", "1", []string{"invalid-scope"}),
+		)
 
-		valid := CompleteAndValidateTaxonomy(&txy)
-		if valid {
-			t.Error("Expected validation to fail for invalid environment compliance")
-		}
+		valid := CompleteAndValidateTaxonomy(txy)
+		AssertValidationFails(t, valid, "Invalid environment compliance")
 	})
 
 	t.Run("Missing shared-service environment fails", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"prod": {
-					ID:                   "prod",
-					Name:                 "Production",
-					Description:          "Production environment with strict security controls for customer-facing services and sensitive data.",
-					Sensitivity:          "A",
-					SensitivityRationale: "Production handles customer data including PII and financial transactions requiring highest classification.",
-					Criticality:          "1",
-					CriticalityRationale: "Production outages directly impact customers and revenue streams requiring immediate incident response.",
-				},
-			},
-			SegL2s:   map[string]domain.SegL2{},
-			CompReqs: map[string]domain.CompReq{},
-		}
+		txy := WithSegL1(NewTestTaxonomy(), "prod", NewProdSegL1())
 
-		valid := CompleteAndValidateTaxonomy(&txy)
-		if valid {
-			t.Error("Expected validation to fail for missing shared-service")
-		}
+		valid := CompleteAndValidateTaxonomy(txy)
+		AssertValidationFails(t, valid, "Missing shared-service")
 	})
 
 	t.Run("Invalid SegL2 references fail", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
-				"shared-service": {
-					ID:                   "shared-service",
-					Name:                 "Shared Service",
-					Description:          "Shared service environment hosting cross-account resources and centralized services with connectivity.",
-					Sensitivity:          "A",
-					SensitivityRationale: "Shared services represent highest risk from lateral movement perspective and bridge between environments.",
-					Criticality:          "1",
-					CriticalityRationale: "All environments depend on shared services for core functionality making outages highly impactful.",
-					ComplianceReqs:       []string{"pci-dss"},
-				},
-			},
-			SegL2s: map[string]domain.SegL2{
-				"app": {
-					Name:        "Application",
-					ID:          "app",
-					Description: "Application domain",
-					L1Overrides: map[string]domain.L1Overrides{
-						"invalid-env": {
-							Sensitivity:          "A",
-							SensitivityRationale: "Test rationale with sufficient length to meet minimum requirements for validation.",
-							Criticality:          "1",
-							CriticalityRationale: "Test rationale with sufficient length to meet minimum requirements for validation.",
-						},
-					},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{
-				"pci-dss": {Name: "PCI DSS", Description: "Payment Card Industry Data Security Standard", ReqsLink: "https://www.pcisecuritystandards.org/"},
-			},
-		}
+		txy := WithSegL2(
+			WithSegL1(
+				WithCompReq(NewTestTaxonomy(), "pci-dss", NewCompReq(
+					"PCI DSS",
+					"Payment Card Industry Data Security Standard",
+					"https://www.pcisecuritystandards.org/",
+				)),
+				"shared-service",
+				NewSharedServiceSegL1(),
+			),
+			"app",
+			NewSegL2("app", "Application", map[string]domain.L1Overrides{
+				"invalid-env": NewL1Override("A", "1", []string{}),
+			}),
+		)
 
-		valid := CompleteAndValidateTaxonomy(&txy)
-		if valid {
-			t.Error("Expected validation to fail for invalid SegL2 environment reference")
-		}
+		valid := CompleteAndValidateTaxonomy(txy)
+		AssertValidationFails(t, valid, "Invalid SegL2 environment reference")
 	})
 }
 

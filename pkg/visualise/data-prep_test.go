@@ -8,8 +8,8 @@ import (
 
 func TestValidateRows(t *testing.T) {
 	rowsMap = map[int][]string{
-		0: []string{"production", "ci", "sandbox", "staging", "dev"},
-		1: []string{"shared-service"},
+		0: {"production", "ci", "sandbox", "staging", "dev"},
+		1: {"shared-service"},
 	}
 	tx := &tx.Taxonomy{
 		SegL1s: map[string]tx.SegL1{
@@ -29,8 +29,8 @@ func TestValidateRows(t *testing.T) {
 }
 func TestValidateRowsPass(t *testing.T) {
 	rowsMap = map[int][]string{
-		0: []string{"production", "ci", "sandbox", "staging", "dev"},
-		1: []string{"shared-service"},
+		0: {"production", "ci", "sandbox", "staging", "dev"},
+		1: {"shared-service"},
 	}
 	tx := &tx.Taxonomy{
 		SegL1s: map[string]tx.SegL1{
@@ -51,8 +51,8 @@ func TestValidateRowsPass(t *testing.T) {
 
 func TestValidateRowCount(t *testing.T) {
 	rowsMap = map[int][]string{
-		0: []string{"production", "ci", "sandbox", "staging", "dev"},
-		1: []string{"shared-service"},
+		0: {"production", "ci", "sandbox", "staging", "dev"},
+		1: {"shared-service"},
 	}
 	tx := &tx.Taxonomy{
 		SegL1s: map[string]tx.SegL1{

@@ -14,7 +14,6 @@ type version struct {
 	Version string `yaml:"version"`
 }
 
-
 // LoadSegL2Files loads all security domain files from the given directory
 func LoadSegL2Files(segL2Dir string) (map[string]SegL2, error) {
 	// Initialize schema validator

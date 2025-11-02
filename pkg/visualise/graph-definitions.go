@@ -21,8 +21,8 @@ var sdEmphasis = map[string]int{
 // higher level shows up on top of the graph
 // can be overridden by setting var in the graph functions
 var rowsMap = map[int][]string{
-	0: []string{"production", "ci", "sandbox", "staging", "dev"},
-	1: []string{"shared-service"},
+	0: {"production", "ci", "sandbox", "staging", "dev"},
+	1: {"shared-service"},
 }
 
 // ################################

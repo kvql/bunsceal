@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kvql/bunsceal/pkg/util"
 	"errors"
+
+	"github.com/kvql/bunsceal/pkg/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -105,9 +106,10 @@ func LoadConfig(configPath string, taxDir string) (Config, error) {
 
 // DirName converts the plural form to a kebab-case directory name
 // Examples:
-//   "Environments" → "environments"
-//   "Security Environments" → "security-environments"
-//   "My Custom Zones" → "my-custom-zones"
+//
+//	"Environments" → "environments"
+//	"Security Environments" → "security-environments"
+//	"My Custom Zones" → "my-custom-zones"
 func (td TermDef) DirName() string {
 	lower := strings.ToLower(td.Plural)
 	kebab := strings.ReplaceAll(lower, " ", "-")

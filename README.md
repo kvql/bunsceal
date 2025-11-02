@@ -96,6 +96,62 @@ env_details:
 >
 > e.g for sandbox in the above example, the SegL2 will be list as being under the Sandbox SegL1with the same properties. 
 
+## Development
+
+### Prerequisites
+
+- Go 1.22 or later
+- [golangci-lint](https://golangci-lint.run/usage/install/) - Install with `make lint-install`
+- [gosec](https://github.com/securego/gosec) - Install with `make sec-install`
+- [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) - Install with `make vulncheck-install`
+- [pre-commit](https://pre-commit.com/#install) (optional but recommended) - Install with `brew install pre-commit` or `pip install pre-commit`
+
+### Getting Started
+
+1. Clone the repository
+2. Install development tools:
+
+   ```bash
+   make install-all
+   ```
+
+3. (Optional) Install pre-commit hooks for local validation:
+
+   ```bash
+   make pre-commit-install
+   ```
+
+### Available Make Targets
+
+Run `make help` to see all available targets. Common commands:
+
+```bash
+make test          # Run tests
+make test-race     # Run tests with race detector
+make lint          # Run linter
+make fmt           # Format code
+make sec           # Run security scanner
+make vulncheck     # Check for vulnerabilities
+make coverage      # Generate coverage report
+make ci            # Run all CI checks locally
+```
+
+### Code Quality
+
+This project uses strict linting and security scanning:
+
+- **golangci-lint**: Comprehensive linting with 100+ checks
+- **gosec**: Security vulnerability scanning
+- **govulncheck**: Dependency vulnerability scanning
+- **Pre-commit hooks**: Fast local validation before commits
+- **GitHub Actions**: Comprehensive CI checks on push/PR
+
+All checks must pass before merging. Run `make ci` locally to validate your changes.
+
+### Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and guidelines.
+
 ## Roadmap
 
 ### Completed
@@ -104,6 +160,7 @@ env_details:
 - ✅ Comprehensive test coverage for business logic validation (100%)
 - ✅ Schema validation with santhosh-tekuri/jsonschema/v6
 - ✅ Format-agnostic validation (supports YAML and JSON)
+- ✅ Comprehensive tooling for code quality and security
 
 ### In Progress
 
@@ -120,5 +177,3 @@ env_details:
 - web api to allow for querying the taxonomy
 - web api to allow for image generation
 - MCP server for LLM queries to web API
-
-

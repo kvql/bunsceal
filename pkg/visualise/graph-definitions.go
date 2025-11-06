@@ -5,25 +5,8 @@ import (
 	"strings"
 
 	"github.com/awalterschulze/gographviz"
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 )
-
-// Layout Variables
-// ----------------
-// variable to increase the size of listed security domains. key is the Segment Level 2 ID, value is the number of new lines to add above and below the label.
-// This is used to make the listed security domains more visible in the graph.
-// no validation is done on the keys but this won't cause any SD to be missed in the image
-var sdEmphasis = map[string]int{
-	"main":    3,
-	"pci-cde": 2,
-}
-
-// higher level shows up on top of the graph
-// can be overridden by setting var in the graph functions
-var rowsMap = map[int][]string{
-	0: {"production", "ci", "sandbox", "staging", "dev"},
-	1: {"shared-service"},
-}
 
 // ################################
 // Function to Segment Level 1 Graph
@@ -31,15 +14,20 @@ var rowsMap = map[int][]string{
 
 // See the GraphSDs function for more comments explaining how the graph is generated. That is the more complex function and therefore has more comments than GraphEnvs
 
-func GraphEnvs(txy *domain.Taxonomy, cfg *domain.Config) (*gographviz.Graph, error) {
+func GraphL1(txy *domain.Taxonomy, cfg *domain.Config) (*gographviz.Graph, error) {
 	// Setup the top level graph object
-	validateRows(txy, rowsMap)
 	title := cfg.Terminology.L1.Plural + " Overview"
 	g := BaselineGraph(title, "")
 
 	// // Add legend to the graph
 	// // ------------------------
 	err := AddLegend(g, 12, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build rowsMap from config
+	rowsLayout, err := buildRowsMap(cfg, txy)
 	if err != nil {
 		return nil, err
 	}
@@ -52,14 +40,14 @@ func GraphEnvs(txy *domain.Taxonomy, cfg *domain.Config) (*gographviz.Graph, err
 
 	// setup row subgraphs
 	// -------------------
-	for row := 0; row < len(rowsMap); row++ {
+	for row := 0; row < len(rowsLayout); row++ {
 		orderNodes := []string{}
 		rowSubGraphName := fmt.Sprintf("\"cluster_row_%d\"", row)
 		rowAtt := CopyInvis()
 		rowAtt["label"] = fmt.Sprintf("\"Invisible Row subgraph: %d\"", row) // help with debugging graph structure
 		g.AddSubGraph("top_level_graph", rowSubGraphName, rowAtt)
 		// Environment subgraphs
-		envIds := rowsMap[row]
+		envIds := rowsLayout[row]
 		for _, envId := range envIds {
 			label := FormatEnvLabel(txy, cfg.Terminology.L1.Singular+" - ", envId, true)
 			envNodeAtt := FormatNode(label, txy.SegL1s[envId].Sensitivity)
@@ -87,14 +75,19 @@ func GraphEnvs(txy *domain.Taxonomy, cfg *domain.Config) (*gographviz.Graph, err
 // Function to Segment Level 2 Graphs
 // ################################
 
-func GraphSDs(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
-	validateRows(txy, rowsMap)
+func GraphL2(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
 	term := cfg.Terminology
 	title := term.L1.Plural + " & " + term.L2.Plural + " Layout"
 	subHeading := "Overview of " + term.L2.Plural + " grouped by their respective " + term.L1.Plural
 	g := BaselineGraph(title, subHeading)
+
+	// Build rowsMap from config
+	rowsLayout, err := buildRowsMap(cfg, txy)
+	if err != nil {
+		return nil, err
+	}
 
 	// Following code will create subgraphs for each row and add security environments as subgraphs to those rows
 	// in graphviz, subgraphs are represented in their name with the prefix "cluster_"
@@ -108,7 +101,7 @@ func GraphSDs(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality boo
 	// setup row subgraphs
 	// -------------------
 	rowNodes := map[int][]string{}
-	for row := 0; row < len(rowsMap); row++ {
+	for row := 0; row < len(rowsLayout); row++ {
 		// edges between nodes is what the graphing algorithm will use to determine the structure of the diagram
 		// To allow for different rows, the edges must be on a per-row basis
 		// They must also be set at the most granular level, which is the batches for each security domain
@@ -121,9 +114,9 @@ func GraphSDs(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality boo
 		// Environment subgraphs
 		// --------------------
 		// Now that rows have been setup, we can add the image components for each environment
-		// The rowMap[] are slices which are ordered and therefore we can iterate over them in order,
+		// The rowsLayout[] are slices which are ordered and therefore we can iterate over them in order,
 		// tx.SegL1s is a map and therefore iterating over that would give a different order each time
-		envIds := rowsMap[row]
+		envIds := rowsLayout[row]
 		for _, envId := range envIds {
 			orderNodes[envId] = map[string][]string{}
 			// Generate attributes object for security environment subgraph
@@ -151,8 +144,8 @@ func GraphSDs(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality boo
 					critGraphAtt = map[string]string{
 						"label":     fmt.Sprintf("\"Criticality: %s(%s)\"", crit, domain.CriticalityLevels[crit]),
 						"shape":     "\"box\"",
-						"color":     "\"#9FE870\"",
-						"fontcolor": "\"#9FE870\"",
+						"color":     primaryColours.GetColour("1"),
+						"fontcolor": primaryColours.GetColour("1"),
 						"fontsize":  "\"14\"",
 						"style":     "\"rounded,setlinewidth(1)\"",
 					}
@@ -189,7 +182,7 @@ func GraphSDs(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality boo
 				// Add security domain nodes
 				// -------------------------
 				// Add emphasis to the label (map returns 0 if not found)
-				label := FormatSdLabel(txy, "", envId, sdId, showClass, sdEmphasis[sdId])
+				label := FormatSdLabel(txy, "", envId, sdId, showClass, txy.SegL2s[sdId].Prominence)
 				sdNodeAtt := FormatNode(label, sdEnvDet.Sensitivity) // attributes to format the node
 				sdNodeName := fmt.Sprintf("\"sd_node_%s_%s\"", strings.ReplaceAll(envId, "-", "_"), strings.ReplaceAll(sdId, "-", "_"))
 				// Add security domain node to the batch subgraph
@@ -206,7 +199,7 @@ func GraphSDs(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality boo
 		// add all nodes to a single slice before adding edges, this creates a single list of nodes to link in each row
 		fullOrderNodes := []string{}
 		// loop through environments and criticalities to get the order
-		// To change the order of the environments update it in the rowsMap variable in data-prep.go
+		// To change the order of the environments update it in the config's visuals.l1_layout
 		for _, env := range envIds {
 			for _, c := range domain.CritOrder {
 				if _, ok := imageData[env].Criticalities[c]; ok {
@@ -216,7 +209,7 @@ func GraphSDs(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality boo
 		}
 		rowNodes[row] = fullOrderNodes
 	}
-	err := AddSpacers(g, rowNodes)
+	err = AddSpacers(g, rowNodes)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +229,6 @@ func GraphSDs(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality boo
 // ################################
 // GraphCompliance  showOut is used control if out of scope domains are added to the graph
 func GraphCompliance(txy *domain.Taxonomy, cfg *domain.Config, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
-	validateRows(txy, rowsMap)
 	if _, ok := txy.CompReqs[compName]; !ok {
 		return nil, fmt.Errorf("compliance standard %s not found in taxonomy", compName)
 	}
@@ -248,10 +240,16 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *domain.Config, compName string, 
 	subHeading := fmt.Sprintf("Compliance Standard: %s", txy.CompReqs[compName].Name)
 	g := BaselineGraph(title, subHeading)
 
+	// Build rowsMap from config
+	rowsLayout, err := buildRowsMap(cfg, txy)
+	if err != nil {
+		return nil, err
+	}
+
 	// setup row subgraphs
 	// -------------------
 	rowNodes := map[int][]string{}
-	for row := 0; row < len(rowsMap); row++ {
+	for row := 0; row < len(rowsLayout); row++ {
 
 		orderNodes := map[string]map[string][]string{}
 		rowSubGraphName := fmt.Sprintf("\"cluster_row_%d\"", row)
@@ -261,7 +259,7 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *domain.Config, compName string, 
 
 		// Environment subgraphs
 		// --------------------
-		envIds := rowsMap[row]
+		envIds := rowsLayout[row]
 		for _, envId := range envIds {
 			orderNodes[envId] = map[string][]string{}
 			label := FormatEnvLabel(txy, term.L1.Singular+" - ", envId, false)
@@ -276,8 +274,8 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *domain.Config, compName string, 
 			compGraphAtt := map[string]string{
 				"label":     fmt.Sprintf("\"%s - In Scope\"", compName),
 				"shape":     "\"box\"",
-				"color":     "\"#9FE870\"",
-				"fontcolor": "\"#9FE870\"",
+				"color":     FontColour,
+				"fontcolor": FontColour,
 				"fontsize":  "\"16\"",
 				"style":     "\"rounded,setlinewidth(1)\"",
 			}
@@ -311,7 +309,7 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *domain.Config, compName string, 
 					// Add security domain nodes
 					// -------------------------
 					// Add emphasis to the label (map returns 0 if not found)
-					label := FormatSdLabel(txy, "", envId, sdId, false, sdEmphasis[sdId])
+					label := FormatSdLabel(txy, "", envId, sdId, false, txy.SegL2s[sdId].Prominence)
 					sdNodeAtt := FormatNode(label, sdEnvDet.Sensitivity) // attributes to format the node
 					// Make out of scope nodes less visible in the graph by removing filled style (font needs to be bright if fill removed)
 					if scope == "out" {
@@ -333,7 +331,7 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *domain.Config, compName string, 
 		// ----------------------------
 		// add all nodes to a single slice before adding edges, this creates a single list of nodes to link in each row
 		fullOrderNodes := []string{}
-		// To change the order of the environments update it in the rowsMap variable in data-prep.go
+		// To change the order of the environments update it in the config's visuals.l1_layout
 		for _, env := range envIds {
 			fullOrderNodes = append(fullOrderNodes, orderNodes[env]["in"]...)
 			if showOutOfScope {
@@ -342,7 +340,7 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *domain.Config, compName string, 
 		}
 		rowNodes[row] = fullOrderNodes
 	}
-	err := AddSpacers(g, rowNodes)
+	err = AddSpacers(g, rowNodes)
 	if err != nil {
 		return nil, err
 	}

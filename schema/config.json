@@ -27,6 +27,26 @@
     "taxonomy_path": {
       "$ref": "./common.json#/$defs/filePath",
       "description": "Directory path containing JSON schema files for validation. Defaults to './schema' if not specified."
+    },
+    "visuals": {
+      "type": "object",
+      "description": "Configuration options for visualisation functions",
+      "properties": {
+        "l1_layout": {
+          "type": "object",
+          "description": "Map of row numbers to ordered arrays of L1 identifiers for layout control",
+          "patternProperties": {
+            "^[0-9]+$": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

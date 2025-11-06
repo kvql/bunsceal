@@ -136,7 +136,8 @@ l1_overrides:
 		tmpFile := files.CreateYAMLFile("segl2", validYAML)
 
 		validator := mustCreateValidator(t, "../../schema")
-		segL2, err := parseSDFile(tmpFile, validator)
+		fl := NewFileSegL2Repository(validator)
+		segL2, err := fl.parseSegL2File(tmpFile)
 
 		if err != nil {
 			t.Fatalf("parseSDFile: unexpected error: %v", err)
@@ -146,6 +147,30 @@ l1_overrides:
 		}
 		if segL2.Name != "Test Domain" {
 			t.Errorf("SegL2 Name: got %v, want Test Domain", segL2.Name)
+		}
+		if segL2.Prominence != 1 {
+			t.Errorf("SegL2 prominence got %v, expected default 1", segL2.Prominence)
+		}
+	})
+	t.Run("Setting prominence", func(t *testing.T) {
+		validYAML := `version: "1.0"
+name: "Test Domain"
+id: "test"
+description: "Test security domain"
+prominence: 2
+`
+		files := testhelpers.NewTestFiles(t)
+		tmpFile := files.CreateYAMLFile("segl2", validYAML)
+
+		validator := mustCreateValidator(t, "../../schema")
+		fl := NewFileSegL2Repository(validator)
+		segL2, err := fl.parseSegL2File(tmpFile)
+
+		if err != nil {
+			t.Fatalf("parseSDFile: unexpected error: %v", err)
+		}
+		if segL2.Prominence != 2 {
+			t.Errorf("SegL2 prominence got %v, expected default 2", segL2.Prominence)
 		}
 	})
 
@@ -163,7 +188,8 @@ env_details:
 		tmpFile := files.CreateYAMLFile("segl2", invalidYAML)
 
 		validator := mustCreateValidator(t, "../../schema")
-		_, err := parseSDFile(tmpFile, validator)
+		fl := NewFileSegL2Repository(validator)
+		_, err := fl.parseSegL2File(tmpFile)
 
 		if err == nil {
 			t.Error("Expected error for unsupported version but got nil")

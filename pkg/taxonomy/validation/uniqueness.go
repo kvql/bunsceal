@@ -3,7 +3,7 @@ package validation
 import (
 	"fmt"
 
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 )
 
 // UniquenessValidator validates that IDs and Names are unique across a collection of objects

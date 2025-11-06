@@ -3,7 +3,7 @@ package taxonomy
 import (
 	"fmt"
 
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
 	"github.com/kvql/bunsceal/pkg/util"
 )

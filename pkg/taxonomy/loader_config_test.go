@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 )
 
 func TestLoadConfig_MissingFile(t *testing.T) {
@@ -245,6 +245,78 @@ func TestLoadConfig_missingLevel(t *testing.T) {
 		}
 		if cfg.TaxonomyPath != filepath.Join(tmpDir, defaults.TaxonomyPath) {
 			t.Errorf("Expected default TaxonomyPath '%s', got '%s'", defaults.TaxonomyPath, cfg.TaxonomyPath)
+		}
+	})
+}
+
+func TestLoadConfig_WithVisuals(t *testing.T) {
+	t.Run("Loads config with visuals l1_layout", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configPath := filepath.Join(tmpDir, "config.yaml")
+
+		configYAML := `
+visuals:
+  l1_layout:
+    "1": ["prod", "staging"]
+    "2": ["dev", "test"]
+`
+		if err := os.WriteFile(configPath, []byte(configYAML), 0644); err != nil {
+			t.Fatalf("Failed to write config file: %v", err)
+		}
+
+		cfg, err := LoadConfig(configPath, "../../schema")
+		if err != nil {
+			t.Fatalf("Expected successful load, got error: %v", err)
+		}
+
+		if cfg.Visuals.L1Layout == nil {
+			t.Fatal("Expected Visuals.L1Layout to be populated, got nil")
+		}
+
+		if len(cfg.Visuals.L1Layout) != 2 {
+			t.Errorf("Expected 2 rows in L1Layout, got %d", len(cfg.Visuals.L1Layout))
+		}
+
+		row1, exists := cfg.Visuals.L1Layout["1"]
+		if !exists {
+			t.Error("Expected row 1 to exist in L1Layout")
+		}
+		if len(row1) != 2 || row1[0] != "prod" || row1[1] != "staging" {
+			t.Errorf("Expected row 1 to be [prod, staging], got %v", row1)
+		}
+
+		row2, exists := cfg.Visuals.L1Layout["2"]
+		if !exists {
+			t.Error("Expected row 2 to exist in L1Layout")
+		}
+		if len(row2) != 2 || row2[0] != "dev" || row2[1] != "test" {
+			t.Errorf("Expected row 2 to be [dev, test], got %v", row2)
+		}
+	})
+
+	t.Run("Loads config without visuals (empty Visuals)", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configPath := filepath.Join(tmpDir, "config.yaml")
+
+		configYAML := `terminology:
+  l1:
+    singular: "Zone"
+    plural: "Zones"
+  l2:
+    singular: "Application"
+    plural: "Applications"
+`
+		if err := os.WriteFile(configPath, []byte(configYAML), 0644); err != nil {
+			t.Fatalf("Failed to write config file: %v", err)
+		}
+
+		cfg, err := LoadConfig(configPath, "../../schema")
+		if err != nil {
+			t.Fatalf("Expected successful load, got error: %v", err)
+		}
+
+		if cfg.Visuals.L1Layout != nil {
+			t.Errorf("Expected Visuals.L1Layout to be nil when not specified, got %v", cfg.Visuals.L1Layout)
 		}
 	})
 }

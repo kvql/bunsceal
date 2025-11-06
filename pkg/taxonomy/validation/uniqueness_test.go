@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 )
 
 func TestUniquenessValidator_UniqueItems(t *testing.T) {

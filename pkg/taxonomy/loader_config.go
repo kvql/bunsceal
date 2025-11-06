@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
 	"github.com/kvql/bunsceal/pkg/util"
 	"gopkg.in/yaml.v3"

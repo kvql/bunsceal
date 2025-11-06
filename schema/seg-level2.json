@@ -31,14 +31,22 @@
       },
       "minProperties": 1,
       "additionalProperties": false
+    },
+    "prominence": {
+      "type": "integer",
+      "description": "variable to increase the size of listed security domains. Value is the number of new lines to add above and below the label. This is used to make the listed L2 Segment more visible in the graph.",
+      "enum": [
+        1,
+        2,
+        3
+      ]
     }
   },
   "required": [
     "version",
     "name",
     "id",
-    "description",
-    "l1_overrides"
+    "description"
   ],
   "additionalProperties": false
 }

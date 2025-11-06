@@ -2,12 +2,11 @@ package visualise
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
 	"github.com/awalterschulze/gographviz"
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 )
 
 type ColorFont struct {
@@ -19,17 +18,35 @@ type ColorFont struct {
 // Global Variables for configuring the graph
 // #######################
 
+type PrimaryColours map[string]string
+
+var primaryColours = PrimaryColours{
+	"1": "#58CDCA",
+	"2": "#8F58CD",
+	"3": "#CD585B",
+	"4": "#96CD58",
+}
+
+var BgColour = "\"#1E6566\""
+var FontColour = "\"#BFECEC\""
+var DebugColour = "\"#FF1A00\""
+var TsnColour = "\"#1E6580\""
+
+func (pc PrimaryColours) GetColour(k string) string {
+	return "\"" + pc[k] + "\""
+}
+
 var SenseColourMap = map[string]ColorFont{
-	"A": {"\"#FFEB69\"", "\"#3A341C\""},
-	"B": {"\"#FFC091\"", "\"#260A2F\""},
-	"C": {"\"#FFD7EF\"", "\"#21231D\""},
-	"D": {"\"#9FE870\"", "\"#163300\""},
+	"A": {primaryColours.GetColour("4"), primaryColours.GetColour("2")},
+	"B": {primaryColours.GetColour("3"), primaryColours.GetColour("1")},
+	"C": {primaryColours.GetColour("2"), primaryColours.GetColour("4")},
+	"D": {primaryColours.GetColour("1"), primaryColours.GetColour("3")},
 }
 var CritColourMap = map[string]ColorFont{
-	"1": {"\"#FFC091\"", "\"#260A2F\""},
-	"2": {"\"#FFEB69\"", "\"#3A341C\""},
-	"3": {"\"#FFD7EF\"", "\"#21231D\""},
-	"4": {"\"#A0E1E1\"", "\"#320707\""},
+	"1": {primaryColours.GetColour("4"), primaryColours.GetColour("2")},
+	"2": {primaryColours.GetColour("3"), primaryColours.GetColour("1")},
+	"3": {primaryColours.GetColour("2"), primaryColours.GetColour("4")},
+	"4": {primaryColours.GetColour("1"), primaryColours.GetColour("3")},
 	"5": {"\"#A0E1E1\"", "\"#320707\""},
 }
 
@@ -38,8 +55,33 @@ var visibility = "\"invis\"" //"\"\"" for visible, "\"invis\"" for invisible
 var InvisAtt = map[string]string{
 	"style":     visibility,
 	"label":     "\"\"",
-	"color":     "\"#FF1A00\"",
-	"fontcolor": "\"#FF1A00\"",
+	"color":     DebugColour,
+	"fontcolor": DebugColour,
+}
+
+// #################################
+// Formatting variables
+// #################################
+
+// default formatting for graph nodes
+var NodeFormat = map[string]string{
+	"shape":     "\"box\"",
+	"color":     primaryColours.GetColour("1"),
+	"fontcolor": primaryColours.GetColour("2"),
+	"fontname":  "\"Arial Bold\"",
+	"fontsize":  "\"14\"",
+	"width":     "\"2.5\"",
+	"style":     "\"rounded,filled,setlinewidth(0)\"",
+}
+
+// default formatting for graph nodes
+var GraphFormat = map[string]string{
+	"color":     primaryColours.GetColour("4"),
+	"fontcolor": primaryColours.GetColour("3"),
+	"fontname":  "\"Arial Bold\"",
+	"fontsize":  "\"18\"",
+	"width":     "\"2.5\"",
+	"style":     "\"rounded,setlinewidth(2)\"",
 }
 
 func CopyInvis() map[string]string {
@@ -59,8 +101,8 @@ var BatchSize = 10
 
 var LegendGraphAtt = map[string]string{
 	"shape":     "\"box\"",
-	"color":     "\"#9FE870\"",
-	"fontcolor": "\"#9FE870\"",
+	"color":     primaryColours.GetColour("2"),
+	"fontcolor": primaryColours.GetColour("4"),
 	"fontname":  "\"Arial Bold\"",
 	"fontsize":  "\"12\"",
 	"width":     "\"\"",
@@ -119,9 +161,9 @@ func BaselineGraph(title string, subHeading string) *gographviz.Graph {
 	g.AddAttr("top_level_graph", "rankdir", "\"LR\"") // Left to right graph
 	g.AddAttr("top_level_graph", "splines", "\"line\"")
 	g.AddAttr("top_level_graph", "center", "\"true\"")
-	g.AddAttr("top_level_graph", "bgcolor", "\"#21231D\"")
+	g.AddAttr("top_level_graph", "bgcolor", BgColour)
 	g.AddAttr("top_level_graph", "color", "\"white\"")
-	g.AddAttr("top_level_graph", "fontcolor", "\"#A0E1E1\"")
+	g.AddAttr("top_level_graph", "fontcolor", FontColour)
 	g.AddAttr("top_level_graph", "fontsize", "\"24\"")
 	g.AddAttr("top_level_graph", "fontname", "\"Arial Bold\"")
 	g.AddAttr("top_level_graph", "nodesep", "\"0.1\"") // Increase space between nodes
@@ -130,15 +172,15 @@ func BaselineGraph(title string, subHeading string) *gographviz.Graph {
 	// Adding mostly invisible timestamp to the graph. This ensures that every graph has a unique hash and gets committed after running the code. Without this the images wouldn't be
 	// updated for every taxonomy change and therefore the CI validation would fail.
 	tsnFormat := map[string]string{
-		"color":     "\"#21231D\"",
+		"color":     TsnColour,
 		"label":     fmt.Sprintf("\"%s\"", time.Now().Format("2006-01-02 15:04:05")),
-		"fontcolor": "\"#3A341C\"",
+		"fontcolor": TsnColour,
 		"fontsize":  "\"5\"",
 	}
 	// making visible for debugging
 	if visibility == "\"\"" {
 		tsnFormat["fontsize"] = "\"12\""
-		tsnFormat["fontcolor"] = "\"#FF1A00\""
+		tsnFormat["fontcolor"] = DebugColour
 	}
 	g.AddNode("top_level_graph", "time", tsnFormat)
 	return g
@@ -230,13 +272,12 @@ func AddSpacerNodes(g *gographviz.Graph, row int, spacer int) string {
 	g.AddNode(fmt.Sprintf("\"cluster_row_%d\"", row), nodeName, spacerAtt)
 	return fmt.Sprintf("\"spacer_node_%d_%d\"", row, spacer)
 }
+
 func AddSpacers(g *gographviz.Graph, rowNodes map[int][]string) error {
 	largestRow := 0
-	for row := 0; row < len(rowNodes); row++ {
-		for _, v := range rowNodes {
-			if len(v) > largestRow {
-				largestRow = len(v)
-			}
+	for _, v := range rowNodes {
+		if len(v) > largestRow {
+			largestRow = len(v)
 		}
 	}
 
@@ -245,19 +286,21 @@ func AddSpacers(g *gographviz.Graph, rowNodes map[int][]string) error {
 	// }
 	// add spacer nodes either side of row nodes so each row is the same length
 	for row := 0; row < len(rowNodes); row++ {
-		if len(rowNodes[row]) < largestRow {
-			spacers := int(math.Ceil(float64(largestRow - len(rowNodes[row]))))
+		nodes := rowNodes[row]
+		if len(nodes) < largestRow {
+			spacers := int(float64(largestRow - len(nodes)))
 			if spacers%2 != 0 {
 				spacers++
 			}
 			// add spacer nodes to the start of the row
 			for i := 0; i < spacers/2; i++ {
-				rowNodes[row] = append([]string{AddSpacerNodes(g, row, i)}, rowNodes[row]...)
+				nodes = append([]string{AddSpacerNodes(g, row, i)}, nodes...)
 			}
 			// add spacer nodes to the end of the row
 			for i := spacers / 2; i < spacers; i++ {
-				rowNodes[row] = append(rowNodes[row], AddSpacerNodes(g, row, i))
+				nodes = append(nodes, AddSpacerNodes(g, row, i))
 			}
+			rowNodes[row] = nodes
 		}
 		err := AddEdges(g, rowNodes[row])
 		if err != nil {
@@ -268,29 +311,8 @@ func AddSpacers(g *gographviz.Graph, rowNodes map[int][]string) error {
 }
 
 // #################################
-// Formatting functions and variables
+// Formatting functions
 // #################################
-
-// default formatting for graph nodes
-var NodeFormat = map[string]string{
-	"shape":     "\"box\"",
-	"color":     "\"#163300\"",
-	"fontcolor": "\"#9FE870\"",
-	"fontname":  "\"Arial Bold\"",
-	"fontsize":  "\"14\"",
-	"width":     "\"2.5\"",
-	"style":     "\"rounded,filled,setlinewidth(0)\"",
-}
-
-// default formatting for graph nodes
-var GraphFormat = map[string]string{
-	"color":     "\"#A0E1E1\"",
-	"fontcolor": "\"#A0E1E1\"",
-	"fontname":  "\"Arial Bold\"",
-	"fontsize":  "\"18\"",
-	"width":     "\"2.5\"",
-	"style":     "\"rounded,setlinewidth(2)\"",
-}
 
 // FormatNode returns a map of attributes for a node in graphviz format
 func FormatNode(label string, colourLookup string) map[string]string {

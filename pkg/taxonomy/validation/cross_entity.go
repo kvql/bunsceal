@@ -1,7 +1,7 @@
 package validation
 
 import (
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/util"
 )
 

@@ -8,6 +8,7 @@ type Config struct {
 	Terminology  TermConfig `yaml:"terminology"`
 	SchemaPath   string     `yaml:"schema_path,omitempty"`
 	TaxonomyPath string     `yaml:"taxonomy_path,omitempty"`
+	Visuals      VisualsDef `yaml:"visuals,omitempty"`
 }
 
 // TermConfig holds terminology configuration for L1 and L2 segments.
@@ -20,6 +21,11 @@ type TermConfig struct {
 type TermDef struct {
 	Singular string `yaml:"singular"`
 	Plural   string `yaml:"plural"`
+}
+
+// VisualsDef Config for how taxonomy is visualised
+type VisualsDef struct {
+	L1Layout map[string][]string `yaml:"l1_layout,omitempty"`
 }
 
 // Merge merges this TermDef with defaults, using defaults for any blank fields.
@@ -49,6 +55,7 @@ func (c Config) Merge() Config {
 		Terminology:  c.Terminology.Merge(defaults.Terminology),
 		SchemaPath:   defaults.SchemaPath,
 		TaxonomyPath: defaults.TaxonomyPath,
+		Visuals:      c.Visuals,
 	}
 	if c.SchemaPath != "" {
 		result.SchemaPath = c.SchemaPath

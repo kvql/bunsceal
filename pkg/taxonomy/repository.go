@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
 	"github.com/kvql/bunsceal/pkg/util"
 	"gopkg.in/yaml.v3"
@@ -76,6 +76,10 @@ func (r *FileSegL1Repository) parseSegL1File(filePath string) (domain.SegL1, err
 	return parseSegL1File(filePath, r.schemaValidator)
 }
 
+type version struct {
+	Version string `yaml:"version"`
+}
+
 // parseSegL1File parses a single SegL1 file with schema validation
 func parseSegL1File(filePath string, schemaValidator *validation.SchemaValidator) (domain.SegL1, error) {
 	// #nosec G304 -- filePath comes from config-specified taxonomy directory, not user input
@@ -144,15 +148,6 @@ func (r *FileSegL2Repository) LoadAll(segL2Dir string) ([]domain.SegL2, error) {
 }
 
 func (r *FileSegL2Repository) parseSegL2File(filePath string) (domain.SegL2, error) {
-	return parseSDFile(filePath, r.schemaValidator)
-}
-
-type version struct {
-	Version string `yaml:"version"`
-}
-
-// parseSDFile parses a single SegL2 file with schema validation and version checking
-func parseSDFile(filePath string, schemaValidator *validation.SchemaValidator) (domain.SegL2, error) {
 	// #nosec G304 -- filePath comes from config-specified taxonomy directory, not user input
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -166,7 +161,7 @@ func parseSDFile(filePath string, schemaValidator *validation.SchemaValidator) (
 
 	switch fileVersion.Version {
 	case "1.0":
-		if validationErr := schemaValidator.ValidateData(data, "seg-level2.json"); validationErr != nil {
+		if validationErr := r.schemaValidator.ValidateData(data, "seg-level2.json"); validationErr != nil {
 			return domain.SegL2{}, fmt.Errorf("schema validation failed for %s: %w", filePath, validationErr)
 		}
 
@@ -174,6 +169,7 @@ func parseSDFile(filePath string, schemaValidator *validation.SchemaValidator) (
 		if err = yaml.Unmarshal(data, &segL2); err != nil {
 			return domain.SegL2{}, fmt.Errorf("failed to unmarshal file %s: %w", filePath, err)
 		}
+		segL2.SetDefaults()
 		return segL2, nil
 	default:
 		return domain.SegL2{}, fmt.Errorf("unsupported version %s in file %s", fileVersion.Version, filePath)

@@ -36,9 +36,15 @@ type SegL2 struct {
 	ID          string                 `yaml:"id"`
 	Description string                 `yaml:"description"`
 	L1Overrides map[string]L1Overrides `yaml:"l1_overrides"`
+	Prominence  int                    `yaml:"prominence"`
 }
 
 func (s SegL2) GetIdentities() Identifiers { return Identifiers{Name: s.Name, ID: s.ID} }
+func (s *SegL2) SetDefaults() {
+	if s.Prominence == 0 {
+		s.Prominence = 1
+	}
+}
 
 type CompReq struct {
 	Name        string `yaml:"name"`

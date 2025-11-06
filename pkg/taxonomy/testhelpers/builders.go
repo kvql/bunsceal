@@ -1,7 +1,7 @@
 package testhelpers
 
 import (
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 )
 
 // Taxonomy Builders

@@ -3,7 +3,7 @@ package validation
 import (
 	"testing"
 
-	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 	. "github.com/kvql/bunsceal/pkg/taxonomy/testhelpers"
 )
 

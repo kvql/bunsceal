@@ -41,6 +41,45 @@
               "items": {
                 "type": "string"
               }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rules": {
+      "type": "object",
+      "description": "Configuration for business logic validation rules",
+      "properties": {
+        "shared_service": {
+          "type": "object",
+          "description": "Configuration for shared-service environment validation rule",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable or disable the shared-service validation rule",
+              "default": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "uniqueness": {
+          "type": "object",
+          "description": "Configuration for uniqueness validation across taxonomy entities",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable or disable uniqueness validation",
+              "default": true
+            },
+            "check_keys": {
+              "type": "array",
+              "description": "List of field keys to check for uniqueness across entities",
+              "items": {
+                "type": "string"
+              },
+              "default": ["name"]
             }
           },
           "additionalProperties": false

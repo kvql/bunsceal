@@ -44,29 +44,3 @@ func ValidateL1Definitions(txy *domain.Taxonomy) bool {
 	}
 	return valid
 }
-
-// ValidateSharedServices validates the shared-services environment.
-// Hard coding some specific checks for shared-services environment as it is an exception to the normal security domains.
-// This secenv need to meet the strictest requirements.
-func ValidateSharedServices(txy *domain.Taxonomy) (bool, int) {
-	valid := true
-	envName := "shared-service"
-	failures := 0
-	if _, ok := txy.SegL1s[envName]; !ok {
-		util.Log.Printf("%s environment not found", envName)
-		return false, 1
-	}
-	if txy.SegL1s[envName].Sensitivity != domain.SenseOrder[0] ||
-		txy.SegL1s[envName].Criticality != domain.CritOrder[0] {
-		util.Log.Printf("%s environment does not have the highest sensitivity or criticality", envName)
-		failures++
-		valid = false
-	}
-
-	if len(txy.SegL1s[envName].ComplianceReqs) != len(txy.CompReqs) {
-		util.Log.Printf("%s environment does not have all compliance requirements", envName)
-		failures++
-		valid = false
-	}
-	return valid, failures
-}

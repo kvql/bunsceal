@@ -10,7 +10,6 @@ import (
 // Returns a slice of error messages if validation fails, empty slice if all validations pass
 func UniquenessValidator[T domain.UnqSegKeys](objects []T) []string {
 	idMap := make(map[string]bool)
-	nameMap := make(map[string]bool)
 	var validations []string
 
 	for _, item := range objects {
@@ -21,13 +20,6 @@ func UniquenessValidator[T domain.UnqSegKeys](objects []T) []string {
 			validations = append(validations, fmt.Sprintf("ID for %s is not unique: %s", identifiers.Name, identifiers.ID))
 		} else {
 			idMap[identifiers.ID] = true
-		}
-
-		// Validate name is unique
-		if _, exists := nameMap[identifiers.Name]; exists {
-			validations = append(validations, fmt.Sprintf("Name is not unique: %s", identifiers.Name))
-		} else {
-			nameMap[identifiers.Name] = true
 		}
 	}
 

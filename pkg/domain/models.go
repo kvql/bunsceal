@@ -1,5 +1,9 @@
 package domain
 
+import (
+	"errors"
+)
+
 type Identifiers struct {
 	Name string
 	ID   string
@@ -60,4 +64,30 @@ type Taxonomy struct {
 	CriticalityLevels []string
 	CompReqs          map[string]CompReq
 	Config            Config
+}
+
+func (s SegL1) GetKeyString(key string) (string, error) {
+	var val string
+	switch key {
+	case "name":
+		val = s.Name
+	case "description":
+		val = s.Description
+	default:
+		return "", errors.New("SegL1.GetKeyValue() unsupported key")
+	}
+	return val, nil
+}
+
+func (s SegL2) GetKeyString(key string) (string, error) {
+	var val string
+	switch key {
+	case "name":
+		val = s.Name
+	case "description":
+		val = s.Description
+	default:
+		return "", errors.New("SegL2.GetKeyValue() unsupported key")
+	}
+	return val, nil
 }

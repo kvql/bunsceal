@@ -9,8 +9,15 @@ import (
 	"github.com/kvql/bunsceal/pkg/util"
 )
 
-// ApplyInheritance applies inheritance rules for taxonomy segments.
-func ApplyInheritance(txy *domain.Taxonomy) {
+// ApplyInheritance applies inheritance rules for taxonomy segments and validates cross-entity references.
+// Returns true if all validations pass, false otherwise.
+func ApplyInheritance(txy *domain.Taxonomy) bool {
+	// Validate L1 definitions reference valid compliance requirements
+	valid := validation.ValidateL1Definitions(txy)
+	if !valid {
+		return valid
+	}
+
 	// Loop through env details for each security domain and update risk compliance if not set based on env default
 	for _, segL2 := range txy.SegL2s {
 		for l1ID, l1Override := range segL2.L1Overrides {
@@ -39,25 +46,33 @@ func ApplyInheritance(txy *domain.Taxonomy) {
 			segL2.L1Overrides[l1ID] = l1Override
 		}
 	}
+
+	// Validate L2 definitions after inheritance
+	valid, _ = validation.ValidateL2Definition(txy)
+	return valid
 }
 
 // CompleteAndValidateTaxonomy completes and validates the taxonomy.
+// Deprecated: Use ApplyInheritance and ValidateBusinessLogic separately for better control.
 func CompleteAndValidateTaxonomy(txy *domain.Taxonomy) bool {
-	// Loop through SegL1s and validate max risk level
-	valid := validation.ValidateL1Definitions(txy)
-	if !valid {
-		return valid
-	}
-	valid, _ = validation.ValidateSharedServices(txy)
-	if !valid {
-		return valid
-	}
-	// Apply inheritance rules
-	ApplyInheritance(txy)
+	return ApplyInheritance(txy)
+}
 
-	// Validate the taxonomy
-	valid, _ = validation.ValidateL2Definition(txy)
-	return valid
+// ValidateBusinessLogic validates business logic rules based on configuration.
+// Returns true if all enabled rules pass, false if any rule fails.
+func ValidateBusinessLogic(txy *domain.Taxonomy) bool {
+	ruleSet := NewLogicRuleSet(txy.Config)
+	results := ruleSet.ValidateAll(txy)
+
+	if len(results) > 0 {
+		util.Log.Printf("Business logic validation failed with %d rule(s) reporting errors:", len(results))
+		for _, result := range results {
+			util.Log.Printf("  Rule '%s' failed with %d error(s)", result.RuleName, len(result.Errors))
+		}
+		return false
+	}
+
+	return true
 }
 
 // InitTaxonomy defines the interface for taxonomy initialization.
@@ -117,13 +132,21 @@ func LoadTaxonomy(cfg domain.Config) (domain.Taxonomy, error) {
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
-	// Validate the taxonomy
-	valid := CompleteAndValidateTaxonomy(&txy)
-	// TODO validate against compliance scopes acceptable risk levels
+	// Apply inheritance and validate cross-entity references
+	valid := ApplyInheritance(&txy)
 	if !valid {
-		util.Log.Println("Taxonomy is invalid")
+		util.Log.Println("Taxonomy is invalid: cross-entity validation failed")
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
+
+	// Validate business logic rules
+	valid = ValidateBusinessLogic(&txy)
+	// TODO validate against compliance scopes acceptable risk levels
+	if !valid {
+		util.Log.Println("Taxonomy is invalid: business logic validation failed")
+		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+
 	// Return the taxonomy
 	return txy, nil
 }

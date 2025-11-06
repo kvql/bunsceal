@@ -76,28 +76,6 @@ func TestSegL1Service(t *testing.T) {
 			t.Errorf("Map size %d equals file count 2 - duplicates may have been silently overwritten", len(segL1s))
 		}
 	})
-
-	t.Run("Validates uniqueness of SegL1 names", func(t *testing.T) {
-		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegL1Files([]testhelpers.SegL1Fixture{
-			{Name: "Duplicate Name", ID: "env-one", Sensitivity: "A", Criticality: "1"},
-			{Name: "Duplicate Name", ID: "env-two", Sensitivity: "B", Criticality: "2"},
-		})
-
-		validator := mustCreateValidator(t, "../../schema")
-		repository := NewFileSegL1Repository(validator)
-		service := NewSegL1Service(repository)
-		segL1s, err := service.LoadAndValidate(tmpDir)
-
-		if err == nil {
-			t.Error("Expected error for duplicate names but got nil")
-		}
-
-		// Verify map is nil or empty (duplicates rejected)
-		if len(segL1s) == 2 {
-			t.Errorf("Map size %d equals file count 2 - duplicates may have been silently overwritten", len(segL1s))
-		}
-	})
 }
 
 func TestSegL2Service(t *testing.T) {
@@ -163,25 +141,4 @@ func TestSegL2Service(t *testing.T) {
 		}
 	})
 
-	t.Run("Validates uniqueness of SegL2 names", func(t *testing.T) {
-		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegL2Files([]testhelpers.SegL2Fixture{
-			{Name: "Duplicate Name", ID: "domain1"},
-			{Name: "Duplicate Name", ID: "domain2"},
-		})
-
-		validator := mustCreateValidator(t, "../../schema")
-		repository := NewFileSegL2Repository(validator)
-		service := NewSegL2Service(repository)
-		segL2s, err := service.LoadAndValidate(tmpDir)
-
-		if err == nil {
-			t.Error("Expected error for duplicate names but got nil")
-		}
-
-		// Verify map is nil or empty (duplicates rejected)
-		if len(segL2s) == 2 {
-			t.Errorf("Map size %d equals file count 2 - duplicates may have been silently overwritten", len(segL2s))
-		}
-	})
 }

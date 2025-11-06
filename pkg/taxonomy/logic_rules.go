@@ -1,0 +1,148 @@
+package taxonomy
+
+import (
+	"fmt"
+
+	"github.com/kvql/bunsceal/pkg/taxonomy/domain"
+	"github.com/kvql/bunsceal/pkg/util"
+)
+
+// LogicRule defines the interface for business logic validation rules.
+type LogicRule interface {
+	Validate(taxonomy *domain.Taxonomy) []error
+}
+
+// ValidationResult captures the results of a single rule's validation.
+type ValidationResult struct {
+	RuleName string
+	Errors   []error
+}
+
+// LogicRuleSet holds a collection of business logic validation rules.
+type LogicRuleSet struct {
+	LogicRules map[string]LogicRule
+}
+
+// NewLogicRuleSet creates a new LogicRuleSet based on the provided configuration.
+// Only enabled rules are instantiated and added to the set.
+func NewLogicRuleSet(config domain.Config) *LogicRuleSet {
+	rs := &LogicRuleSet{LogicRules: make(map[string]LogicRule)}
+
+	if config.Rules.SharedService.Enabled {
+		rs.LogicRules["SharedService"] = NewLogicRuleSharedService(config.Rules.SharedService)
+	}
+
+	if config.Rules.Uniqueness.Enabled {
+		rs.LogicRules["Uniqueness"] = NewLogicRuleUniqueness(config.Rules.Uniqueness)
+	}
+
+	return rs
+}
+
+// ValidateAll runs all configured rules against the taxonomy and aggregates the results.
+// Returns a slice of ValidationResult, one for each rule that produced errors.
+func (rs *LogicRuleSet) ValidateAll(taxonomy *domain.Taxonomy) []ValidationResult {
+	var results []ValidationResult
+
+	for name, logicRule := range rs.LogicRules {
+		if errs := logicRule.Validate(taxonomy); len(errs) > 0 {
+			results = append(results, ValidationResult{
+				RuleName: name,
+				Errors:   errs,
+			})
+		}
+	}
+
+	return results
+}
+
+// LogicRuleSharedService validates the shared-services environment.
+// This rule ensures the shared-services environment meets the strictest requirements.
+type LogicRuleSharedService struct {
+	config domain.GeneralBooleanConfig
+}
+
+// NewLogicRuleSharedService creates a new SharedService validation rule.
+func NewLogicRuleSharedService(config domain.GeneralBooleanConfig) *LogicRuleSharedService {
+	return &LogicRuleSharedService{config: config}
+}
+
+// Validate checks that the shared-service environment meets all requirements.
+// Returns a slice of errors if validation fails, or an empty slice if valid.
+func (r *LogicRuleSharedService) Validate(taxonomy *domain.Taxonomy) []error {
+	var errs []error
+	envName := "shared-service"
+
+	if _, ok := taxonomy.SegL1s[envName]; !ok {
+		err := fmt.Errorf("%s environment not found", envName)
+		util.Log.Printf("%v", err)
+		errs = append(errs, err)
+		return errs
+	}
+
+	if taxonomy.SegL1s[envName].Sensitivity != domain.SenseOrder[0] ||
+		taxonomy.SegL1s[envName].Criticality != domain.CritOrder[0] {
+		err := fmt.Errorf("%s environment does not have the highest sensitivity or criticality", envName)
+		util.Log.Printf("%v", err)
+		errs = append(errs, err)
+	}
+
+	if len(taxonomy.SegL1s[envName].ComplianceReqs) != len(taxonomy.CompReqs) {
+		err := fmt.Errorf("%s environment does not have all compliance requirements", envName)
+		util.Log.Printf("%v", err)
+		errs = append(errs, err)
+	}
+
+	return errs
+}
+
+// LogicRuleUniqueness validates that specified fields are unique across taxonomy entities.
+type LogicRuleUniqueness struct {
+	config domain.UniquenessConfig
+}
+
+// NewLogicRuleUniqueness creates a new Uniqueness validation rule.
+func NewLogicRuleUniqueness(config domain.UniquenessConfig) *LogicRuleUniqueness {
+	return &LogicRuleUniqueness{config: config}
+}
+
+// Validate checks that the configured keys are unique across L1 and L2 segments.
+// Returns a slice of errors if validation fails, or an empty slice if valid.
+func (r *LogicRuleUniqueness) Validate(taxonomy *domain.Taxonomy) []error {
+	var errs []error
+
+	// Track which keys to check
+	for _, key := range r.config.CheckKeys {
+		// Check L1 names
+		l1Values := make(map[string]bool)
+		for _, seg := range taxonomy.SegL1s {
+			val, err := seg.GetKeyString(key)
+			if err != nil {
+				return []error{err}
+			}
+			if l1Values[val] {
+				err := fmt.Errorf("duplicate L1 name found: %s", val)
+				util.Log.Printf("%v", err)
+				errs = append(errs, err)
+			}
+			l1Values[val] = true
+		}
+
+		// Check L2 names
+		l2Values := make(map[string]bool)
+		for _, seg := range taxonomy.SegL2s {
+			val, err := seg.GetKeyString(key)
+			if err != nil {
+				return []error{err}
+			}
+			if l2Values[val] {
+				err := fmt.Errorf("duplicate L2 name found: %s", val)
+				util.Log.Printf("%v", err)
+				errs = append(errs, err)
+			}
+			l2Values[val] = true
+		}
+	}
+
+	return errs
+}

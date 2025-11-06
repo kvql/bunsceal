@@ -5,9 +5,10 @@ import "strings"
 
 // Config represents the taxonomy configuration.
 type Config struct {
-	Terminology  TermConfig `yaml:"terminology"`
-	SchemaPath   string     `yaml:"schema_path,omitempty"`
-	TaxonomyPath string     `yaml:"taxonomy_path,omitempty"`
+	Terminology  TermConfig       `yaml:"terminology"`
+	SchemaPath   string           `yaml:"schema_path,omitempty"`
+	TaxonomyPath string           `yaml:"taxonomy_path,omitempty"`
+	Rules        LogicRulesConfig `yaml:"rules,omitempty"`
 }
 
 // TermConfig holds terminology configuration for L1 and L2 segments.
@@ -71,6 +72,23 @@ func (td TermDef) DirName() string {
 	return kebab
 }
 
+// LogicRulesConfig holds configuration for business logic validation rules.
+type LogicRulesConfig struct {
+	SharedService GeneralBooleanConfig `yaml:"shared_service,omitempty"`
+	Uniqueness    UniquenessConfig     `yaml:"uniqueness,omitempty"`
+}
+
+// GeneralBooleanConfig provides a simple enabled/disabled configuration for rules.
+type GeneralBooleanConfig struct {
+	Enabled bool `yaml:"enabled"`
+}
+
+// UniquenessConfig holds configuration for uniqueness validation rules.
+type UniquenessConfig struct {
+	Enabled   bool     `yaml:"enabled"`
+	CheckKeys []string `yaml:"check_keys,omitempty"`
+}
+
 // DefaultConfig returns the default configuration.
 func DefaultConfig() Config {
 	return Config{
@@ -86,5 +104,12 @@ func DefaultConfig() Config {
 		},
 		SchemaPath:   "./schema",
 		TaxonomyPath: "taxonomy",
+		Rules: LogicRulesConfig{
+			SharedService: GeneralBooleanConfig{Enabled: true},
+			Uniqueness: UniquenessConfig{
+				Enabled:   true,
+				CheckKeys: []string{"name"},
+			},
+		},
 	}
 }

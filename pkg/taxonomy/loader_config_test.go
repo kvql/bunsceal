@@ -257,8 +257,12 @@ func TestLoadConfig_WithVisuals(t *testing.T) {
 		configYAML := `
 visuals:
   l1_layout:
-    "1": ["prod", "staging"]
-    "2": ["dev", "test"]
+    "1":
+      - "prod"
+      - "staging"
+    "2":
+      - "dev"
+      - "test"
 `
 		if err := os.WriteFile(configPath, []byte(configYAML), 0644); err != nil {
 			t.Fatalf("Failed to write config file: %v", err)

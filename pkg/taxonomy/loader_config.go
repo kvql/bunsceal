@@ -2,6 +2,7 @@ package taxonomy
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,8 +40,8 @@ func LoadConfig(configPath, configSchemaPath string) (domain.Config, error) {
 		return domain.Config{}, err
 	}
 	if err := schemaValidator.ValidateData(data, "config.json"); err != nil {
-		util.Log.Printf("Schema validation failed for Config")
-		return domain.Config{}, errors.New("schema validation failed for Config")
+		util.Log.Printf("Schema validation failed for Config %s", err)
+		return domain.Config{}, fmt.Errorf("schema validation failed for Config. Error: %w", err)
 	}
 
 	var loadedConfig domain.Config

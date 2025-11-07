@@ -46,7 +46,8 @@
     "version",
     "name",
     "id",
-    "description"
+    "description",
+    "l1_overrides"
   ],
   "additionalProperties": false
 }

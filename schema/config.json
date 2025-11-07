@@ -4,7 +4,6 @@
   "title": "Taxonomy Configuration",
   "description": "Configuration for taxonomy terminology and customization",
   "type": "object",
-  "required": ["terminology"],
   "additionalProperties": false,
   "properties": {
     "terminology": {

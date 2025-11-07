@@ -158,6 +158,10 @@ name: "Test Domain"
 id: "test"
 description: "Test security domain"
 prominence: 2
+l1_overrides:
+  production:
+    sensitivity: "A"
+    sensitivity_rationale: "Test rationale with sufficient length. Test rationale with sufficient length."
 `
 		files := testhelpers.NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("segl2", validYAML)
@@ -179,7 +183,7 @@ prominence: 2
 name: "Test Domain"
 id: "test"
 description: "Test domain"
-env_details:
+l1_overrides:
   production:
     sensitivity: "A"
     sensitivity_rationale: "Test rationale with sufficient length."

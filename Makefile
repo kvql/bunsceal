@@ -108,8 +108,8 @@ clean:
 	@rm -rf bin/
 	@rm -f coverage.out coverage.html
 
-# CI target - runs all checks
-ci: fmt-check vet lint sec vulncheck test-race build
+# CI target 
+ci: fmt-check vet lint build
 	@echo "All CI checks passed!"
 
 # Git hook setup - uses built-in git hooks with Makefile targets

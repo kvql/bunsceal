@@ -55,9 +55,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: ['1.25', '1.24']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -67,7 +64,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: '1.25'
           cache: true
 
       - name: Run tests with race detector and coverage
@@ -78,7 +75,6 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
-        if: matrix.go-version == '1.25'
         with:
           file: ./coverage.out
           flags: unittests

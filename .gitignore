@@ -4,6 +4,10 @@
 *.swo
 *~
 
+# Config Files
+.claude/
+.vscode
+
 # Temporary files
 .tmp
 *.tmp

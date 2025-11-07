@@ -133,6 +133,14 @@ func ValidateImageVersion(txDir string, imagePath string) (bool, error) {
 		util.Log.Println("Execution directory path:", p)
 		return false, errors.New("git binary not found")
 	}
+	if hasHistory, err := util.HasGitHistory(); !hasHistory {
+		if err != nil {
+			util.Log.Println("Error checking git history:", err)
+			return false, errors.New("error checking git history")
+		}
+		util.Log.Println("Repository is a shallow clone, commit times may be inaccurate")
+		return false, errors.New("repository is a shallow clone, full git history required")
+	}
 	txTime, err := util.GetLatestCommitTime(txDir)
 	if err != nil {
 		tmp := fmt.Sprintf("Error getting latest commit time: %s", err)
@@ -147,5 +155,7 @@ func ValidateImageVersion(txDir string, imagePath string) (bool, error) {
 		util.Log.Println("Image is out of date")
 		return false, nil
 	}
+	util.Log.Printf("directory time: %s", txTime)
+	util.Log.Printf("image time: %s", imgTime)
 	return true, nil
 }

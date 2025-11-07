@@ -31,7 +31,7 @@ func GenLocalTaxonomy(tx domain.Taxonomy, dir string) error {
 }
 
 func Version() string {
-	prefix := "plat-sec-taxonomy"
+	prefix := "bunsceal-taxonomy"
 	gitCommit := os.Getenv("GITHUB_SHA")
 	if gitCommit == "" {
 		if util.CheckGit() {

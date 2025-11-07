@@ -19,6 +19,17 @@ func CheckGit() bool {
 	return true
 }
 
+// HasGitHistory checks if the repository has full git history (not a shallow clone)
+func HasGitHistory() (bool, error) {
+	cmd := exec.Command("git", "rev-parse", "--is-shallow-repository")
+	output, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+	// "false" means NOT shallow, i.e., has full history
+	return string(output) == "false\n", nil
+}
+
 func GetLatestCommitTime(path string) (time.Time, error) {
 	var pathT time.Time
 	epochRe := regexp.MustCompile("[0-9]+")

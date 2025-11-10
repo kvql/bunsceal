@@ -9,7 +9,7 @@ import (
 func TestLoadCompScope(t *testing.T) {
 	t.Run("Successfully loads valid compliance requirements", func(t *testing.T) {
 		file := "../../example/taxonomy/compliance_requirements.yaml"
-		compReqs, err := LoadCompScope(file, "../../schema")
+		compReqs, err := LoadCompScope(file, testSchemaPath)
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
@@ -26,7 +26,7 @@ func TestLoadCompScope(t *testing.T) {
 	})
 
 	t.Run("Fails with non-existent file", func(t *testing.T) {
-		_, err := LoadCompScope("/non/existent/file.yaml", "../../schema")
+		_, err := LoadCompScope("/non/existent/file.yaml", testSchemaPath)
 		if err == nil {
 			t.Error("Expected error for non-existent file")
 		}
@@ -36,7 +36,7 @@ func TestLoadCompScope(t *testing.T) {
 		files := testhelpers.NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("compliance-req", "this is not valid yaml: {[")
 
-		_, err := LoadCompScope(tmpFile, "../../schema")
+		_, err := LoadCompScope(tmpFile, testSchemaPath)
 		if err == nil {
 			t.Error("Expected error for invalid YAML but got nil")
 		}

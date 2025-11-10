@@ -8,7 +8,7 @@ import (
 
 func TestSegL1Service(t *testing.T) {
 	t.Run("Successfully loads and validates SegL1 files", func(t *testing.T) {
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		repository := NewFileSegL1Repository(validator)
 		service := NewSegL1Service(repository)
 
@@ -34,7 +34,7 @@ func TestSegL1Service(t *testing.T) {
 			{Name: "Environment 3", ID: "env-three", Sensitivity: "C", Criticality: "3"},
 		})
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		repository := NewFileSegL1Repository(validator)
 		service := NewSegL1Service(repository)
 		segL1s, err := service.LoadAndValidate(tmpDir)
@@ -62,7 +62,7 @@ func TestSegL1Service(t *testing.T) {
 			{Name: "Environment 2", ID: "duplicate", Sensitivity: "B", Criticality: "2"},
 		})
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		repository := NewFileSegL1Repository(validator)
 		service := NewSegL1Service(repository)
 		segL1s, err := service.LoadAndValidate(tmpDir)
@@ -80,7 +80,7 @@ func TestSegL1Service(t *testing.T) {
 
 func TestSegL2Service(t *testing.T) {
 	t.Run("Successfully loads and validates SegL2 files", func(t *testing.T) {
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		repository := NewFileSegL2Repository(validator)
 		service := NewSegL2Service(repository)
 
@@ -101,7 +101,7 @@ func TestSegL2Service(t *testing.T) {
 			{Name: "Domain 3", ID: "domain3"},
 		})
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		repository := NewFileSegL2Repository(validator)
 		service := NewSegL2Service(repository)
 		segL2s, err := service.LoadAndValidate(tmpDir)
@@ -126,7 +126,7 @@ func TestSegL2Service(t *testing.T) {
 			{Name: "Domain 2", ID: "duplicate"},
 		})
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		repository := NewFileSegL2Repository(validator)
 		service := NewSegL2Service(repository)
 		segL2s, err := service.LoadAndValidate(tmpDir)

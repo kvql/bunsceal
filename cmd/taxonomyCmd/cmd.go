@@ -22,7 +22,7 @@ func Execute() {
 	flag.Parse()
 
 	// Load configuration (with defaults if not found)
-	cfg, err := tx.LoadConfig(*configPath, "schema/")
+	cfg, err := tx.LoadConfig(*configPath, "")
 	if err != nil {
 		util.Log.Printf("Failed to load configuration: %v\n", err)
 		os.Exit(1)

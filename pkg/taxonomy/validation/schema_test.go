@@ -12,8 +12,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// testSchemaPath is the relative path from pkg/taxonomy/validation to the schema directory
+const testSchemaPath = "../../../pkg/domain/schemas"
+
 // Test helpers
-func mustCreateValidator(t *testing.T, schemaPath string) *SchemaValidator {
+func mustCreateValidator(t *testing.T) *SchemaValidator {
+	t.Helper()
+	return mustCreateValidatorWithPath(t, testSchemaPath)
+}
+
+func mustCreateValidatorWithPath(t *testing.T, schemaPath string) *SchemaValidator {
 	t.Helper()
 	validator, err := NewSchemaValidator(schemaPath)
 	if err != nil {
@@ -32,7 +40,7 @@ func expectValidatorError(t *testing.T, schemaPath string) {
 
 func assertValidationPasses(t *testing.T, data interface{}, schemaFile string) {
 	t.Helper()
-	validator := mustCreateValidator(t, "../../../schema")
+	validator := mustCreateValidator(t)
 	yamlData, err := yaml.Marshal(data)
 	if err != nil {
 		t.Fatalf("Failed to marshal test data to YAML: %v", err)
@@ -45,7 +53,7 @@ func assertValidationPasses(t *testing.T, data interface{}, schemaFile string) {
 
 func assertValidationFails(t *testing.T, data interface{}, schemaFile string) {
 	t.Helper()
-	validator := mustCreateValidator(t, "../../../schema")
+	validator := mustCreateValidator(t)
 	yamlData, err := yaml.Marshal(data)
 	if err != nil {
 		t.Fatalf("Failed to marshal test data to YAML: %v", err)
@@ -77,7 +85,7 @@ func marshalSegL2(seg testdata.SegL2) ([]byte, error) {
 
 func TestNewSchemaValidator(t *testing.T) {
 	t.Run("Successfully creates validator with valid schema directory", func(t *testing.T) {
-		validator := mustCreateValidator(t, "../../../schema")
+		validator := mustCreateValidator(t)
 		if validator == nil {
 			t.Fatal("Expected validator, got nil")
 		}
@@ -140,7 +148,7 @@ func TestValidateData_SegL1(t *testing.T) {
 }
 
 func TestValidateData_SegL2(t *testing.T) {
-	validator, err := NewSchemaValidator("../../../schema")
+	validator, err := NewSchemaValidator(testSchemaPath)
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -207,7 +215,7 @@ func TestValidateData_SegL2(t *testing.T) {
 }
 
 func TestValidateData_CompReqs(t *testing.T) {
-	validator, err := NewSchemaValidator("../../../schema")
+	validator, err := NewSchemaValidator(testSchemaPath)
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -245,7 +253,7 @@ func TestValidateData_CompReqs(t *testing.T) {
 }
 
 func TestValidateData_JSON(t *testing.T) {
-	validator, err := NewSchemaValidator("../../../schema")
+	validator, err := NewSchemaValidator(testSchemaPath)
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -269,7 +277,7 @@ func TestValidateData_JSON(t *testing.T) {
 }
 
 func TestValidateData_ErrorHandling(t *testing.T) {
-	validator, err := NewSchemaValidator("../../../schema")
+	validator, err := NewSchemaValidator(testSchemaPath)
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -381,7 +389,7 @@ func TestConvertYAMLToJSON(t *testing.T) {
 
 func TestFormatValidationError(t *testing.T) {
 	t.Run("Formats jsonschema.ValidationError", func(t *testing.T) {
-		validator, err := NewSchemaValidator("../../../schema")
+		validator, err := NewSchemaValidator(testSchemaPath)
 		if err != nil {
 			t.Fatalf("Failed to create validator: %v", err)
 		}

@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../../schema/seg-level2.json
+# yaml-language-server: $schema=../../../pkg/domain/schemas/seg-level2.json
 ---
 version: "1.0"
 name: Security

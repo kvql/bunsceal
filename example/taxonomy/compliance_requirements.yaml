@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../schema/compliance-requirements.json
+# yaml-language-server: $schema=../../pkg/domain/schemas/compliance-reqs.json
 ---
 pci-dss:
   name: "PCI DSS"

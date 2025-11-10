@@ -15,9 +15,15 @@ import (
 
 // LoadConfig loads configuration from the specified path.
 // If configPath is empty, loads from taxDir/config.yaml.
+// If configSchemaPath is empty, uses domain.DefaultSchemaPath.
 // If the config file doesn't exist or has missing fields, uses defaults.
 func LoadConfig(configPath, configSchemaPath string) (domain.Config, error) {
 	defaults := domain.DefaultConfig()
+
+	// Use default schema path if not provided
+	if configSchemaPath == "" {
+		configSchemaPath = domain.DefaultSchemaPath
+	}
 
 	schemaValidator, err := validation.NewSchemaValidator(configSchemaPath)
 	if err != nil {

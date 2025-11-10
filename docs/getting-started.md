@@ -161,7 +161,7 @@ Validates that taxonomy schema is valid and diagrams reflect current state.
 
 1. Identify whether you need L1 (new isolated boundary) or L2 (subdivision of existing L1)
 2. Create YAML file in appropriate directory (`taxonomy/environments/` or `taxonomy/segments/`)
-3. Copy format from existing file or refer to schema in `schema/` directory
+3. Copy format from existing file or refer to schema in `pkg/domain/schemas/` directory
 4. Define all required metadata fields
 5. **Provide rationale**: All criticality and sensitivity classifications must include reasoning
 

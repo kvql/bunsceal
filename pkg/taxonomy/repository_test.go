@@ -9,7 +9,7 @@ import (
 func TestFileSegL1Repository(t *testing.T) {
 
 	t.Run("Fails with non-existent directory", func(t *testing.T) {
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		repository := NewFileSegL1Repository(validator)
 
 		_, err := repository.LoadAll("/non/existent/path")
@@ -26,7 +26,7 @@ func TestFileSegL1Repository(t *testing.T) {
 			{Name: "Environment 3", ID: "env-three", Sensitivity: "C", Criticality: "3"},
 		})
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		repository := NewFileSegL1Repository(validator)
 		segL1s, err := repository.LoadAll(tmpDir)
 
@@ -41,7 +41,7 @@ func TestFileSegL1Repository(t *testing.T) {
 
 func TestFileSegL2Repository(t *testing.T) {
 	t.Run("Fails with non-existent directory", func(t *testing.T) {
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		repository := NewFileSegL2Repository(validator)
 
 		_, err := repository.LoadAll("/non/existent/path")
@@ -58,7 +58,7 @@ func TestFileSegL2Repository(t *testing.T) {
 			{Name: "Domain 3", ID: "domain3"},
 		})
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		repository := NewFileSegL2Repository(validator)
 		segL2s, err := repository.LoadAll(tmpDir)
 
@@ -86,7 +86,7 @@ compliance_reqs:
 		files := testhelpers.NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("segl1", validYAML)
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		segL1, err := parseSegL1File(tmpFile, validator)
 
 		if err != nil {
@@ -108,7 +108,7 @@ id: "test"
 		files := testhelpers.NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("segl1", invalidYAML)
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		_, err := parseSegL1File(tmpFile, validator)
 
 		if err == nil {
@@ -135,7 +135,7 @@ l1_overrides:
 		files := testhelpers.NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("segl2", validYAML)
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		fl := NewFileSegL2Repository(validator)
 		segL2, err := fl.parseSegL2File(tmpFile)
 
@@ -166,7 +166,7 @@ l1_overrides:
 		files := testhelpers.NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("segl2", validYAML)
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		fl := NewFileSegL2Repository(validator)
 		segL2, err := fl.parseSegL2File(tmpFile)
 
@@ -191,7 +191,7 @@ l1_overrides:
 		files := testhelpers.NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("segl2", invalidYAML)
 
-		validator := mustCreateValidator(t, "../../schema")
+		validator := mustCreateValidator(t)
 		fl := NewFileSegL2Repository(validator)
 		_, err := fl.parseSegL2File(tmpFile)
 

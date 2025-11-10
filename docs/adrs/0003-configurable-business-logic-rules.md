@@ -93,7 +93,7 @@ pkg/taxonomy/
 
 Utilise existing configuration code and schema, coupling is acceptable for now.
 
-Schema validation in schema/config.json must be updated to include the `rules` property, otherwise LoadConfig will reject any config file with rules defined due to `additionalProperties: false`.
+Schema validation in pkg/domain/schemas/config.json must be updated to include the `rules` property, otherwise LoadConfig will reject any config file with rules defined due to `additionalProperties: false`.
 
 ### Core Types
 

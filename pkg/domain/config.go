@@ -3,6 +3,9 @@ package domain
 
 import "strings"
 
+// DefaultSchemaPath is the default location for JSON schemas
+const DefaultSchemaPath = "./pkg/domain/schemas"
+
 // Config represents the taxonomy configuration.
 type Config struct {
 	Terminology  TermConfig       `yaml:"terminology"`
@@ -109,7 +112,7 @@ func DefaultConfig() Config {
 				Plural:   "Segments",
 			},
 		},
-		SchemaPath:   "./schema",
+		SchemaPath:   DefaultSchemaPath,
 		TaxonomyPath: "taxonomy",
 		Rules: LogicRulesConfig{
 			SharedService: GeneralBooleanConfig{Enabled: true},

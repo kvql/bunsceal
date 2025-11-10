@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../schema/config.json
+# yaml-language-server: $schema=../pkg/domain/schemas/config.json
 ---
 terminology:
   l1:
@@ -7,4 +7,4 @@ terminology:
   l2:
     singular: "Segment"
     plural: "Segments"
-schema_path: "schema/"
+schema_path: "pkg/domain/schemas"

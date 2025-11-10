@@ -13,7 +13,7 @@ func TestLoadConfig_MissingFile(t *testing.T) {
 		defaults := domain.DefaultConfig()
 
 		// Use non-existent path
-		cfg, err := LoadConfig("/nonexistent/path", "../../schema")
+		cfg, err := LoadConfig("/nonexistent/path", testSchemaPath)
 		if err != nil {
 			t.Errorf("Expected no error for missing config, got: %v", err)
 		}
@@ -52,7 +52,7 @@ func TestLoadConfig_CompleteConfig(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		cfg, err := LoadConfig(configPath, "../../schema")
+		cfg, err := LoadConfig(configPath, testSchemaPath)
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
@@ -88,7 +88,7 @@ func TestLoadConfig_PartialL1Config(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		_, err := LoadConfig(configPath, "../../schema")
+		_, err := LoadConfig(configPath, testSchemaPath)
 		if err == nil {
 			t.Errorf("Expected error on load for not defining singular value")
 		}
@@ -110,7 +110,7 @@ func TestLoadConfig_PartialL1Config(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		_, err := LoadConfig(configPath, "../../schema")
+		_, err := LoadConfig(configPath, testSchemaPath)
 		if err == nil {
 			t.Errorf("Expected error for not defining plural values, go no error")
 		}
@@ -134,7 +134,7 @@ func TestLoadConfig_PartialL2Config(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		_, err := LoadConfig(configPath, "../../schema")
+		_, err := LoadConfig(configPath, testSchemaPath)
 		if err == nil {
 			t.Errorf("Expected error on load for not defining singular value")
 		}
@@ -158,7 +158,7 @@ func TestLoadConfig_L2DefinedButBlank(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		_, err := LoadConfig(configPath, "../../schema")
+		_, err := LoadConfig(configPath, testSchemaPath)
 		if err == nil {
 			t.Errorf("Expected failed load based on schema validation for blank terms")
 		}
@@ -183,7 +183,7 @@ func TestLoadConfig_DefaultLocation(t *testing.T) {
 		}
 
 		// Pass empty string for configPath, tmpDir as taxDir
-		cfg, err := LoadConfig(configPath, "../../schema")
+		cfg, err := LoadConfig(configPath, testSchemaPath)
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
@@ -211,7 +211,7 @@ func TestLoadConfig_InvalidYAML(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		_, err := LoadConfig(configPath, "../../schema")
+		_, err := LoadConfig(configPath, testSchemaPath)
 		if err == nil {
 			t.Error("Expected error for invalid YAML, got nil")
 		}
@@ -233,7 +233,7 @@ func TestLoadConfig_missingLevel(t *testing.T) {
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		cfg, err := LoadConfig(configPath, "../../schema")
+		cfg, err := LoadConfig(configPath, testSchemaPath)
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
@@ -268,7 +268,7 @@ visuals:
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		cfg, err := LoadConfig(configPath, "../../schema")
+		cfg, err := LoadConfig(configPath, testSchemaPath)
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
@@ -314,7 +314,7 @@ visuals:
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
-		cfg, err := LoadConfig(configPath, "../../schema")
+		cfg, err := LoadConfig(configPath, testSchemaPath)
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}

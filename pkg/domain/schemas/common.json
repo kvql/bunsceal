@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/kvql/bunsceal/schema/common.json",
+  "$id": "https://github.com/kvql/bunsceal/pkg/domain/schemas/common.json",
   "title": "Common schema definitions",
   "$defs": {
     "sensitivityCode": {

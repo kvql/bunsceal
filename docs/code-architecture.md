@@ -2,12 +2,56 @@
 
 Overview of the code architecture.
 
-### Layered Architecture
 
-| Layer | Components | Responsibilities | Dependencies |
-|-------|------------|------------------|--------------|
-| **User Layer** | `main.go`, `config.yaml` | Register plugins at startup; Load configuration; Initialize core services | → Core Taxonomy Layer |
-| **Core Taxonomy Layer** | `TaxonomyService`, `PluginRegistry`, `SegL1`/`SegL2` Models, Core Validation | Orchestrate segment loading and validation; Manage plugin lifecycle; Store core fields + metadata map; Validate uniqueness and references; **No knowledge of concrete plugins** | → Plugin Interface, → Data Layer |
-| **Plugin Interface** | `MetadataPlugin` interface | Define contract for all plugins; Decouple core from implementations; Enable Dependency Inversion | *(interface, no dependencies)* |
-| **Plugin Implementations** | `ClassificationPlugin`, `CompliancePlugin`, Custom plugins | Implement domain-specific metadata logic; Define validation rules; Handle inheritance behavior; Provide configurable terminology | → Plugin Interface (implements) |
-| **Data Layer** | `Repository`, `taxonomy.yaml` | Load segment definitions from YAML; Persist taxonomy data | *(no dependencies)* |
+
+## Logic overview
+
+1. Load config and schema
+2. Load taxonomy files
+3. validate taxonomy file content
+4. cross validate taxonomy
+5. metadata validation and logic
+6. publishing and image generation
+
+
+```mermaid
+flowchart
+    subgraph fs ["filesystem"]
+        config["config file"]
+        schema["schema files"]
+        taxonomy["raw taxonomy files"]
+        images["generated Images"]
+    end
+    
+    code(["bunsceal"])
+    
+    code -->fs
+    code -->remote
+
+    subgraph remote ["remote data store"]
+        schema-rm["remote schema"]
+        tax-pub["published taxonomy"]
+    end
+
+
+```
+
+**Package Domains:**
+
+```mermaid
+block-beta
+    columns 3
+    cli["User Interaction"]:3
+    tax["Taxonomy"]
+    space
+    vis["Visuals"]
+    o11y["Observability"]:3
+```
+
+| Domain | Purpose | Interacts with |
+|-------|---------|------------|
+| **CMD** | User Interaction, via the CLI  | Visualisations, Taxonomy, Config |
+| **Taxonomy** | Business logic, use cases | |
+| **Visualisation** | Generates visuals based on  | Taxonomy |
+| **Observability** | Handles logging and metrics |  |
+| **Config** | Handles configuration and providing configuration data to other packages ||

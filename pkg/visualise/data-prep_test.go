@@ -3,13 +3,14 @@ package visualise
 import (
 	"testing"
 
+	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
 )
 
 func TestBuildRowsMap(t *testing.T) {
 	t.Run("Uses config L1Layout when provided", func(t *testing.T) {
-		cfg := &domain.Config{
-			Visuals: domain.VisualsDef{
+		cfg := &configdomain.Config{
+			Visuals: configdomain.VisualsDef{
 				L1Layout: map[string][]string{
 					"0": {"prod", "staging"},
 					"1": {"dev", "test"},
@@ -45,8 +46,8 @@ func TestBuildRowsMap(t *testing.T) {
 	})
 
 	t.Run("Adds missing L1s to last row", func(t *testing.T) {
-		cfg := &domain.Config{
-			Visuals: domain.VisualsDef{
+		cfg := &configdomain.Config{
+			Visuals: configdomain.VisualsDef{
 				L1Layout: map[string][]string{
 					"0": {"prod", "staging"},
 				},
@@ -97,8 +98,8 @@ func TestBuildRowsMap(t *testing.T) {
 	})
 
 	t.Run("Defaults to single row when no L1Layout configured", func(t *testing.T) {
-		cfg := &domain.Config{
-			Visuals: domain.VisualsDef{},
+		cfg := &configdomain.Config{
+			Visuals: configdomain.VisualsDef{},
 		}
 
 		txy := &domain.Taxonomy{
@@ -124,8 +125,8 @@ func TestBuildRowsMap(t *testing.T) {
 	})
 
 	t.Run("Defaults to single row when L1Layout is nil", func(t *testing.T) {
-		cfg := &domain.Config{
-			Visuals: domain.VisualsDef{
+		cfg := &configdomain.Config{
+			Visuals: configdomain.VisualsDef{
 				L1Layout: nil,
 			},
 		}
@@ -153,8 +154,8 @@ func TestBuildRowsMap(t *testing.T) {
 	})
 
 	t.Run("Config has more l1 than taxonomy", func(t *testing.T) {
-		cfg := &domain.Config{
-			Visuals: domain.VisualsDef{
+		cfg := &configdomain.Config{
+			Visuals: configdomain.VisualsDef{
 				L1Layout: map[string][]string{
 					"0": {"prod", "staging"},
 					"1": {"dev", "unknown"},
@@ -179,8 +180,8 @@ func TestBuildRowsMap(t *testing.T) {
 	})
 
 	t.Run("Handles non-sequential row numbers", func(t *testing.T) {
-		cfg := &domain.Config{
-			Visuals: domain.VisualsDef{
+		cfg := &configdomain.Config{
+			Visuals: configdomain.VisualsDef{
 				L1Layout: map[string][]string{
 					"0": {"prod"},
 					"2": {"staging"},

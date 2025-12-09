@@ -2,7 +2,7 @@ package validation
 
 import (
 	"github.com/kvql/bunsceal/pkg/domain"
-	"github.com/kvql/bunsceal/pkg/util"
+	"github.com/kvql/bunsceal/pkg/o11y"
 )
 
 func ValidateL2Definition(txy *domain.Taxonomy) (bool, int) {
@@ -14,14 +14,14 @@ func ValidateL2Definition(txy *domain.Taxonomy) (bool, int) {
 			// validate compliance scope for each SD
 			for _, compReq := range sdEnv.ComplianceReqs {
 				if _, ok := txy.CompReqs[compReq]; !ok {
-					util.Log.Printf("Invalid compliance scope(%s) for SegL1(%s) in SD (%s)", compReq, envID, secDomain.Name)
+					o11y.Log.Printf("Invalid compliance scope(%s) for SegL1(%s) in SD (%s)", compReq, envID, secDomain.Name)
 					failures++
 					valid = false
 				}
 			}
 			// validate secEnv for each SD is a valid secEnv in the taxonomy,
 			if _, ok := txy.SegL1s[envID]; !ok {
-				util.Log.Printf("Invalid secEnv for SD %s: %s\n", secDomain.Name, envID)
+				o11y.Log.Printf("Invalid secEnv for SD %s: %s\n", secDomain.Name, envID)
 				failures++
 				valid = false
 			}
@@ -37,7 +37,7 @@ func ValidateL1Definitions(txy *domain.Taxonomy) bool {
 		// validate compliance scope for each SD
 		for _, compReq := range env.ComplianceReqs {
 			if _, ok := txy.CompReqs[compReq]; !ok {
-				util.Log.Printf("Invalid compliance scope (%s) for env(%s)", env.ID, compReq)
+				o11y.Log.Printf("Invalid compliance scope (%s) for env(%s)", env.ID, compReq)
 				valid = false
 			}
 		}

@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/o11y"
 	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
-	"github.com/kvql/bunsceal/pkg/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -15,7 +15,7 @@ func LoadCompScope(filePath string, schemaPath string) (map[string]domain.CompRe
 	// Initialise schema validator with provided path
 	schemaValidator, err := validation.NewSchemaValidator(schemaPath)
 	if err != nil {
-		util.Log.Printf("Error initialising schema validator: %v\n", err)
+		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
 		return nil, err
 	}
 
@@ -23,13 +23,13 @@ func LoadCompScope(filePath string, schemaPath string) (map[string]domain.CompRe
 	// #nosec G304 -- filePath comes from config-specified taxonomy directory, not user input
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		util.Log.Println("Error reading file:", err)
+		o11y.Log.Println("Error reading file:", err)
 		return nil, err
 	}
 
 	// Validate against JSON schema first
 	if validationErr := schemaValidator.ValidateData(data, "compliance-reqs.json"); validationErr != nil {
-		util.Log.Printf("Schema validation failed for %s: %v\n", filePath, validationErr)
+		o11y.Log.Printf("Schema validation failed for %s: %v\n", filePath, validationErr)
 		return nil, validationErr
 	}
 
@@ -37,7 +37,7 @@ func LoadCompScope(filePath string, schemaPath string) (map[string]domain.CompRe
 	var compReqs map[string]domain.CompReq
 	err = yaml.Unmarshal(data, &compReqs)
 	if err != nil {
-		util.Log.Println("Error parsing file:", err)
+		o11y.Log.Println("Error parsing file:", err)
 		return nil, err
 	}
 

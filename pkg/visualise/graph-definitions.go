@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/awalterschulze/gographviz"
+	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
 )
 
@@ -14,7 +15,7 @@ import (
 
 // See the GraphSDs function for more comments explaining how the graph is generated. That is the more complex function and therefore has more comments than GraphEnvs
 
-func GraphL1(txy *domain.Taxonomy, cfg *domain.Config) (*gographviz.Graph, error) {
+func GraphL1(txy *domain.Taxonomy, cfg *configdomain.Config) (*gographviz.Graph, error) {
 	// Setup the top level graph object
 	title := cfg.Terminology.L1.Plural + " Overview"
 	g := BaselineGraph(title, "")
@@ -75,7 +76,7 @@ func GraphL1(txy *domain.Taxonomy, cfg *domain.Config) (*gographviz.Graph, error
 // Function to Segment Level 2 Graphs
 // ################################
 
-func GraphL2(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
+func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
 	term := cfg.Terminology
@@ -228,7 +229,7 @@ func GraphL2(txy *domain.Taxonomy, cfg *domain.Config, highlightCriticality bool
 // Function to Segment Level 2 Graphs
 // ################################
 // GraphCompliance  showOut is used control if out of scope domains are added to the graph
-func GraphCompliance(txy *domain.Taxonomy, cfg *domain.Config, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
+func GraphCompliance(txy *domain.Taxonomy, cfg *configdomain.Config, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
 	if _, ok := txy.CompReqs[compName]; !ok {
 		return nil, fmt.Errorf("compliance standard %s not found in taxonomy", compName)
 	}

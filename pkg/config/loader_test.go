@@ -1,12 +1,14 @@
-package taxonomy
+package config
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/config/domain"
 )
+
+const testSchemaPath = "../../pkg/domain/schemas"
 
 func TestLoadConfig_MissingFile(t *testing.T) {
 	t.Run("Returns defaults when config file missing", func(t *testing.T) {

@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 
 	"github.com/awalterschulze/gographviz"
+	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
-	"github.com/kvql/bunsceal/pkg/util"
+	"github.com/kvql/bunsceal/pkg/o11y"
 )
 
 type ImageConfig struct {
@@ -70,17 +71,17 @@ func RenderGraph(g *gographviz.Graph, dir string, name string) error {
 	cmd := exec.Command("dot", "-Tpng", tmp.Name(), "-o", outputPath)
 	cmdOutput, err := cmd.CombinedOutput()
 	if err != nil {
-		util.Log.Println("Failed to generate image:", err)
-		util.Log.Println("Standard output:", string(cmdOutput))
+		o11y.Log.Println("Failed to generate image:", err)
+		o11y.Log.Println("Standard output:", string(cmdOutput))
 		return err
 	}
 
-	util.Log.Println("Generated image at:", dir+name)
+	o11y.Log.Println("Generated image at:", dir+name)
 	return nil
 }
 
 // RenderDiagrams generates all the diagrams for the taxonomy
-func RenderDiagrams(tax *domain.Taxonomy, dir string, cfg *domain.Config) error {
+func RenderDiagrams(tax *domain.Taxonomy, dir string, cfg *configdomain.Config) error {
 	// Generate the security domain graph
 	graphConfigs := []ImageConfig{
 		{func() (*gographviz.Graph, error) { return GraphL2(tax, cfg, false, false) }, "l2_Segments_overview.png"},
@@ -117,7 +118,7 @@ func ValidateImageVersions() bool {
 		if ok, err := ValidateImageVersion("./taxonomy", img); !ok && err == nil {
 			return false
 		} else if err != nil {
-			util.Log.Println("error validating image version:", err)
+			o11y.Log.Println("error validating image version:", err)
 			return false
 		}
 	}
@@ -126,36 +127,36 @@ func ValidateImageVersions() bool {
 
 // ValidateImageVersions checks if the image is up to date with the taxonomy based on latest commit times
 func ValidateImageVersion(txDir string, imagePath string) (bool, error) {
-	if !util.CheckGit() {
-		util.Log.Println("Git binary not found")
-		util.Log.Println("PATH environment variable:", os.Getenv("PATH"))
+	if !CheckGit() {
+		o11y.Log.Println("Git binary not found")
+		o11y.Log.Println("PATH environment variable:", os.Getenv("PATH"))
 		p, _ := os.Getwd()
-		util.Log.Println("Execution directory path:", p)
+		o11y.Log.Println("Execution directory path:", p)
 		return false, errors.New("git binary not found")
 	}
-	if hasHistory, err := util.HasGitHistory(); !hasHistory {
+	if hasHistory, err := HasGitHistory(); !hasHistory {
 		if err != nil {
-			util.Log.Println("Error checking git history:", err)
+			o11y.Log.Println("Error checking git history:", err)
 			return false, errors.New("error checking git history")
 		}
-		util.Log.Println("Repository is a shallow clone, commit times may be inaccurate")
+		o11y.Log.Println("Repository is a shallow clone, commit times may be inaccurate")
 		return false, errors.New("repository is a shallow clone, full git history required")
 	}
-	txTime, err := util.GetLatestCommitTime(txDir)
+	txTime, err := GetLatestCommitTime(txDir)
 	if err != nil {
 		tmp := fmt.Sprintf("Error getting latest commit time: %s", err)
 		return false, errors.New(tmp)
 	}
-	imgTime, err := util.GetLatestCommitTime(imagePath)
+	imgTime, err := GetLatestCommitTime(imagePath)
 	if err != nil {
 		tmp := fmt.Sprintf("Error getting latest commit time: %s", err)
 		return false, errors.New(tmp)
 	}
 	if txTime.After(imgTime) {
-		util.Log.Println("Image is out of date")
+		o11y.Log.Println("Image is out of date")
 		return false, nil
 	}
-	util.Log.Printf("directory time: %s", txTime)
-	util.Log.Printf("image time: %s", imgTime)
+	o11y.Log.Printf("directory time: %s", txTime)
+	o11y.Log.Printf("image time: %s", imgTime)
 	return true, nil
 }

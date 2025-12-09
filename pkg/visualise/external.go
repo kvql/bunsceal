@@ -1,4 +1,4 @@
-package util
+package visualise
 
 import (
 	"errors"
@@ -8,15 +8,13 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+	"github.com/kvql/bunsceal/pkg/o11y"
 )
 
 // CheckGit checks if git binary is available
 func CheckGit() bool {
 	_, err := exec.LookPath("git")
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // HasGitHistory checks if the repository has full git history (not a shallow clone)
@@ -36,20 +34,20 @@ func GetLatestCommitTime(path string) (time.Time, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		message := fmt.Sprintf("File/dir does not exist, %s", path)
 		cp, _ := os.Getwd()
-		Log.Printf("current path: %s", cp)
+		o11y.Log.Printf("current path: %s", cp)
 		return pathT, errors.New(message)
 	}
 	txOut := exec.Command("git", "--no-pager", "log", "-1", "--format=\"%cd\"", "--date=raw", "--", path)
 	tmpOut, err := txOut.Output()
 	if err != nil {
-		Log.Println("Error checking latest taxonomy commit date. Error: ", err)
-		Log.Println(string(tmpOut))
+		o11y.Log.Println("Error checking latest taxonomy commit date. Error: ", err)
+		o11y.Log.Println(string(tmpOut))
 		return pathT, errors.New("error checking latest taxonomy commit date")
 	}
 	// sample format "1710150183 +0000", below is ignoring the timezone
 	tmp := epochRe.FindStringSubmatch(string(tmpOut[:]))
 	if len(tmp) == 0 {
-		Log.Println("Error parsing time")
+		o11y.Log.Println("Error parsing time")
 		return pathT, errors.New("error parsing time, no match")
 	}
 	// convert to int

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
 )
 
@@ -20,7 +21,7 @@ type EnvImageData struct {
 // If an L1 ID exists in the taxonomy but is not in the config layout,
 // it will be added to the last row to ensure all L1s are included in visualisations.
 // Returns an error if the config references L1 IDs that don't exist in the taxonomy.
-func buildRowsMap(cfg *domain.Config, txy *domain.Taxonomy) (map[int][]string, error) {
+func buildRowsMap(cfg *configdomain.Config, txy *domain.Taxonomy) (map[int][]string, error) {
 	result := make(map[int][]string)
 	seenL1s := make(map[string]bool)
 

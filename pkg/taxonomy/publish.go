@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/kvql/bunsceal/pkg/domain"
-	"github.com/kvql/bunsceal/pkg/util"
+	"github.com/kvql/bunsceal/pkg/o11y"
 )
 
 // GenLocalTaxonomy generates a local taxonomy file
@@ -30,11 +30,17 @@ func GenLocalTaxonomy(tx domain.Taxonomy, dir string) error {
 	return os.WriteFile(filePath, data, 0600)
 }
 
+// CheckGit checks if git binary is available
+func CheckGit() bool {
+	_, err := exec.LookPath("git")
+	return err == nil
+}
+
 func Version() string {
 	prefix := "bunsceal-taxonomy"
 	gitCommit := os.Getenv("GITHUB_SHA")
 	if gitCommit == "" {
-		if util.CheckGit() {
+		if CheckGit() {
 			cmd := exec.Command("git", "rev-parse", "HEAD")
 			output, err := cmd.Output()
 			if err == nil {
@@ -47,6 +53,6 @@ func Version() string {
 		}
 	}
 	file := prefix + "-" + gitCommit[:7] + ".json"
-	util.Log.Println("Taxonomy version: ", file)
+	o11y.Log.Println("Taxonomy version: ", file)
 	return file
 }

@@ -1,4 +1,4 @@
-package taxonomy
+package config
 
 import (
 	"errors"
@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/config/domain"
+	"github.com/kvql/bunsceal/pkg/o11y"
 	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
-	"github.com/kvql/bunsceal/pkg/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -27,7 +27,7 @@ func LoadConfig(configPath, configSchemaPath string) (domain.Config, error) {
 
 	schemaValidator, err := validation.NewSchemaValidator(configSchemaPath)
 	if err != nil {
-		util.Log.Printf("Error initialising schema validator: %v\n", err)
+		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
 		return domain.Config{}, errors.New("failed to initialise schema validator")
 	}
 	// Determine config file location
@@ -40,13 +40,13 @@ func LoadConfig(configPath, configSchemaPath string) (domain.Config, error) {
 	if err != nil {
 		// Config file missing - use full defaults
 		if os.IsNotExist(err) {
-			util.Log.Printf("Config file not found at %s, using defaults\n", configPath)
+			o11y.Log.Printf("Config file not found at %s, using defaults\n", configPath)
 			return defaults, nil
 		}
 		return domain.Config{}, err
 	}
 	if err := schemaValidator.ValidateData(data, "config.json"); err != nil {
-		util.Log.Printf("Schema validation failed for Config %s", err)
+		o11y.Log.Printf("Schema validation failed for Config %s", err)
 		return domain.Config{}, fmt.Errorf("schema validation failed for Config. Error: %w", err)
 	}
 

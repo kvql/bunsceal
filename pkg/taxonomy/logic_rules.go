@@ -3,8 +3,9 @@ package taxonomy
 import (
 	"fmt"
 
+	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
-	"github.com/kvql/bunsceal/pkg/util"
+	"github.com/kvql/bunsceal/pkg/o11y"
 )
 
 // LogicRule defines the interface for business logic validation rules.
@@ -25,7 +26,7 @@ type LogicRuleSet struct {
 
 // NewLogicRuleSet creates a new LogicRuleSet based on the provided configuration.
 // Only enabled rules are instantiated and added to the set.
-func NewLogicRuleSet(config domain.Config) *LogicRuleSet {
+func NewLogicRuleSet(config configdomain.Config) *LogicRuleSet {
 	rs := &LogicRuleSet{LogicRules: make(map[string]LogicRule)}
 
 	if config.Rules.SharedService.Enabled {
@@ -59,11 +60,11 @@ func (rs *LogicRuleSet) ValidateAll(taxonomy *domain.Taxonomy) []ValidationResul
 // LogicRuleSharedService validates the shared-services environment.
 // This rule ensures the shared-services environment meets the strictest requirements.
 type LogicRuleSharedService struct {
-	config domain.GeneralBooleanConfig
+	config configdomain.GeneralBooleanConfig
 }
 
 // NewLogicRuleSharedService creates a new SharedService validation rule.
-func NewLogicRuleSharedService(config domain.GeneralBooleanConfig) *LogicRuleSharedService {
+func NewLogicRuleSharedService(config configdomain.GeneralBooleanConfig) *LogicRuleSharedService {
 	return &LogicRuleSharedService{config: config}
 }
 
@@ -75,7 +76,7 @@ func (r *LogicRuleSharedService) Validate(taxonomy *domain.Taxonomy) []error {
 
 	if _, ok := taxonomy.SegL1s[envName]; !ok {
 		err := fmt.Errorf("%s environment not found", envName)
-		util.Log.Printf("%v", err)
+		o11y.Log.Printf("%v", err)
 		errs = append(errs, err)
 		return errs
 	}
@@ -83,13 +84,13 @@ func (r *LogicRuleSharedService) Validate(taxonomy *domain.Taxonomy) []error {
 	if taxonomy.SegL1s[envName].Sensitivity != domain.SenseOrder[0] ||
 		taxonomy.SegL1s[envName].Criticality != domain.CritOrder[0] {
 		err := fmt.Errorf("%s environment does not have the highest sensitivity or criticality", envName)
-		util.Log.Printf("%v", err)
+		o11y.Log.Printf("%v", err)
 		errs = append(errs, err)
 	}
 
 	if len(taxonomy.SegL1s[envName].ComplianceReqs) != len(taxonomy.CompReqs) {
 		err := fmt.Errorf("%s environment does not have all compliance requirements", envName)
-		util.Log.Printf("%v", err)
+		o11y.Log.Printf("%v", err)
 		errs = append(errs, err)
 	}
 
@@ -98,11 +99,11 @@ func (r *LogicRuleSharedService) Validate(taxonomy *domain.Taxonomy) []error {
 
 // LogicRuleUniqueness validates that specified fields are unique across taxonomy entities.
 type LogicRuleUniqueness struct {
-	config domain.UniquenessConfig
+	config configdomain.UniquenessConfig
 }
 
 // NewLogicRuleUniqueness creates a new Uniqueness validation rule.
-func NewLogicRuleUniqueness(config domain.UniquenessConfig) *LogicRuleUniqueness {
+func NewLogicRuleUniqueness(config configdomain.UniquenessConfig) *LogicRuleUniqueness {
 	return &LogicRuleUniqueness{config: config}
 }
 
@@ -122,7 +123,7 @@ func (r *LogicRuleUniqueness) Validate(taxonomy *domain.Taxonomy) []error {
 			}
 			if l1Values[val] {
 				err := fmt.Errorf("duplicate L1 name found: %s", val)
-				util.Log.Printf("%v", err)
+				o11y.Log.Printf("%v", err)
 				errs = append(errs, err)
 			}
 			l1Values[val] = true
@@ -137,7 +138,7 @@ func (r *LogicRuleUniqueness) Validate(taxonomy *domain.Taxonomy) []error {
 			}
 			if l2Values[val] {
 				err := fmt.Errorf("duplicate L2 name found: %s", val)
-				util.Log.Printf("%v", err)
+				o11y.Log.Printf("%v", err)
 				errs = append(errs, err)
 			}
 			l2Values[val] = true

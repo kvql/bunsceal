@@ -63,7 +63,6 @@ type Taxonomy struct {
 	SensitivityLevels []string
 	CriticalityLevels []string
 	CompReqs          map[string]CompReq
-	Config            Config
 }
 
 func (s SegL1) GetKeyString(key string) (string, error) {

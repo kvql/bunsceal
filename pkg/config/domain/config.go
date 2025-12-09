@@ -1,4 +1,4 @@
-// Package domain provides core domain models and configuration for the taxonomy system.
+// Package domain provides configuration models for the taxonomy system.
 package domain
 
 import "strings"

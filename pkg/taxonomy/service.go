@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/o11y"
 	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
-	"github.com/kvql/bunsceal/pkg/util"
 )
 
 // SegL1Service orchestrates loading and validation of SegL1 entities
@@ -33,7 +33,7 @@ func (s *SegL1Service) LoadAndValidate(source string) (map[string]domain.SegL1, 
 	validations := validation.UniquenessValidator(segList)
 	if len(validations) > 0 {
 		for _, result := range validations {
-			util.Log.Println(result)
+			o11y.Log.Println(result)
 		}
 		return nil, fmt.Errorf("security environment validation failed, source: %s", source)
 	}
@@ -72,7 +72,7 @@ func (s *SegL2Service) LoadAndValidate(source string) (map[string]domain.SegL2, 
 	validations := validation.UniquenessValidator(segList)
 	if len(validations) > 0 {
 		for _, result := range validations {
-			util.Log.Println(result)
+			o11y.Log.Println(result)
 		}
 		return nil, fmt.Errorf("security domain validation failed, source: %s", source)
 	}

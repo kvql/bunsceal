@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/o11y"
 	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
-	"github.com/kvql/bunsceal/pkg/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -57,7 +57,7 @@ func (r *FileSegL1Repository) LoadAll(segL1Dir string) ([]domain.SegL1, error) {
 			filePath := filepath.Join(segL1Dir, file.Name())
 			segL1, err := r.parseSegL1File(filePath)
 			if err != nil {
-				util.Log.Printf("Error parsing file %s: %v\n", filePath, err)
+				o11y.Log.Printf("Error parsing file %s: %v\n", filePath, err)
 				parseErrors = append(parseErrors, err)
 				continue
 			}
@@ -127,7 +127,7 @@ func (r *FileSegL2Repository) LoadAll(segL2Dir string) ([]domain.SegL2, error) {
 		if !d.IsDir() {
 			segL2, err := r.parseSegL2File(path)
 			if err != nil {
-				util.Log.Printf("Error parsing file %s: %v\n", path, err)
+				o11y.Log.Printf("Error parsing file %s: %v\n", path, err)
 				parseErrors = append(parseErrors, err)
 				return nil // Continue walking despite parse error
 			}

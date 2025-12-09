@@ -4,9 +4,10 @@ import (
 	"errors"
 	"strings"
 
+	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/o11y"
 	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
-	"github.com/kvql/bunsceal/pkg/util"
 )
 
 // ApplyInheritance applies inheritance rules for taxonomy segments and validates cross-entity references.
@@ -60,14 +61,14 @@ func CompleteAndValidateTaxonomy(txy *domain.Taxonomy) bool {
 
 // ValidateBusinessLogic validates business logic rules based on configuration.
 // Returns true if all enabled rules pass, false if any rule fails.
-func ValidateBusinessLogic(txy *domain.Taxonomy) bool {
-	ruleSet := NewLogicRuleSet(txy.Config)
+func ValidateBusinessLogic(txy *domain.Taxonomy, cfg configdomain.Config) bool {
+	ruleSet := NewLogicRuleSet(cfg)
 	results := ruleSet.ValidateAll(txy)
 
 	if len(results) > 0 {
-		util.Log.Printf("Business logic validation failed with %d rule(s) reporting errors:", len(results))
+		o11y.Log.Printf("Business logic validation failed with %d rule(s) reporting errors:", len(results))
 		for _, result := range results {
-			util.Log.Printf("  Rule '%s' failed with %d error(s)", result.RuleName, len(result.Errors))
+			o11y.Log.Printf("  Rule '%s' failed with %d error(s)", result.RuleName, len(result.Errors))
 		}
 		return false
 	}
@@ -84,10 +85,9 @@ var InitTaxonomy interface {
 // Validates the loaded data is valid and meets requirements.
 // Fills in missing data based on inheritance rules.
 // cfg parameter provides terminology configuration for directory resolution.
-func LoadTaxonomy(cfg domain.Config) (domain.Taxonomy, error) {
+func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 	txy := domain.Taxonomy{
 		ApiVersion: domain.ApiVersion,
-		Config:     cfg,
 	}
 	var err error
 	taxDir := cfg.TaxonomyPath
@@ -100,14 +100,14 @@ func LoadTaxonomy(cfg domain.Config) (domain.Taxonomy, error) {
 	l1Dir := taxDir + cfg.Terminology.L1.DirName()
 	schemaValidator, err := validation.NewSchemaValidator(cfg.SchemaPath)
 	if err != nil {
-		util.Log.Printf("Error initialising schema validator: %v\n", err)
+		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
 		return domain.Taxonomy{}, errors.New("failed to initialise schema validator")
 	}
 	l1Repository := NewFileSegL1Repository(schemaValidator)
 	l1Service := NewSegL1Service(l1Repository)
 	txy.SegL1s, err = l1Service.LoadAndValidate(l1Dir)
 	if err != nil {
-		util.Log.Printf("Error loading L1 files from %s, exiting\n", l1Dir)
+		o11y.Log.Printf("Error loading L1 files from %s, exiting\n", l1Dir)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
@@ -121,29 +121,29 @@ func LoadTaxonomy(cfg domain.Config) (domain.Taxonomy, error) {
 	l2Service := NewSegL2Service(l2Repository)
 	txy.SegL2s, err = l2Service.LoadAndValidate(l2Dir)
 	if err != nil {
-		util.Log.Printf("Error loading L2 files from %s: %v\n", l2Dir, err)
+		o11y.Log.Printf("Error loading L2 files from %s: %v\n", l2Dir, err)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
 	// Define compliance scopes
 	txy.CompReqs, err = LoadCompScope(taxDir+"compliance_requirements.yaml", cfg.SchemaPath)
 	if err != nil {
-		util.Log.Println("Error loading compliance scope files:", err)
+		o11y.Log.Println("Error loading compliance scope files:", err)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
 	// Apply inheritance and validate cross-entity references
 	valid := ApplyInheritance(&txy)
 	if !valid {
-		util.Log.Println("Taxonomy is invalid: cross-entity validation failed")
+		o11y.Log.Println("Taxonomy is invalid: cross-entity validation failed")
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
 	// Validate business logic rules
-	valid = ValidateBusinessLogic(&txy)
+	valid = ValidateBusinessLogic(&txy, cfg)
 	// TODO validate against compliance scopes acceptable risk levels
 	if !valid {
-		util.Log.Println("Taxonomy is invalid: business logic validation failed")
+		o11y.Log.Println("Taxonomy is invalid: business logic validation failed")
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 

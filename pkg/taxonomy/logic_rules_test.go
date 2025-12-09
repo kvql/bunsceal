@@ -3,15 +3,16 @@ package taxonomy
 import (
 	"testing"
 
+	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
 )
 
 func TestNewLogicRuleSet(t *testing.T) {
 	t.Run("Creates empty ruleset when all rules disabled", func(t *testing.T) {
-		config := domain.Config{
-			Rules: domain.LogicRulesConfig{
-				SharedService: domain.GeneralBooleanConfig{Enabled: false},
-				Uniqueness:    domain.UniquenessConfig{Enabled: false},
+		config := configdomain.Config{
+			Rules: configdomain.LogicRulesConfig{
+				SharedService: configdomain.GeneralBooleanConfig{Enabled: false},
+				Uniqueness:    configdomain.UniquenessConfig{Enabled: false},
 			},
 		}
 
@@ -23,10 +24,10 @@ func TestNewLogicRuleSet(t *testing.T) {
 	})
 
 	t.Run("Creates ruleset with Uniqueness rule enabled", func(t *testing.T) {
-		config := domain.Config{
-			Rules: domain.LogicRulesConfig{
-				SharedService: domain.GeneralBooleanConfig{Enabled: false},
-				Uniqueness:    domain.UniquenessConfig{Enabled: true, CheckKeys: []string{"name"}},
+		config := configdomain.Config{
+			Rules: configdomain.LogicRulesConfig{
+				SharedService: configdomain.GeneralBooleanConfig{Enabled: false},
+				Uniqueness:    configdomain.UniquenessConfig{Enabled: true, CheckKeys: []string{"name"}},
 			},
 		}
 
@@ -42,7 +43,7 @@ func TestNewLogicRuleSet(t *testing.T) {
 	})
 
 	t.Run("Uses default configuration", func(t *testing.T) {
-		config := domain.DefaultConfig()
+		config := configdomain.DefaultConfig()
 
 		ruleSet := NewLogicRuleSet(config)
 
@@ -62,9 +63,8 @@ func TestNewLogicRuleSet(t *testing.T) {
 
 func TestLogicRuleSet_ValidateAll(t *testing.T) {
 	t.Run("Returns empty results when all validations pass", func(t *testing.T) {
-		config := domain.DefaultConfig()
+		config := configdomain.DefaultConfig()
 		txy := &domain.Taxonomy{
-			Config: config,
 			SegL1s: map[string]domain.SegL1{
 				"shared-service": {
 					ID:             "shared-service",
@@ -107,10 +107,9 @@ func TestLogicRuleSet_ValidateAll(t *testing.T) {
 	})
 
 	t.Run("Returns results for failing rules", func(t *testing.T) {
-		config := domain.DefaultConfig()
+		config := configdomain.DefaultConfig()
 		// Missing shared-service environment
 		txy := &domain.Taxonomy{
-			Config: config,
 			SegL1s: map[string]domain.SegL1{
 				"prod": {
 					ID:   "prod",
@@ -155,7 +154,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			CompReqs: map[string]domain.CompReq{},
 		}
 
-		rule := NewLogicRuleSharedService(domain.GeneralBooleanConfig{Enabled: true})
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
 		errs := rule.Validate(txy)
 
 		if len(errs) == 0 {
@@ -179,7 +178,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			},
 		}
 
-		rule := NewLogicRuleSharedService(domain.GeneralBooleanConfig{Enabled: true})
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
 		errs := rule.Validate(txy)
 
 		if len(errs) == 0 {
@@ -203,7 +202,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			},
 		}
 
-		rule := NewLogicRuleSharedService(domain.GeneralBooleanConfig{Enabled: true})
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
 		errs := rule.Validate(txy)
 
 		if len(errs) == 0 {
@@ -228,7 +227,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			},
 		}
 
-		rule := NewLogicRuleSharedService(domain.GeneralBooleanConfig{Enabled: true})
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
 		errs := rule.Validate(txy)
 
 		if len(errs) == 0 {
@@ -253,7 +252,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			},
 		}
 
-		rule := NewLogicRuleSharedService(domain.GeneralBooleanConfig{Enabled: true})
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
 		errs := rule.Validate(txy)
 
 		if len(errs) != 0 {
@@ -278,7 +277,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			},
 		}
 
-		rule := NewLogicRuleSharedService(domain.GeneralBooleanConfig{Enabled: true})
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
 		errs := rule.Validate(txy)
 
 		if len(errs) != 2 {
@@ -297,7 +296,7 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 			SegL2s: map[string]domain.SegL2{},
 		}
 
-		rule := NewLogicRuleUniqueness(domain.UniquenessConfig{
+		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{
 			Enabled:   true,
 			CheckKeys: []string{"name"},
 		})
@@ -317,7 +316,7 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 			SegL2s: map[string]domain.SegL2{},
 		}
 
-		rule := NewLogicRuleUniqueness(domain.UniquenessConfig{
+		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{
 			Enabled:   true,
 			CheckKeys: []string{"name"},
 		})
@@ -337,7 +336,7 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 			},
 		}
 
-		rule := NewLogicRuleUniqueness(domain.UniquenessConfig{
+		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{
 			Enabled:   true,
 			CheckKeys: []string{"name"},
 		})
@@ -357,7 +356,7 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 			},
 		}
 
-		rule := NewLogicRuleUniqueness(domain.UniquenessConfig{
+		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{
 			Enabled:   true,
 			CheckKeys: []string{"name"},
 		})
@@ -371,7 +370,7 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 
 func TestDefaultConfig_Rules(t *testing.T) {
 	t.Run("Default config has SharedService rule enabled", func(t *testing.T) {
-		config := domain.DefaultConfig()
+		config := configdomain.DefaultConfig()
 
 		if !config.Rules.SharedService.Enabled {
 			t.Error("Expected SharedService rule to be enabled by default")
@@ -379,7 +378,7 @@ func TestDefaultConfig_Rules(t *testing.T) {
 	})
 
 	t.Run("Default config has Uniqueness rule enabled", func(t *testing.T) {
-		config := domain.DefaultConfig()
+		config := configdomain.DefaultConfig()
 
 		if !config.Rules.Uniqueness.Enabled {
 			t.Error("Expected Uniqueness rule to be enabled by default")
@@ -387,7 +386,7 @@ func TestDefaultConfig_Rules(t *testing.T) {
 	})
 
 	t.Run("Default config checks 'name' key for uniqueness", func(t *testing.T) {
-		config := domain.DefaultConfig()
+		config := configdomain.DefaultConfig()
 
 		if len(config.Rules.Uniqueness.CheckKeys) != 1 {
 			t.Errorf("Expected 1 check key, got %d", len(config.Rules.Uniqueness.CheckKeys))

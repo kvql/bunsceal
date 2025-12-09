@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-// TestSchemaPath is the relative path from pkg/taxonomy/validation to the schema directory
+// TestSchemaPath is the relative path from pkg/taxonomy/application/validation to the schema directory
 const TestSchemaPath = "../../../pkg/domain/schemas"
 
 func MustCreateValidator(t *testing.T) *SchemaValidator {

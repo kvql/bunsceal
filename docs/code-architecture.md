@@ -43,15 +43,23 @@ block-beta
     columns 3
     cli["User Interaction"]:3
     tax["Taxonomy"]
-    space
+    cfg["Config"]
+    dom["Domain"]
     vis["Visuals"]
     o11y["Observability"]:3
 ```
 
 | Domain | Purpose | Interacts with |
 |-------|---------|------------|
-| **CMD** | User Interaction, via the CLI  | Visualisations, Taxonomy, Config |
-| **Taxonomy** | Business logic, use cases | |
-| **Visualisation** | Generates visuals based on  | Taxonomy |
+| **CMD** | User Interaction, via the CLI  | Visualisations, Taxonomy, Config, O11y |
+| **Domain**| Define the scheama and associated data types| O11y|
+| **Taxonomy** | Business logic, use cases | Domain, Config, O11y|
+| **Visualisation** | Generates visuals based on  | Domain, Config, O11y |
 | **Observability** | Handles logging and metrics |  |
 | **Config** | Handles configuration and providing configuration data to other packages ||
+
+### Notes
+
+#### Schema Validation
+
+Schema validation is complied at the application level for taxonomy and passed to the infrastructure functions as a point. This saves duplicate compliation resources. Schema validation should only happen at the infrastructure level, application level assumes pre validated data.

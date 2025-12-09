@@ -5,21 +5,14 @@ import (
 
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/o11y"
-	"github.com/kvql/bunsceal/pkg/taxonomy/schemaValidation"
+	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
 
 	"gopkg.in/yaml.v3"
 )
 
 // LoadCompScope loads compliance requirements from a YAML file and validates against schema
 // schemaPath specifies the directory containing JSON schema files for validation
-func LoadCompScope(filePath string, schemaPath string) (map[string]domain.CompReq, error) {
-	// Initialise schema validator with provided path
-	schemaValidator, err := schemaValidation.NewSchemaValidator(schemaPath)
-	if err != nil {
-		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
-		return nil, err
-	}
-
+func LoadCompScope(filePath string, schemaValidator *schemaValidation.SchemaValidator) (map[string]domain.CompReq, error) {
 	// Read the file
 	// #nosec G304 -- filePath comes from config-specified taxonomy directory, not user input
 	data, err := os.ReadFile(filePath)

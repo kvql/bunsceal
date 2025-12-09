@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
 	"github.com/kvql/bunsceal/pkg/o11y"
-	"github.com/kvql/bunsceal/pkg/taxonomy/schemaValidation"
 	"gopkg.in/yaml.v3"
 )
 

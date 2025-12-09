@@ -6,11 +6,81 @@ import (
 
 	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
 	"github.com/kvql/bunsceal/pkg/o11y"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/validation"
 	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
-	"github.com/kvql/bunsceal/pkg/taxonomy/schemaValidation"
-	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
 )
+
+// LoadTaxonomy loads the taxonomy by loading the different files and combining them into one struct.
+// Validates the loaded data is valid and meets requirements.
+// Fills in missing data based on inheritance rules.
+// cfg parameter provides terminology configuration for directory resolution.
+func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
+	txy := domain.Taxonomy{
+		ApiVersion: domain.ApiVersion,
+	}
+	var err error
+	taxDir := cfg.TaxonomyPath
+
+	if !strings.HasSuffix(taxDir, "/") {
+		taxDir = taxDir + "/"
+	}
+
+	// Load L1 segments using configured directory name
+	l1Dir := taxDir + cfg.Terminology.L1.DirName()
+	schemaValidator, err := schemaValidation.NewSchemaValidator(cfg.SchemaPath)
+	if err != nil {
+		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
+		return domain.Taxonomy{}, errors.New("failed to initialise schema validator")
+	}
+	l1Repository := infrastructure.NewFileSegL1Repository(schemaValidator)
+	l1Service := NewSegL1Service(l1Repository)
+	txy.SegL1s, err = l1Service.LoadAndValidate(l1Dir)
+	if err != nil {
+		o11y.Log.Printf("Error loading L1 files from %s, exiting\n", l1Dir)
+		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+
+	// Load risk levels
+	txy.SensitivityLevels = domain.SenseOrder
+	txy.CriticalityLevels = domain.CritOrder
+
+	// Load L2 segments using configured directory name
+	l2Dir := taxDir + cfg.Terminology.L2.DirName()
+	l2Repository := infrastructure.NewFileSegL2Repository(schemaValidator)
+	l2Service := NewSegL2Service(l2Repository)
+	txy.SegL2s, err = l2Service.LoadAndValidate(l2Dir)
+	if err != nil {
+		o11y.Log.Printf("Error loading L2 files from %s: %v\n", l2Dir, err)
+		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+
+	// Define compliance scopes
+	txy.CompReqs, err = infrastructure.LoadCompScope(taxDir+"compliance_requirements.yaml", schemaValidator)
+	if err != nil {
+		o11y.Log.Println("Error loading compliance scope files:", err)
+		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+
+	// Apply inheritance and validate cross-entity references
+	valid := ApplyInheritance(&txy)
+	if !valid {
+		o11y.Log.Println("Taxonomy is invalid: cross-entity validation failed")
+		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+
+	// Validate business logic rules
+	valid = ValidateBusinessLogic(&txy, cfg)
+	// TODO validate against compliance scopes acceptable risk levels
+	if !valid {
+		o11y.Log.Println("Taxonomy is invalid: business logic validation failed")
+		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+
+	// Return the taxonomy
+	return txy, nil
+}
 
 // ApplyInheritance applies inheritance rules for taxonomy segments and validates cross-entity references.
 // Returns true if all validations pass, false otherwise.
@@ -64,7 +134,7 @@ func CompleteAndValidateTaxonomy(txy *domain.Taxonomy) bool {
 // ValidateBusinessLogic validates business logic rules based on configuration.
 // Returns true if all enabled rules pass, false if any rule fails.
 func ValidateBusinessLogic(txy *domain.Taxonomy, cfg configdomain.Config) bool {
-	ruleSet := NewLogicRuleSet(cfg)
+	ruleSet := validation.NewLogicRuleSet(cfg)
 	results := ruleSet.ValidateAll(txy)
 
 	if len(results) > 0 {
@@ -76,79 +146,4 @@ func ValidateBusinessLogic(txy *domain.Taxonomy, cfg configdomain.Config) bool {
 	}
 
 	return true
-}
-
-// InitTaxonomy defines the interface for taxonomy initialization.
-var InitTaxonomy interface {
-	Load()
-}
-
-// LoadTaxonomy loads the taxonomy by loading the different files and combining them into one struct.
-// Validates the loaded data is valid and meets requirements.
-// Fills in missing data based on inheritance rules.
-// cfg parameter provides terminology configuration for directory resolution.
-func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
-	txy := domain.Taxonomy{
-		ApiVersion: domain.ApiVersion,
-	}
-	var err error
-	taxDir := cfg.TaxonomyPath
-
-	if !strings.HasSuffix(taxDir, "/") {
-		taxDir = taxDir + "/"
-	}
-
-	// Load L1 segments using configured directory name
-	l1Dir := taxDir + cfg.Terminology.L1.DirName()
-	schemaValidator, err := schemaValidation.NewSchemaValidator(cfg.SchemaPath)
-	if err != nil {
-		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
-		return domain.Taxonomy{}, errors.New("failed to initialise schema validator")
-	}
-	l1Repository := infrastructure.NewFileSegL1Repository(schemaValidator)
-	l1Service := NewSegL1Service(l1Repository)
-	txy.SegL1s, err = l1Service.LoadAndValidate(l1Dir)
-	if err != nil {
-		o11y.Log.Printf("Error loading L1 files from %s, exiting\n", l1Dir)
-		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
-	}
-
-	// Load risk levels
-	txy.SensitivityLevels = domain.SenseOrder
-	txy.CriticalityLevels = domain.CritOrder
-
-	// Load L2 segments using configured directory name
-	l2Dir := taxDir + cfg.Terminology.L2.DirName()
-	l2Repository := infrastructure.NewFileSegL2Repository(schemaValidator)
-	l2Service := NewSegL2Service(l2Repository)
-	txy.SegL2s, err = l2Service.LoadAndValidate(l2Dir)
-	if err != nil {
-		o11y.Log.Printf("Error loading L2 files from %s: %v\n", l2Dir, err)
-		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
-	}
-
-	// Define compliance scopes
-	txy.CompReqs, err = infrastructure.LoadCompScope(taxDir+"compliance_requirements.yaml", cfg.SchemaPath)
-	if err != nil {
-		o11y.Log.Println("Error loading compliance scope files:", err)
-		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
-	}
-
-	// Apply inheritance and validate cross-entity references
-	valid := ApplyInheritance(&txy)
-	if !valid {
-		o11y.Log.Println("Taxonomy is invalid: cross-entity validation failed")
-		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
-	}
-
-	// Validate business logic rules
-	valid = ValidateBusinessLogic(&txy, cfg)
-	// TODO validate against compliance scopes acceptable risk levels
-	if !valid {
-		o11y.Log.Println("Taxonomy is invalid: business logic validation failed")
-		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
-	}
-
-	// Return the taxonomy
-	return txy, nil
 }

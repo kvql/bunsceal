@@ -1,4 +1,4 @@
-package taxonomy
+package application
 
 import "github.com/kvql/bunsceal/pkg/domain"
 

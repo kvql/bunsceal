@@ -3,14 +3,15 @@ package infrastructure
 import (
 	"testing"
 
-	"github.com/kvql/bunsceal/pkg/taxonomy/schemaValidation"
+	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
 	"github.com/kvql/bunsceal/pkg/taxonomy/testhelpers"
 )
 
 func TestLoadCompScope(t *testing.T) {
+	validator := schemaValidation.MustCreateValidator(t)
 	t.Run("Successfully loads valid compliance requirements", func(t *testing.T) {
 		file := "../../../example/taxonomy/compliance_requirements.yaml"
-		compReqs, err := LoadCompScope(file, schemaValidation.TestSchemaPath)
+		compReqs, err := LoadCompScope(file, validator)
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
@@ -27,7 +28,7 @@ func TestLoadCompScope(t *testing.T) {
 	})
 
 	t.Run("Fails with non-existent file", func(t *testing.T) {
-		_, err := LoadCompScope("/non/existent/file.yaml", schemaValidation.TestSchemaPath)
+		_, err := LoadCompScope("/non/existent/file.yaml", validator)
 		if err == nil {
 			t.Error("Expected error for non-existent file")
 		}
@@ -37,17 +38,9 @@ func TestLoadCompScope(t *testing.T) {
 		files := testhelpers.NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("compliance-req", "this is not valid yaml: {[")
 
-		_, err := LoadCompScope(tmpFile, schemaValidation.TestSchemaPath)
+		_, err := LoadCompScope(tmpFile, validator)
 		if err == nil {
 			t.Error("Expected error for invalid YAML but got nil")
-		}
-	})
-
-	t.Run("Fails with invalid schema path", func(t *testing.T) {
-		file := "../../../example/taxonomy/compliance_requirements.yaml"
-		_, err := LoadCompScope(file, "/non/existent/schema")
-		if err == nil {
-			t.Error("Expected error for invalid schema path but got nil")
 		}
 	})
 }

@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"testing"
 
-	"github.com/kvql/bunsceal/pkg/taxonomy/schemaValidation"
+	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
 	"github.com/kvql/bunsceal/pkg/taxonomy/testhelpers"
 )
 

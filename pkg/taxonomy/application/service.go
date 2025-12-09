@@ -1,20 +1,21 @@
-package taxonomy
+package application
 
 import (
 	"fmt"
 
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/o11y"
+	"github.com/kvql/bunsceal/pkg/taxonomy"
 	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
 )
 
 // SegL1Service orchestrates loading and validation of SegL1 entities
 type SegL1Service struct {
-	repository SegL1Repository
+	repository taxonomy.SegL1Repository
 }
 
 // NewSegL1Service creates a new SegL1 service with the provided repository
-func NewSegL1Service(repository SegL1Repository) *SegL1Service {
+func NewSegL1Service(repository taxonomy.SegL1Repository) *SegL1Service {
 	return &SegL1Service{
 		repository: repository,
 	}
@@ -49,11 +50,11 @@ func (s *SegL1Service) LoadAndValidate(source string) (map[string]domain.SegL1, 
 
 // SegL2Service orchestrates loading and validation of SegL2 entities
 type SegL2Service struct {
-	repository SegL2Repository
+	repository taxonomy.SegL2Repository
 }
 
 // NewSegL2Service creates a new SegL2 service with the provided repository
-func NewSegL2Service(repository SegL2Repository) *SegL2Service {
+func NewSegL2Service(repository taxonomy.SegL2Repository) *SegL2Service {
 	return &SegL2Service{
 		repository: repository,
 	}

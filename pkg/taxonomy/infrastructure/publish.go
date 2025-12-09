@@ -1,4 +1,4 @@
-package taxonomy
+package infrastructure
 
 import (
 	"encoding/json"

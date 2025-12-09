@@ -1,4 +1,4 @@
-package taxonomy
+package application
 
 import (
 	"errors"
@@ -7,6 +7,8 @@ import (
 	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/o11y"
+	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
+	"github.com/kvql/bunsceal/pkg/taxonomy/schemaValidation"
 	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
 )
 
@@ -98,12 +100,12 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 
 	// Load L1 segments using configured directory name
 	l1Dir := taxDir + cfg.Terminology.L1.DirName()
-	schemaValidator, err := validation.NewSchemaValidator(cfg.SchemaPath)
+	schemaValidator, err := schemaValidation.NewSchemaValidator(cfg.SchemaPath)
 	if err != nil {
 		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
 		return domain.Taxonomy{}, errors.New("failed to initialise schema validator")
 	}
-	l1Repository := NewFileSegL1Repository(schemaValidator)
+	l1Repository := infrastructure.NewFileSegL1Repository(schemaValidator)
 	l1Service := NewSegL1Service(l1Repository)
 	txy.SegL1s, err = l1Service.LoadAndValidate(l1Dir)
 	if err != nil {
@@ -117,7 +119,7 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 
 	// Load L2 segments using configured directory name
 	l2Dir := taxDir + cfg.Terminology.L2.DirName()
-	l2Repository := NewFileSegL2Repository(schemaValidator)
+	l2Repository := infrastructure.NewFileSegL2Repository(schemaValidator)
 	l2Service := NewSegL2Service(l2Repository)
 	txy.SegL2s, err = l2Service.LoadAndValidate(l2Dir)
 	if err != nil {
@@ -126,7 +128,7 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 	}
 
 	// Define compliance scopes
-	txy.CompReqs, err = LoadCompScope(taxDir+"compliance_requirements.yaml", cfg.SchemaPath)
+	txy.CompReqs, err = infrastructure.LoadCompScope(taxDir+"compliance_requirements.yaml", cfg.SchemaPath)
 	if err != nil {
 		o11y.Log.Println("Error loading compliance scope files:", err)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")

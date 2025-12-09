@@ -1,4 +1,4 @@
-package taxonomy
+package application
 
 import (
 	"fmt"

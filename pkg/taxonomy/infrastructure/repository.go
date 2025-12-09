@@ -1,4 +1,4 @@
-package taxonomy
+package infrastructure
 
 import (
 	"fmt"
@@ -7,34 +7,18 @@ import (
 
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/o11y"
-	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
+	"github.com/kvql/bunsceal/pkg/taxonomy/schemaValidation"
 	"gopkg.in/yaml.v3"
 )
 
-// SegL1Repository defines the contract for loading SegL1 data from any source
-type SegL1Repository interface {
-	// LoadAll loads all SegL1 entities from the specified source
-	// Returns a slice of SegL1 entities or an error if loading fails
-	// Does NOT perform business rule validation (uniqueness, etc)
-	LoadAll(source string) ([]domain.SegL1, error)
-}
-
-// SegL2Repository defines the contract for loading SegL2 data from any source
-type SegL2Repository interface {
-	// LoadAll loads all SegL2 entities from the specified source
-	// Returns a slice of SegL2 entities or an error if loading fails
-	// Does NOT perform business rule validation (uniqueness, etc)
-	LoadAll(source string) ([]domain.SegL2, error)
-}
-
-// FileSegL1Repository implements SegL1Repository for file-based data sources
+// FileSegL1Repository implements taxonomy.SegL1Repository for file-based data sources
 type FileSegL1Repository struct {
-	schemaValidator *validation.SchemaValidator
+	schemaValidator *schemaValidation.SchemaValidator
 }
 
 // NewFileSegL1Repository creates a new file-based SegL1 repository
 // schemaValidator is used to validate each file against the JSON schema
-func NewFileSegL1Repository(schemaValidator *validation.SchemaValidator) *FileSegL1Repository {
+func NewFileSegL1Repository(schemaValidator *schemaValidation.SchemaValidator) *FileSegL1Repository {
 	return &FileSegL1Repository{
 		schemaValidator: schemaValidator,
 	}
@@ -81,7 +65,7 @@ type version struct {
 }
 
 // parseSegL1File parses a single SegL1 file with schema validation
-func parseSegL1File(filePath string, schemaValidator *validation.SchemaValidator) (domain.SegL1, error) {
+func parseSegL1File(filePath string, schemaValidator *schemaValidation.SchemaValidator) (domain.SegL1, error) {
 	// #nosec G304 -- filePath comes from config-specified taxonomy directory, not user input
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -100,14 +84,14 @@ func parseSegL1File(filePath string, schemaValidator *validation.SchemaValidator
 	return segL1, nil
 }
 
-// FileSegL2Repository implements SegL2Repository for file-based data sources
+// FileSegL2Repository implements taxonomy.SegL2Repository for file-based data sources
 type FileSegL2Repository struct {
-	schemaValidator *validation.SchemaValidator
+	schemaValidator *schemaValidation.SchemaValidator
 }
 
 // NewFileSegL2Repository creates a new file-based SegL2 repository
 // schemaValidator is used to validate each file against the JSON schema
-func NewFileSegL2Repository(schemaValidator *validation.SchemaValidator) *FileSegL2Repository {
+func NewFileSegL2Repository(schemaValidator *schemaValidation.SchemaValidator) *FileSegL2Repository {
 	return &FileSegL2Repository{
 		schemaValidator: schemaValidator,
 	}

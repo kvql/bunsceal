@@ -9,7 +9,7 @@ import (
 
 	"github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/o11y"
-	"github.com/kvql/bunsceal/pkg/taxonomy/validation"
+	"github.com/kvql/bunsceal/pkg/taxonomy/schemaValidation"
 	"gopkg.in/yaml.v3"
 )
 
@@ -25,7 +25,7 @@ func LoadConfig(configPath, configSchemaPath string) (domain.Config, error) {
 		configSchemaPath = domain.DefaultSchemaPath
 	}
 
-	schemaValidator, err := validation.NewSchemaValidator(configSchemaPath)
+	schemaValidator, err := schemaValidation.NewSchemaValidator(configSchemaPath)
 	if err != nil {
 		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
 		return domain.Config{}, errors.New("failed to initialise schema validator")

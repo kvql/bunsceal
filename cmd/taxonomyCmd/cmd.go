@@ -6,7 +6,8 @@ import (
 
 	"github.com/kvql/bunsceal/pkg/config"
 	"github.com/kvql/bunsceal/pkg/o11y"
-	tx "github.com/kvql/bunsceal/pkg/taxonomy"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application"
+	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
 	vis "github.com/kvql/bunsceal/pkg/visualise"
 )
 
@@ -31,7 +32,7 @@ func Execute() {
 
 	// Validate and Load the taxonomy and validate it
 	// required for all actions
-	tax, err := tx.LoadTaxonomy(cfg)
+	tax, err := application.LoadTaxonomy(cfg)
 
 	if err != nil {
 		o11y.Log.Println("Taxonomy content is not valid")
@@ -48,7 +49,7 @@ func Execute() {
 	}
 	// Generate local JSON file of the taxonomy
 	if *localExport != "" {
-		err := tx.GenLocalTaxonomy(tax, *localExport)
+		err := infrastructure.GenLocalTaxonomy(tax, *localExport)
 		if err != nil {
 			o11y.Log.Println("Failed to export taxonomy to local JSON file")
 			os.Exit(1)

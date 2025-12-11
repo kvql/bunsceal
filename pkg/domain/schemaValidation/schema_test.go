@@ -46,6 +46,51 @@ func assertValidationFails(t *testing.T, data interface{}, schemaFile string) {
 	}
 }
 
+// validSegL1Data returns a valid SegL1 data structure for testing
+func validSegL1Data() map[string]interface{} {
+	return map[string]interface{}{
+		"name":                   "Production",
+		"id":                     "prod",
+		"description":            "Production environment with strict access controls and security policies enforced",
+		"sensitivity":            "A",
+		"sensitivity_rationale":  "Contains customer PII and financial data requiring highest classification level and protection",
+		"criticality":            "1",
+		"criticality_rationale":  "Direct customer impact if unavailable, requires immediate response and escalation",
+	}
+}
+
+// validSegL1WithLabels returns a valid SegL1 data structure with labels
+func validSegL1WithLabels(labels []string) map[string]interface{} {
+	data := validSegL1Data()
+	data["labels"] = labels
+	return data
+}
+
+// validSegL2Data returns a valid SegL2 data structure for testing
+func validSegL2Data() map[string]interface{} {
+	return map[string]interface{}{
+		"version":     "1.0",
+		"name":        "Application",
+		"id":          "app",
+		"description": "Application domain for all application-specific resources and services managed here",
+		"l1_overrides": map[string]interface{}{
+			"prod": map[string]interface{}{
+				"sensitivity":            "A",
+				"sensitivity_rationale":  "Application handles customer data and requires strict access controls and monitoring",
+				"criticality":            "1",
+				"criticality_rationale":  "Critical for business operations and customer service delivery with high availability requirements",
+			},
+		},
+	}
+}
+
+// validSegL2WithLabels returns a valid SegL2 data structure with labels
+func validSegL2WithLabels(labels []string) map[string]interface{} {
+	data := validSegL2Data()
+	data["labels"] = labels
+	return data
+}
+
 // Helper type and function to eliminate duplication in SegL2 tests
 type segL2TestData struct {
 	Version     string                          `yaml:"version"`
@@ -418,5 +463,106 @@ func TestNewSchemaValidator_ErrorCases(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for invalid JSON schema")
 		}
+	})
+}
+
+func TestValidateData_Labels(t *testing.T) {
+	t.Run("Valid label formats in SegL1", func(t *testing.T) {
+		testCases := []struct {
+			name   string
+			labels []string
+		}{
+			{"Simple key:value pairs", []string{"env:prod", "region:us-east-1"}},
+			{"With hyphens", []string{"region-id:us-west-2", "app-tier:backend"}},
+			{"With underscores", []string{"team_name:platform", "cost_center:engineering"}},
+			{"Namespaced labels", []string{"org.example/app:backend", "company.io/team:infra"}},
+			{"Values with forward slashes", []string{"url:api.example.com/v1", "path:/var/log/app.log"}},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				assertValidationPasses(t, validSegL1WithLabels(tc.labels), "seg-level1.json")
+			})
+		}
+	})
+
+	t.Run("AWS-compliant special characters in values", func(t *testing.T) {
+		testCases := []struct {
+			name   string
+			labels []string
+		}{
+			{"Values with spaces", []string{"env:production environment", "desc:web application tier"}},
+			{"Values with plus signs", []string{"version:v1.0.0+build.123", "tag:feature+bugfix"}},
+			{"Values with equals signs", []string{"formula:x=y+z", "equation:a=b"}},
+			{"Values with at signs", []string{"owner:team@example.com", "contact:admin@internal"}},
+			{"Values with colons", []string{"url:https://api.example.com:8080", "time:12:30:45"}},
+			{"Combined special chars", []string{"deploy:user@host:/path/to/app v1.0+patch", "ref:team=platform contact@example.com"}},
+			{"Trailing/leading spaces in values", []string{"env: production ", "tier: frontend"}},
+			{"Multiple spaces in values", []string{"desc:multi  word   description", "note:has    gaps"}},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				assertValidationPasses(t, validSegL1WithLabels(tc.labels), "seg-level1.json")
+			})
+		}
+	})
+
+	t.Run("Invalid label formats in SegL1", func(t *testing.T) {
+		testCases := []struct {
+			name   string
+			labels []string
+		}{
+			{"Missing colon separator", []string{"invalid-no-colon"}},
+			{"Key starts with hyphen", []string{"-invalid:value"}},
+			{"Key ends with hyphen", []string{"invalid-:value"}},
+			{"Empty key", []string{":value"}},
+			{"Key starts with dot", []string{".invalid:value"}},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				assertValidationFails(t, validSegL1WithLabels(tc.labels), "seg-level1.json")
+			})
+		}
+	})
+
+	t.Run("Invalid special characters in values", func(t *testing.T) {
+		testCases := []struct {
+			name   string
+			labels []string
+		}{
+			{"Value with parentheses", []string{"note:(important)"}},
+			{"Value with brackets", []string{"list:[item1,item2]"}},
+			{"Value with braces", []string{"obj:{key:val}"}},
+			{"Value with ampersand", []string{"query:foo&bar"}},
+			{"Value with percent", []string{"rate:50%"}},
+			{"Value with asterisk", []string{"glob:*.txt"}},
+			{"Value with hash", []string{"color:#FF0000"}},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				assertValidationFails(t, validSegL1WithLabels(tc.labels), "seg-level1.json")
+			})
+		}
+	})
+
+	t.Run("Uniqueness constraint in SegL1", func(t *testing.T) {
+		assertValidationFails(t, validSegL1WithLabels([]string{"env:prod", "env:prod"}), "seg-level1.json")
+	})
+
+	t.Run("Valid labels in SegL2", func(t *testing.T) {
+		assertValidationPasses(t, validSegL2WithLabels([]string{"domain:application", "tier:frontend"}), "seg-level2.json")
+	})
+
+	t.Run("Optional labels field", func(t *testing.T) {
+		t.Run("SegL1 without labels passes", func(t *testing.T) {
+			assertValidationPasses(t, validSegL1Data(), "seg-level1.json")
+		})
+
+		t.Run("SegL2 without labels passes", func(t *testing.T) {
+			assertValidationPasses(t, validSegL2Data(), "seg-level2.json")
+		})
 	})
 }

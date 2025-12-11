@@ -40,6 +40,9 @@
         2,
         3
       ]
+    },
+    "labels": {
+      "$ref": "./common.json#/$defs/labels"
     }
   },
   "required": [

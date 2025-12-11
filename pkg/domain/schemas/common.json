@@ -69,6 +69,15 @@
       "maxLength": 255,
       "pattern": "^[a-zA-Z0-9._/-]+$",
       "description": "File system path (relative or absolute). Supports forward slashes (/) for Unix/Mac. Example: './schema' or '/usr/local/schema'"
+    },
+    "labels": {
+      "type": "array",
+      "description": "Namespaced labels as key:value strings for categorization and plugin integration. Keys: max 63 chars (alphanumeric + ./_-). Values: max 253 chars (AWS-compliant: alphanumeric + ./_-+=:@ and spaces). Format: 'key:value' or 'prefix/name:value'",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][a-zA-Z0-9./_-]{0,61}[a-zA-Z0-9]:[a-zA-Z0-9./_\\-+=:@ ]{1,253}$"
+      },
+      "uniqueItems": true
     }
   }
 }

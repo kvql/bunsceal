@@ -90,6 +90,8 @@ func (tf *TestFiles) CreateSegL2Files(items []SegL2Fixture) string {
 name: "%s"
 id: "%s"
 description: "Test domain"
+l1_parents:
+  - production
 l1_overrides:
   production:
     sensitivity: "A"

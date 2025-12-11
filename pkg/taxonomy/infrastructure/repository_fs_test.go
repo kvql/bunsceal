@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
@@ -124,6 +125,8 @@ func TestParseSDFile(t *testing.T) {
 name: "Test Domain"
 id: "test"
 description: "Test security domain"
+l1_parents:
+  - production
 l1_overrides:
   production:
     sensitivity: "A"
@@ -159,6 +162,8 @@ name: "Test Domain"
 id: "test"
 description: "Test security domain"
 prominence: 2
+l1_parents:
+  - production
 l1_overrides:
   production:
     sensitivity: "A"
@@ -198,6 +203,36 @@ l1_overrides:
 
 		if err == nil {
 			t.Error("Expected error for unsupported version but got nil")
+		}
+	})
+
+	t.Run("Fails when l1_overrides key not in l1_parents", func(t *testing.T) {
+		invalidYAML := `version: "1.0"
+name: "Test Domain"
+id: "test"
+description: "Test security domain"
+l1_parents:
+  - production
+l1_overrides:
+  production:
+    sensitivity: "A"
+    sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
+  staging:
+    sensitivity: "D"
+    sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
+`
+		files := testhelpers.NewTestFiles(t)
+		tmpFile := files.CreateYAMLFile("segl2", invalidYAML)
+
+		validator := schemaValidation.MustCreateValidator(t)
+		fl := NewFileSegL2Repository(validator)
+		_, err := fl.parseSegL2File(tmpFile)
+
+		if err == nil {
+			t.Error("Expected L1 consistency validation error but got nil")
+		}
+		if err != nil && !strings.Contains(err.Error(), "L1 consistency validation failed") {
+			t.Errorf("Expected L1 consistency error, got: %v", err)
 		}
 	})
 }

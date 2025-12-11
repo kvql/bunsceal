@@ -2,31 +2,20 @@
 
 ## Overview
 
-As of this release, L2 segments now use an explicit `l1_parents` field to define parent relationships instead of relying on `l1_overrides` map keys.
+**BREAKING CHANGE:** L2 segments now require an explicit `l1_parents` field to define parent relationships. The old pattern of using `l1_overrides` map keys for parent selection is no longer supported.
 
-**What's changing:** The practice of using `l1_overrides` map keys to determine parent relationships. The `l1_overrides` field itself remains for storing override data.
+**What changed:**
+- `l1_parents` field is now **required** in all SegL2 YAML files
+- `l1_overrides` map keys are no longer used to determine parent relationships
+- The `l1_overrides` field remains for storing override data only
 
-## Migration Timeline
+## Required Changes
 
-### Phase 1: Backward Compatibility (Current)
-- Both old and new formats are fully supported
-- Files with only `l1_overrides` automatically migrate at load time
-- No immediate action required
-- Migration logs show which files are being auto-migrated
-
-### Phase 2: Dual Format (Recommended - Adopt Now)
-- Add `l1_parents` field to your L2 segment YAML files
-- Keep `l1_overrides` for override data
-- See examples below
-
-### Phase 3: New Format Only (Future)
-- `l1_overrides` keys will be ignored for parent relationships
-- Only `l1_parents` will determine parent-child relationships
-- `l1_overrides` becomes purely override data
+All L2 segment YAML files **must** be updated to include the `l1_parents` field. Files without this field will fail schema validation.
 
 ## Format Comparison
 
-### Old Format (Still Supported)
+### Old Format (No Longer Supported)
 ```yaml
 version: "1.0"
 name: Security
@@ -45,7 +34,7 @@ l1_overrides:
     criticality_rationale: "Critical shared infrastructure"
 ```
 
-### New Format (Recommended)
+### New Format (Required)
 ```yaml
 version: "1.0"
 name: Security
@@ -137,7 +126,7 @@ Run your taxonomy loading to ensure no errors:
 go test ./...
 ```
 
-Check logs for migration messages - once you've added `l1_parents`, you should no longer see migration logs for those files.
+Files without `l1_parents` will fail schema validation with a clear error message.
 
 ### Step 4: Simplify (Optional)
 If a segment fully inherits from its parents, you can now simplify:
@@ -152,32 +141,34 @@ l1_overrides: {}  # Will inherit all values
 ## Schema Changes
 
 The JSON schema now enforces:
-- At least one of `l1_parents` or `l1_overrides` must be present
-- If both are present, `l1_overrides` keys must be a subset of `l1_parents`
-- `l1_overrides` can now be empty (previously required minProperties: 1)
+- `l1_parents` is **required** (must be present in all SegL2 files)
+- `l1_parents` must have at least one entry (minItems: 1)
+- `l1_parents` must have unique entries (no duplicates)
+- `l1_overrides` can be empty (for full inheritance scenarios)
 
 ## Troubleshooting
 
-### Error: "L1Override key 'X' not found in L1Parents"
-**Cause:** You have an override for an L1 that isn't listed in `l1_parents`
+### Error: "missing properties: 'l1_parents'"
+**Cause:** SegL2 YAML file is missing the required `l1_parents` field
 
-**Fix:** Either add the L1 to `l1_parents` or remove the override
+**Fix:** Add the `l1_parents` field with at least one L1 parent ID
 
 ```yaml
 # Wrong:
-l1_parents:
-  - prod
+version: "1.0"
+name: Security
+id: sec
 l1_overrides:
   prod: {...}
-  staging: {...}  # ERROR: staging not in l1_parents
 
 # Correct:
+version: "1.0"
+name: Security
+id: sec
 l1_parents:
   - prod
-  - staging
 l1_overrides:
   prod: {...}
-  staging: {...}
 ```
 
 ### Error: "SegL2 'X' has parent 'Y' but no override data after inheritance"
@@ -185,24 +176,16 @@ l1_overrides:
 
 **Fix:** Check that the parent L1 segment exists in your taxonomy
 
-### Migration Logs
-During Phase 1, you may see logs like:
-```
-Migrated L1Parents for SegL2 'sec' from L1Overrides keys in file security.yaml
-```
-
-These are informational and indicate automatic migration is working. To stop seeing these logs, add the `l1_parents` field to your YAML files.
-
 ## Questions & Support
 
 **Q: Do I need to migrate immediately?**
-A: No. The system supports both formats indefinitely. However, we recommend migrating to take advantage of the new capabilities.
+A: Yes. This is a breaking change. All SegL2 YAML files must have the `l1_parents` field.
 
 **Q: Can I have both l1_parents and l1_overrides?**
-A: Yes! This is the recommended approach. Use `l1_parents` to define relationships and `l1_overrides` for override data.
+A: Yes! `l1_parents` defines the parent relationships (required), and `l1_overrides` provides override data (optional - can be empty for full inheritance).
 
 **Q: What if I want to remove a parent?**
-A: Remove the L1 from both `l1_parents` and `l1_overrides`. The system will validate consistency.
+A: Remove the L1 from `l1_parents`. You can also remove it from `l1_overrides` if you had override data.
 
 **Q: Can parents have different overrides?**
 A: Yes! That's the whole point of the override system. Each parent can have different sensitivity, criticality, and compliance requirements.

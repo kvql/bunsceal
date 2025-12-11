@@ -158,17 +158,13 @@ func (r *FileSegL2Repository) parseSegL2File(filePath string) (domain.SegL2, err
 			return domain.SegL2{}, fmt.Errorf("failed to unmarshal file %s: %w", filePath, err)
 		}
 
-		// MIGRATION SUPPORT: Populate L1Parents from L1Overrides if not present
-		if segL2.MigrateL1Parents() {
-			o11y.Log.Printf("Migrated L1Parents for SegL2 '%s' from L1Overrides keys in file %s", segL2.ID, filePath)
-		}
+		segL2.SetDefaults()
 
-		// VALIDATION: Ensure consistency between L1Parents and L1Overrides if both present
+		// Validate that l1_overrides keys are subset of l1_parents
 		if err = segL2.ValidateL1Consistency(); err != nil {
 			return domain.SegL2{}, fmt.Errorf("L1 consistency validation failed for %s: %w", filePath, err)
 		}
 
-		segL2.SetDefaults()
 		if err = segL2.ParseLabels(); err != nil {
 			return domain.SegL2{}, err
 		}

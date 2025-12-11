@@ -73,6 +73,7 @@ func validSegL2Data() map[string]interface{} {
 		"name":        "Application",
 		"id":          "app",
 		"description": "Application domain for all application-specific resources and services managed here",
+		"l1_parents":  []string{"prod"},
 		"l1_overrides": map[string]interface{}{
 			"prod": map[string]interface{}{
 				"sensitivity":           "A",
@@ -97,6 +98,7 @@ type segL2TestData struct {
 	Name        string                          `yaml:"name,omitempty"`
 	ID          string                          `yaml:"id"`
 	Description string                          `yaml:"description"`
+	L1Parents   []string                        `yaml:"l1_parents,omitempty"`
 	L1Overrides map[string]testdata.L1Overrides `yaml:"l1_overrides,omitempty"`
 }
 
@@ -106,6 +108,7 @@ func marshalSegL2(seg testdata.SegL2) ([]byte, error) {
 		Name:        seg.Name,
 		ID:          seg.ID,
 		Description: seg.Description,
+		L1Parents:   seg.L1Parents,
 		L1Overrides: seg.L1Overrides,
 	})
 }

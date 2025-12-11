@@ -59,22 +59,8 @@
     "version",
     "name",
     "id",
-    "description"
-  ],
-  "anyOf": [
-    {
-      "required": ["l1_parents"],
-      "description": "New format: explicit l1_parents field"
-    },
-    {
-      "required": ["l1_overrides"],
-      "properties": {
-        "l1_overrides": {
-          "minProperties": 1
-        }
-      },
-      "description": "Legacy format: l1_overrides with at least one entry"
-    }
+    "description",
+    "l1_parents"
   ],
   "additionalProperties": false
 }

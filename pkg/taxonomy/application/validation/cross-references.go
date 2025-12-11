@@ -10,20 +10,33 @@ func ValidateL2Definition(txy *domain.Taxonomy) (bool, int) {
 	failures := 0
 	// Loop through SegL2s and validate default risk levels
 	for _, secDomain := range txy.SegL2s {
-		for envID, sdEnv := range secDomain.L1Overrides {
-			// validate compliance scope for each SD
+		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
+		for _, l1ID := range secDomain.L1Parents {
+			// Validate parent L1 exists in taxonomy
+			if _, ok := txy.SegL1s[l1ID]; !ok {
+				o11y.Log.Printf("Invalid L1 parent for SegL2 %s: %s\n", secDomain.Name, l1ID)
+				failures++
+				valid = false
+				continue // Skip compliance validation for invalid parent
+			}
+
+			// Lookup override (should exist after inheritance)
+			sdEnv, exists := secDomain.L1Overrides[l1ID]
+			if !exists {
+				// This should not happen if inheritance ran correctly
+				o11y.Log.Printf("ERROR: SegL2 '%s' has parent '%s' but no override data after inheritance\n", secDomain.Name, l1ID)
+				failures++
+				valid = false
+				continue
+			}
+
+			// Validate compliance scope for each SD
 			for _, compReq := range sdEnv.ComplianceReqs {
 				if _, ok := txy.CompReqs[compReq]; !ok {
-					o11y.Log.Printf("Invalid compliance scope(%s) for SegL1(%s) in SD (%s)", compReq, envID, secDomain.Name)
+					o11y.Log.Printf("Invalid compliance scope(%s) for SegL1(%s) in SD (%s)", compReq, l1ID, secDomain.Name)
 					failures++
 					valid = false
 				}
-			}
-			// validate secEnv for each SD is a valid secEnv in the taxonomy,
-			if _, ok := txy.SegL1s[envID]; !ok {
-				o11y.Log.Printf("Invalid secEnv for SD %s: %s\n", secDomain.Name, envID)
-				failures++
-				valid = false
 			}
 		}
 	}

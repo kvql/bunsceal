@@ -21,15 +21,25 @@
       "type": "string",
       "minLength": 1
     },
+    "l1_parents": {
+      "type": "array",
+      "description": "Explicit list of L1 parent segment IDs",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z-]{1,15}$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
     "l1_overrides": {
       "type": "object",
-      "description": "Map of L1 segment ID -> L1 override details",
+      "description": "Map of L1 segment ID -> L1 override details. Keys must be subset of l1_parents if l1_parents is present.",
       "patternProperties": {
         "^[a-z-]{1,15}$": {
           "$ref": "./l1-overrides.json"
         }
       },
-      "minProperties": 1,
+      "minProperties": 0,
       "additionalProperties": false
     },
     "prominence": {
@@ -49,8 +59,22 @@
     "version",
     "name",
     "id",
-    "description",
-    "l1_overrides"
+    "description"
+  ],
+  "anyOf": [
+    {
+      "required": ["l1_parents"],
+      "description": "New format: explicit l1_parents field"
+    },
+    {
+      "required": ["l1_overrides"],
+      "properties": {
+        "l1_overrides": {
+          "minProperties": 1
+        }
+      },
+      "description": "Legacy format: l1_overrides with at least one entry"
+    }
   ],
   "additionalProperties": false
 }

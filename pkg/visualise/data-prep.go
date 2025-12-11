@@ -6,6 +6,7 @@ import (
 
 	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/o11y"
 )
 
 type EnvImageData struct {
@@ -92,13 +93,22 @@ func PrepTaxonomy(txy *domain.Taxonomy) map[string]EnvImageData {
 	}
 
 	for _, sd := range txy.SegL2s {
-		for envId, det := range sd.L1Overrides {
-			envData := data[envId]
+		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
+		for _, l1ID := range sd.L1Parents {
+			// Lookup override (should exist after inheritance)
+			det, exists := sd.L1Overrides[l1ID]
+			if !exists {
+				// This should not happen if inheritance ran correctly
+				o11y.Log.Printf("WARNING: SegL2 '%s' has parent '%s' but no override data after inheritance - skipping\n", sd.ID, l1ID)
+				continue
+			}
+
+			envData := data[l1ID]
 			envData.SegL2s[sd.ID] = det
 			envData.SegL2Names[sd.ID] = sd.Name
 			envData.Criticalities[det.Criticality] = true
-			envData.SortedSegL2s = append(data[envId].SortedSegL2s, sd.ID)
-			data[envId] = envData
+			envData.SortedSegL2s = append(data[l1ID].SortedSegL2s, sd.ID)
+			data[l1ID] = envData
 		}
 	}
 	for _, envData := range data {

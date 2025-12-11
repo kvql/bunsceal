@@ -27,6 +27,7 @@ type SegL2 struct {
 	Name        string                 `yaml:"name"`
 	ID          string                 `yaml:"id"`
 	Description string                 `yaml:"description"`
+	L1Parents   []string               `yaml:"l1_parents,omitempty"`
 	L1Overrides map[string]L1Overrides `yaml:"l1_overrides"`
 }
 
@@ -184,6 +185,7 @@ var ValidSegL2Security = SegL2{
 	Name:        "Security",
 	ID:          "sec",
 	Description: "Security domain for security tooling and monitoring infrastructure",
+	L1Parents:   []string{"production", "staging"},
 	L1Overrides: map[string]L1Overrides{
 		"production": {
 			Sensitivity:          "B",
@@ -206,6 +208,7 @@ var ValidSegL2Application = SegL2{
 	Name:        "Application",
 	ID:          "app",
 	Description: "Application domain for core business application services",
+	L1Parents:   []string{"production"},
 	L1Overrides: map[string]L1Overrides{
 		"production": {
 			Sensitivity:          "A",
@@ -222,6 +225,7 @@ var ValidSegL2WithInheritance = SegL2{
 	Name:        "Infrastructure",
 	ID:          "infra",
 	Description: "Infrastructure domain that inherits all settings from environments",
+	L1Parents:   []string{"production", "staging"},
 	L1Overrides: map[string]L1Overrides{
 		"production": {
 			// Empty - should inherit from production SegL1
@@ -232,11 +236,21 @@ var ValidSegL2WithInheritance = SegL2{
 	},
 }
 
+// SegL2 with full inheritance (no overrides in YAML)
+var ValidSegL2FullInheritance = SegL2{
+	Name:        "Monitoring",
+	ID:          "mon",
+	Description: "Monitoring domain that fully inherits from all parent environments without any overrides",
+	L1Parents:   []string{"production", "staging"},
+	L1Overrides: map[string]L1Overrides{}, // Empty - will be populated by inheritance
+}
+
 // Invalid SegL2 Fixtures
 
 var InvalidSegL2_MissingName = SegL2{
 	ID:          "invalid",
 	Description: "Missing name field",
+	L1Parents:   []string{"production"},
 	L1Overrides: map[string]L1Overrides{
 		"production": {},
 	},
@@ -246,6 +260,7 @@ var InvalidSegL2_InvalidID = SegL2{
 	Name:        "Invalid ID",
 	ID:          "Invalid_ID!",
 	Description: "ID contains invalid characters",
+	L1Parents:   []string{"production"},
 	L1Overrides: map[string]L1Overrides{
 		"production": {},
 	},
@@ -256,6 +271,7 @@ var InvalidSegL2_NoL1Overrides = SegL2{
 	ID:          "no-env",
 	Description: "Security domain with no environment details defined",
 	L1Overrides: map[string]L1Overrides{},
+	// No L1Parents - should fail schema validation (anyOf requires one field)
 }
 
 // Valid CompReq Fixtures

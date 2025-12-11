@@ -4,6 +4,9 @@ version: "1.0"
 name: Security
 id: sec
 description: The "Security" security domain is where the majority of the resources deployed are for security tooling.
+l1_parents:
+  - staging
+  - shared-service
 l1_overrides:
   staging:
     sensitivity: "D"

@@ -1,6 +1,8 @@
 package testhelpers
 
 import (
+	"sort"
+
 	"github.com/kvql/bunsceal/pkg/domain"
 )
 
@@ -130,6 +132,7 @@ func NewAppSegL2() domain.SegL2 {
 		Name:        "Application",
 		ID:          "app",
 		Description: "Application domain for core business services",
+		L1Parents:   []string{"prod"},
 		L1Overrides: map[string]domain.L1Overrides{
 			"prod": {
 				Sensitivity:          "A",
@@ -143,11 +146,32 @@ func NewAppSegL2() domain.SegL2 {
 }
 
 // NewSegL2 creates a SegL2 with the given parameters
+// L1Parents is auto-populated from overrides keys for backward compatibility
 func NewSegL2(id, name string, overrides map[string]domain.L1Overrides) domain.SegL2 {
+	// Extract L1Parents from overrides keys for backward compatibility
+	l1Parents := make([]string, 0, len(overrides))
+	for l1ID := range overrides {
+		l1Parents = append(l1Parents, l1ID)
+	}
+	sort.Strings(l1Parents)
+
 	return domain.SegL2{
 		Name:        name,
 		ID:          id,
 		Description: "This is a valid description with sufficient length to meet minimum requirements for validation purposes.",
+		L1Parents:   l1Parents,
+		L1Overrides: overrides,
+	}
+}
+
+// NewSegL2WithParents creates a SegL2 with explicit parents and overrides
+// Allows testing parent without override scenarios
+func NewSegL2WithParents(id, name string, l1Parents []string, overrides map[string]domain.L1Overrides) domain.SegL2 {
+	return domain.SegL2{
+		Name:        name,
+		ID:          id,
+		Description: "This is a valid description with sufficient length to meet minimum requirements for validation purposes.",
+		L1Parents:   l1Parents,
 		L1Overrides: overrides,
 	}
 }

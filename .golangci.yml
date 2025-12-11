@@ -27,6 +27,7 @@ linters-settings:
     ignore-words:
       - color   # graphviz attribute name
       - center  # graphviz attribute name
+      - Initialize
   nolintlint:
     allow-unused: false
     require-explanation: true

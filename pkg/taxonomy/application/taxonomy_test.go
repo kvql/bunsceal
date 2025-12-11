@@ -25,6 +25,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Infrastructure",
 					ID:          "infra",
 					Description: "Infrastructure domain",
+					L1Parents:   []string{"prod"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
 							// Empty sensitivity and rationale - should inherit
@@ -68,6 +69,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
+					L1Parents:   []string{"staging"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"staging": {
 							Sensitivity:          "C",
@@ -105,6 +107,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Security",
 					ID:          "sec",
 					Description: "Security domain",
+					L1Parents:   []string{"prod"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
 							Sensitivity:          "B",
@@ -140,6 +143,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
+					L1Parents:   []string{"prod"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
 							// nil ComplianceReqs - should inherit
@@ -179,6 +183,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
+					L1Parents:   []string{"prod"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
 							ComplianceReqs:       []string{"pci-dss"}, // Custom subset
@@ -218,6 +223,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
+					L1Parents:   []string{"prod"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
 							ComplianceReqs:       []string{"pci-dss", "sox"},
@@ -267,6 +273,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
+					L1Parents:   []string{"prod"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
 							ComplianceReqs:       []string{"pci-dss", "invalid-scope"},
@@ -315,6 +322,7 @@ func TestApplyInheritance(t *testing.T) {
 					Name:        "Application",
 					ID:          "app",
 					Description: "Application domain",
+					L1Parents:   []string{"prod", "staging"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
 							// Should inherit from prod SegL1

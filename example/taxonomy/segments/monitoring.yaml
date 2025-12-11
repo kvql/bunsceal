@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../pkg/domain/schemas/seg-level2.json
+---
+version: "1.0"
+name: Monitoring
+id: mon
+description: Centralized monitoring infrastructure that fully inherits security properties from parent L1 segments without overrides.
+
+# Parents with full inheritance - no overrides needed
+l1_parents:
+  - staging
+  - shared-service
+
+# Empty overrides - will inherit all values from parent L1 segments
+l1_overrides: {}

@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/kvql/bunsceal/pkg/domain"
-	"github.com/kvql/bunsceal/pkg/o11y"
 	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
+	"github.com/kvql/bunsceal/pkg/o11y"
 
 	"gopkg.in/yaml.v3"
 )

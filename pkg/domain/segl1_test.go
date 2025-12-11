@@ -57,7 +57,7 @@ func TestSegL1_ParseLabels(t *testing.T) {
 		}
 	})
 
-	t.Run("Initializes nil ParsedLabels map", func(t *testing.T) {
+	t.Run("Initialises nil ParsedLabels map", func(t *testing.T) {
 		seg := &SegL1{
 			Labels:       []string{"key:value"},
 			ParsedLabels: nil,
@@ -69,7 +69,7 @@ func TestSegL1_ParseLabels(t *testing.T) {
 		}
 
 		if seg.ParsedLabels == nil {
-			t.Fatal("Expected ParsedLabels to be initialized")
+			t.Fatal("Expected ParsedLabels to be initialised")
 		}
 		if seg.ParsedLabels["key"] != "value" {
 			t.Errorf("Expected key=value, got %s", seg.ParsedLabels["key"])

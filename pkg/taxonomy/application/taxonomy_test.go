@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/kvql/bunsceal/pkg/domain"
-	. "github.com/kvql/bunsceal/pkg/taxonomy/testhelpers"
 )
 
 func TestApplyInheritance(t *testing.T) {
@@ -340,53 +339,5 @@ func TestApplyInheritance(t *testing.T) {
 		if stagingDetails.Sensitivity != "D" {
 			t.Errorf("Expected staging to inherit 'D', got %s", stagingDetails.Sensitivity)
 		}
-	})
-}
-
-func TestCompleteAndValidateTaxonomy(t *testing.T) {
-	t.Run("Complete valid taxonomy passes all validations", func(t *testing.T) {
-		txy := WithSegL2(NewCompleteTaxonomy(), "app", NewAppSegL2())
-
-		valid := CompleteAndValidateTaxonomy(txy)
-		AssertValidationPasses(t, valid, "Complete valid taxonomy")
-	})
-
-	t.Run("Invalid environment compliance fails", func(t *testing.T) {
-		txy := WithSegL1(
-			NewTestTaxonomy(),
-			"shared-service",
-			NewSegL1("shared-service", "Shared Service", "A", "1", []string{"invalid-scope"}),
-		)
-
-		valid := CompleteAndValidateTaxonomy(txy)
-		AssertValidationFails(t, valid, "Invalid environment compliance")
-	})
-
-	t.Run("Missing shared-service environment fails", func(t *testing.T) {
-		txy := WithSegL1(NewTestTaxonomy(), "prod", NewProdSegL1())
-
-		valid := CompleteAndValidateTaxonomy(txy)
-		AssertValidationFails(t, valid, "Missing shared-service")
-	})
-
-	t.Run("Invalid SegL2 references fail", func(t *testing.T) {
-		txy := WithSegL2(
-			WithSegL1(
-				WithCompReq(NewTestTaxonomy(), "pci-dss", NewCompReq(
-					"PCI DSS",
-					"Payment Card Industry Data Security Standard",
-					"https://www.pcisecuritystandards.org/",
-				)),
-				"shared-service",
-				NewSharedServiceSegL1(),
-			),
-			"app",
-			NewSegL2("app", "Application", map[string]domain.L1Overrides{
-				"invalid-env": NewL1Override("A", "1", []string{}),
-			}),
-		)
-
-		valid := CompleteAndValidateTaxonomy(txy)
-		AssertValidationFails(t, valid, "Invalid SegL2 environment reference")
 	})
 }

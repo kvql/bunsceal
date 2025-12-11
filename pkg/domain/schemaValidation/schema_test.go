@@ -49,13 +49,13 @@ func assertValidationFails(t *testing.T, data interface{}, schemaFile string) {
 // validSegL1Data returns a valid SegL1 data structure for testing
 func validSegL1Data() map[string]interface{} {
 	return map[string]interface{}{
-		"name":                   "Production",
-		"id":                     "prod",
-		"description":            "Production environment with strict access controls and security policies enforced",
-		"sensitivity":            "A",
-		"sensitivity_rationale":  "Contains customer PII and financial data requiring highest classification level and protection",
-		"criticality":            "1",
-		"criticality_rationale":  "Direct customer impact if unavailable, requires immediate response and escalation",
+		"name":                  "Production",
+		"id":                    "prod",
+		"description":           "Production environment with strict access controls and security policies enforced",
+		"sensitivity":           "A",
+		"sensitivity_rationale": "Contains customer PII and financial data requiring highest classification level and protection",
+		"criticality":           "1",
+		"criticality_rationale": "Direct customer impact if unavailable, requires immediate response and escalation",
 	}
 }
 
@@ -75,10 +75,10 @@ func validSegL2Data() map[string]interface{} {
 		"description": "Application domain for all application-specific resources and services managed here",
 		"l1_overrides": map[string]interface{}{
 			"prod": map[string]interface{}{
-				"sensitivity":            "A",
-				"sensitivity_rationale":  "Application handles customer data and requires strict access controls and monitoring",
-				"criticality":            "1",
-				"criticality_rationale":  "Critical for business operations and customer service delivery with high availability requirements",
+				"sensitivity":           "A",
+				"sensitivity_rationale": "Application handles customer data and requires strict access controls and monitoring",
+				"criticality":           "1",
+				"criticality_rationale": "Critical for business operations and customer service delivery with high availability requirements",
 			},
 		},
 	}

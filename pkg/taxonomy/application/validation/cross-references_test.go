@@ -15,7 +15,7 @@ func TestValidateL1Definitions(t *testing.T) {
 			NewProdSegL1(),
 		)
 
-		valid := ValidateL1Definitions(txy)
+		valid := ValidateL1Comp(txy)
 		AssertValidationPasses(t, valid, "Valid compliance requirements")
 	})
 
@@ -30,7 +30,7 @@ func TestValidateL1Definitions(t *testing.T) {
 			NewSegL1("prod", "Production", "A", "1", []string{"invalid-scope"}),
 		)
 
-		valid := ValidateL1Definitions(txy)
+		valid := ValidateL1Comp(txy)
 		AssertValidationFails(t, valid, "Invalid compliance requirement")
 	})
 
@@ -41,7 +41,7 @@ func TestValidateL1Definitions(t *testing.T) {
 			NewStagingSegL1(),
 		)
 
-		valid := ValidateL1Definitions(txy)
+		valid := ValidateL1Comp(txy)
 		AssertValidationPasses(t, valid, "Empty compliance requirements")
 	})
 }

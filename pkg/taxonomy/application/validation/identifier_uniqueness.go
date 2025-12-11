@@ -6,9 +6,9 @@ import (
 	"github.com/kvql/bunsceal/pkg/domain"
 )
 
-// UniquenessValidator validates that IDs and Names are unique across a collection of objects
+// IdentifierUniquenessValidation validates that IDs and Names are unique across a collection of objects
 // Returns a slice of error messages if validation fails, empty slice if all validations pass
-func UniquenessValidator[T domain.UnqSegKeys](objects []T) []string {
+func IdentifierUniquenessValidation[T domain.UnqSegKeys](objects []T) []string {
 	idMap := make(map[string]bool)
 	var validations []string
 

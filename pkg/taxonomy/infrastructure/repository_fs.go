@@ -81,6 +81,10 @@ func parseSegL1File(filePath string, schemaValidator *schemaValidation.SchemaVal
 		return domain.SegL1{}, err
 	}
 
+	if err = segL1.ParseLabels(); err != nil {
+		return domain.SegL1{}, err
+	}
+
 	return segL1, nil
 }
 
@@ -154,6 +158,9 @@ func (r *FileSegL2Repository) parseSegL2File(filePath string) (domain.SegL2, err
 			return domain.SegL2{}, fmt.Errorf("failed to unmarshal file %s: %w", filePath, err)
 		}
 		segL2.SetDefaults()
+		if err = segL2.ParseLabels(); err != nil {
+			return domain.SegL2{}, err
+		}
 		return segL2, nil
 	default:
 		return domain.SegL2{}, fmt.Errorf("unsupported version %s in file %s", fileVersion.Version, filePath)

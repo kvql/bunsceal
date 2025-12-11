@@ -14,7 +14,7 @@ func TestSegL1Service(t *testing.T) {
 		repository := infrastructure.NewFileSegL1Repository(validator)
 		service := NewSegL1Service(repository)
 
-		segL1s, err := service.LoadAndValidate("../../../example/taxonomy/environments")
+		segL1s, err := service.Load("../../../example/taxonomy/environments")
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
@@ -38,7 +38,7 @@ func TestSegL1Service(t *testing.T) {
 
 		repository := infrastructure.NewFileSegL1Repository(validator)
 		service := NewSegL1Service(repository)
-		segL1s, err := service.LoadAndValidate(tmpDir)
+		segL1s, err := service.Load(tmpDir)
 
 		if err != nil {
 			t.Fatalf("LoadAndValidate: unexpected error: %v", err)
@@ -65,7 +65,7 @@ func TestSegL1Service(t *testing.T) {
 
 		repository := infrastructure.NewFileSegL1Repository(validator)
 		service := NewSegL1Service(repository)
-		segL1s, err := service.LoadAndValidate(tmpDir)
+		segL1s, err := service.Load(tmpDir)
 
 		if err == nil {
 			t.Error("Expected error for duplicate IDs but got nil")
@@ -84,7 +84,7 @@ func TestSegL2Service(t *testing.T) {
 		repository := infrastructure.NewFileSegL2Repository(validator)
 		service := NewSegL2Service(repository)
 
-		segL2s, err := service.LoadAndValidate("../../../example/taxonomy/segments")
+		segL2s, err := service.Load("../../../example/taxonomy/segments")
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
@@ -103,7 +103,7 @@ func TestSegL2Service(t *testing.T) {
 
 		repository := infrastructure.NewFileSegL2Repository(validator)
 		service := NewSegL2Service(repository)
-		segL2s, err := service.LoadAndValidate(tmpDir)
+		segL2s, err := service.Load(tmpDir)
 
 		if err != nil {
 			t.Fatalf("LoadAndValidate: unexpected error: %v", err)
@@ -127,7 +127,7 @@ func TestSegL2Service(t *testing.T) {
 
 		repository := infrastructure.NewFileSegL2Repository(validator)
 		service := NewSegL2Service(repository)
-		segL2s, err := service.LoadAndValidate(tmpDir)
+		segL2s, err := service.Load(tmpDir)
 
 		if err == nil {
 			t.Error("Expected error for duplicate IDs but got nil")

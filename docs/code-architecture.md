@@ -2,18 +2,6 @@
 
 Overview of the code architecture.
 
-
-
-## Logic overview
-
-1. Load config and schema
-2. Load taxonomy files
-3. validate taxonomy file content
-4. cross validate taxonomy
-5. metadata validation and logic
-6. publishing and image generation
-
-
 ```mermaid
 flowchart
     subgraph fs ["filesystem"]
@@ -52,14 +40,63 @@ block-beta
 | Domain | Purpose | Interacts with |
 |-------|---------|------------|
 | **CMD** | User Interaction, via the CLI  | Visualisations, Taxonomy, Config, O11y |
-| **Domain**| Define the scheama and associated data types| O11y|
+| **Domain**| Define the schema and associated data types| O11y|
 | **Taxonomy** | Business logic, use cases | Domain, Config, O11y|
 | **Visualisation** | Generates visuals based on  | Domain, Config, O11y |
 | **Observability** | Handles logging and metrics |  |
 | **Config** | Handles configuration and providing configuration data to other packages ||
 
-### Notes
 
-#### Schema Validation
+### Schema Validation
 
-Schema validation is complied at the application level for taxonomy and passed to the infrastructure functions as a point. This saves duplicate compliation resources. Schema validation should only happen at the infrastructure level, application level assumes pre validated data.
+Schema validation is compiled at the application level for taxonomy and passed to the infrastructure functions as a point. This saves duplicate compilation resources. Schema validation should only happen at the infrastructure level, application level assumes pre validated data.
+
+## Domain
+
+Definition of core data types for building the taxonomy.
+
+> **Core fields**:
+> To decouple the core functionality of mapping out segments from extra metadata. Core fields are all excluding `labels`
+
+## Taxonomy
+
+List of components under the taxonomy package
+
+### Layer: Application
+
+#### Repository
+
+Interface for repository functions to abstract infrastructure details on data access
+
+Responsibilities for repository:
+
+This includes:
+
+- Schema validation (json schema)
+- PostLoad() method
+    - Schema validation (code based validation rules)
+    - Setting defaults
+    - Field extraction (e.g labels)
+
+#### Service
+
+Purpose: Take individual list of segments and form a map
+
+- Identifier uniqueness Validation
+
+#### taxonomy
+
+Purpose: Population of the taxonomy object and application of business logic on core field
+Build the taxonomy Object
+
+
+
+#### Plugin
+
+Handle everything outside of the core taxonomy fields
+- Plugin Logic
+    - Inheritance
+    - Business Logic
+
+
+

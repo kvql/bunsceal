@@ -20,17 +20,17 @@ func NewSegL1Service(repository SegL1Repository) *SegL1Service {
 	}
 }
 
-// LoadAndValidate loads SegL1 entities from the source, validates them,
+// Load loads SegL1 entities from the source, validates schema, ID uniqueness and performs postLoad, them,
 // and returns a map indexed by ID
-func (s *SegL1Service) LoadAndValidate(source string) (map[string]domain.SegL1, error) {
+func (s *SegL1Service) Load(source string) (map[string]domain.SegL1, error) {
 	// Load entities from repository
 	segList, err := s.repository.LoadAll(source)
 	if err != nil {
 		return nil, err
 	}
 
-	// Validate uniqueness
-	validations := validation.UniquenessValidator(segList)
+	// Validate uniqueness of ID field before forming map
+	validations := validation.IdentifierUniquenessValidation(segList)
 	if len(validations) > 0 {
 		for _, result := range validations {
 			o11y.Log.Println(result)
@@ -59,9 +59,9 @@ func NewSegL2Service(repository SegL2Repository) *SegL2Service {
 	}
 }
 
-// LoadAndValidate loads SegL2 entities from the source, validates them,
+// Load loads SegL2 entities from the source, validates them,
 // and returns a map indexed by ID
-func (s *SegL2Service) LoadAndValidate(source string) (map[string]domain.SegL2, error) {
+func (s *SegL2Service) Load(source string) (map[string]domain.SegL2, error) {
 	// Load entities from repository
 	segList, err := s.repository.LoadAll(source)
 	if err != nil {
@@ -69,7 +69,7 @@ func (s *SegL2Service) LoadAndValidate(source string) (map[string]domain.SegL2, 
 	}
 
 	// Validate uniqueness
-	validations := validation.UniquenessValidator(segList)
+	validations := validation.IdentifierUniquenessValidation(segList)
 	if len(validations) > 0 {
 		for _, result := range validations {
 			o11y.Log.Println(result)

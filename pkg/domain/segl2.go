@@ -57,9 +57,8 @@ func (s *SegL2) ParseLabels() error {
 	return nil
 }
 
-// TODO:
-// UpdateLables() Function to convert ParsedLabels into deliminated strings and 
-// update the Label value. To be run after ParsedLabels are updated via inheritance
+// UpdateLabels converts ParsedLabels into deliminated strings and updates the Label value.
+// TODO: To be run after ParsedLabels are updated via inheritance
 func (s *SegL2) UpdateLabels() error {
 	return nil
 }

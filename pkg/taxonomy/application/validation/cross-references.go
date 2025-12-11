@@ -30,7 +30,7 @@ func ValidateL2Definition(txy *domain.Taxonomy) (bool, int) {
 	return valid, failures
 }
 
-func ValidateL1Definitions(txy *domain.Taxonomy) bool {
+func ValidateL1Comp(txy *domain.Taxonomy) bool {
 	valid := true
 	// Loop through environments and validate
 	for _, env := range txy.SegL1s {

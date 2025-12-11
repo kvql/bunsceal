@@ -14,7 +14,7 @@ func TestUniquenessValidator_UniqueItems(t *testing.T) {
 		{ID: "test-3", Name: "Test 3"},
 	}
 
-	validations := UniquenessValidator(segments)
+	validations := IdentifierUniquenessValidation(segments)
 
 	if len(validations) != 0 {
 		t.Errorf("Expected no validations for unique items, got %d: %v", len(validations), validations)
@@ -27,7 +27,7 @@ func TestUniquenessValidator_DuplicateID(t *testing.T) {
 		{ID: "test-1", Name: "Test 2"}, // Duplicate ID
 	}
 
-	validations := UniquenessValidator(segments)
+	validations := IdentifierUniquenessValidation(segments)
 
 	if len(validations) != 1 {
 		t.Fatalf("Expected 1 validation error, got %d: %v", len(validations), validations)

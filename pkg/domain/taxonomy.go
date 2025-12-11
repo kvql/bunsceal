@@ -1,6 +1,5 @@
 package domain
 
-
 // Taxonomy is the root aggregate containing all taxonomy data.
 type Taxonomy struct {
 	ApiVersion        string
@@ -16,4 +15,3 @@ type CompReq struct {
 	Description string `yaml:"description"`
 	ReqsLink    string `yaml:"requirements_link"`
 }
-

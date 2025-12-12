@@ -15,16 +15,16 @@ func ApplyInheritance(txy *domain.Taxonomy) bool {
 	}
 
 	// Loop through env details for each security domain and update risk compliance if not set based on env default
-	for _, segL2 := range txy.SegL2s {
+	for _, Seg := range txy.Segs {
 		// Initialize L1Overrides map if nil (enables parent-without-override pattern)
-		if segL2.L1Overrides == nil {
-			segL2.L1Overrides = make(map[string]domain.L1Overrides)
+		if Seg.L1Overrides == nil {
+			Seg.L1Overrides = make(map[string]domain.L1Overrides)
 		}
 
 		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
-		for _, l1ID := range segL2.L1Parents {
+		for _, l1ID := range Seg.L1Parents {
 			// Get existing override or create empty struct for full inheritance
-			l1Override, exists := segL2.L1Overrides[l1ID]
+			l1Override, exists := Seg.L1Overrides[l1ID]
 			if !exists {
 				l1Override = domain.L1Overrides{}
 			}
@@ -52,7 +52,7 @@ func ApplyInheritance(txy *domain.Taxonomy) bool {
 				}
 			}
 			// Write back override (creates new entry if didn't exist)
-			segL2.L1Overrides[l1ID] = l1Override
+			Seg.L1Overrides[l1ID] = l1Override
 		}
 	}
 

@@ -48,7 +48,7 @@ func TestValidateL1Definitions(t *testing.T) {
 
 func TestValidateL2Definition(t *testing.T) {
 	t.Run("Valid security domains pass", func(t *testing.T) {
-		txy := WithSegL2(
+		txy := WithSeg(
 			WithSegL1(
 				WithCompReq(NewTestTaxonomy(), "pci-dss", NewCompReq(
 					"PCI DSS",
@@ -59,7 +59,7 @@ func TestValidateL2Definition(t *testing.T) {
 				NewSegL1("prod", "Production", "A", "1", []string{}),
 			),
 			"app",
-			NewAppSegL2(),
+			NewAppSeg(),
 		)
 
 		valid, failures := ValidateL2Definition(txy)
@@ -67,39 +67,39 @@ func TestValidateL2Definition(t *testing.T) {
 		AssertFailureCount(t, failures, 0, "Valid security domains")
 	})
 
-	t.Run("Invalid compliance requirement in SegL2 fails", func(t *testing.T) {
-		txy := WithSegL2(
+	t.Run("Invalid compliance requirement in Seg fails", func(t *testing.T) {
+		txy := WithSeg(
 			WithSegL1(NewTestTaxonomy(), "prod", NewSegL1("prod", "Production", "A", "1", []string{})),
 			"app",
-			NewSegL2("app", "Application", map[string]domain.L1Overrides{
+			NewSeg("app", "Application", map[string]domain.L1Overrides{
 				"prod": {ComplianceReqs: []string{"invalid-scope"}},
 			}),
 		)
 
 		valid, failures := ValidateL2Definition(txy)
-		AssertValidationFails(t, valid, "Invalid compliance requirement in SegL2")
-		AssertMinFailures(t, failures, 1, "Invalid compliance requirement in SegL2")
+		AssertValidationFails(t, valid, "Invalid compliance requirement in Seg")
+		AssertMinFailures(t, failures, 1, "Invalid compliance requirement in Seg")
 	})
 
-	t.Run("Invalid environment ID in SegL2 fails", func(t *testing.T) {
-		txy := WithSegL2(
+	t.Run("Invalid environment ID in Seg fails", func(t *testing.T) {
+		txy := WithSeg(
 			WithSegL1(NewTestTaxonomy(), "prod", NewSegL1("prod", "Production", "A", "1", []string{})),
 			"app",
-			NewSegL2("app", "Application", map[string]domain.L1Overrides{
+			NewSeg("app", "Application", map[string]domain.L1Overrides{
 				"invalid-env": NewL1Override("A", "1", []string{}),
 			}),
 		)
 
 		valid, failures := ValidateL2Definition(txy)
-		AssertValidationFails(t, valid, "Invalid environment ID in SegL2")
-		AssertMinFailures(t, failures, 1, "Invalid environment ID in SegL2")
+		AssertValidationFails(t, valid, "Invalid environment ID in Seg")
+		AssertMinFailures(t, failures, 1, "Invalid environment ID in Seg")
 	})
 
 	t.Run("Multiple validation failures counted", func(t *testing.T) {
-		txy := WithSegL2(
+		txy := WithSeg(
 			WithSegL1(NewTestTaxonomy(), "prod", NewSegL1("prod", "Production", "A", "1", []string{})),
 			"app",
-			NewSegL2("app", "Application", map[string]domain.L1Overrides{
+			NewSeg("app", "Application", map[string]domain.L1Overrides{
 				"prod":        {ComplianceReqs: []string{"invalid1", "invalid2"}},
 				"invalid-env": {ComplianceReqs: []string{"invalid3"}},
 			}),

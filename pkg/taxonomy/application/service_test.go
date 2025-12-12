@@ -78,64 +78,64 @@ func TestSegL1Service(t *testing.T) {
 	})
 }
 
-func TestSegL2Service(t *testing.T) {
+func TestSegService(t *testing.T) {
 	validator := schemaValidation.MustCreateValidator(t)
-	t.Run("Successfully loads and validates SegL2 files", func(t *testing.T) {
-		repository := infrastructure.NewFileSegL2Repository(validator)
-		service := NewSegL2Service(repository)
+	t.Run("Successfully loads and validates Seg files", func(t *testing.T) {
+		repository := infrastructure.NewFileSegRepository(validator)
+		service := NewSegService(repository)
 
-		segL2s, err := service.Load("../../../example/taxonomy/segments")
+		Segs, err := service.Load("../../../example/taxonomy/segments")
 		if err != nil {
 			t.Fatalf("Expected successful load, got error: %v", err)
 		}
-		if len(segL2s) == 0 {
-			t.Error("Expected at least one SegL2 to be loaded")
+		if len(Segs) == 0 {
+			t.Error("Expected at least one Seg to be loaded")
 		}
 	})
 
 	t.Run("Returns map indexed by ID", func(t *testing.T) {
 		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegL2Files([]testhelpers.SegL2Fixture{
-			{Name: "Domain 1", ID: "domain1"},
-			{Name: "Domain 2", ID: "domain2"},
-			{Name: "Domain 3", ID: "domain3"},
+		tmpDir := files.CreateSegFiles([]testhelpers.SegFixture{
+			{Name: "Domain 1", ID: "domain-one"},
+			{Name: "Domain 2", ID: "domain-two"},
+			{Name: "Domain 3", ID: "domain-three"},
 		})
 
-		repository := infrastructure.NewFileSegL2Repository(validator)
-		service := NewSegL2Service(repository)
-		segL2s, err := service.Load(tmpDir)
+		repository := infrastructure.NewFileSegRepository(validator)
+		service := NewSegService(repository)
+		Segs, err := service.Load(tmpDir)
 
 		if err != nil {
 			t.Fatalf("LoadAndValidate: unexpected error: %v", err)
 		}
-		if len(segL2s) != 3 {
-			t.Errorf("Expected map length 3, got %d", len(segL2s))
+		if len(Segs) != 3 {
+			t.Errorf("Expected map length 3, got %d", len(Segs))
 		}
 
 		// Verify map is indexed by ID
-		if _, ok := segL2s["domain1"]; !ok {
-			t.Error("Expected map to be indexed by ID 'domain1'")
+		if _, ok := Segs["domain-one"]; !ok {
+			t.Error("Expected map to be indexed by ID 'domain-one'")
 		}
 	})
 
-	t.Run("Validates uniqueness of SegL2 IDs", func(t *testing.T) {
+	t.Run("Validates uniqueness of Seg IDs", func(t *testing.T) {
 		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegL2Files([]testhelpers.SegL2Fixture{
+		tmpDir := files.CreateSegFiles([]testhelpers.SegFixture{
 			{Name: "Domain 1", ID: "duplicate"},
 			{Name: "Domain 2", ID: "duplicate"},
 		})
 
-		repository := infrastructure.NewFileSegL2Repository(validator)
-		service := NewSegL2Service(repository)
-		segL2s, err := service.Load(tmpDir)
+		repository := infrastructure.NewFileSegRepository(validator)
+		service := NewSegService(repository)
+		Segs, err := service.Load(tmpDir)
 
 		if err == nil {
 			t.Error("Expected error for duplicate IDs but got nil")
 		}
 
 		// Verify map is nil or empty (duplicates rejected)
-		if len(segL2s) == 2 {
-			t.Errorf("Map size %d equals file count 2 - duplicates may have been silently overwritten", len(segL2s))
+		if len(Segs) == 2 {
+			t.Errorf("Map size %d equals file count 2 - duplicates may have been silently overwritten", len(Segs))
 		}
 	})
 

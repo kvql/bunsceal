@@ -8,7 +8,7 @@ import (
 )
 
 func TestUniquenessValidator_UniqueItems(t *testing.T) {
-	segments := []domain.SegL1{
+	segments := []domain.Seg{
 		{ID: "test-1", Name: "Test 1"},
 		{ID: "test-2", Name: "Test 2"},
 		{ID: "test-3", Name: "Test 3"},
@@ -22,7 +22,7 @@ func TestUniquenessValidator_UniqueItems(t *testing.T) {
 }
 
 func TestUniquenessValidator_DuplicateID(t *testing.T) {
-	segments := []domain.SegL1{
+	segments := []domain.Seg{
 		{ID: "test-1", Name: "Test 1"},
 		{ID: "test-1", Name: "Test 2"}, // Duplicate ID
 	}

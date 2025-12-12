@@ -48,9 +48,9 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 
 	// Load L2 segments using configured directory name
 	l2Dir := taxDir + cfg.Terminology.L2.DirName()
-	l2Repository := infrastructure.NewFileSegL2Repository(schemaValidator)
-	l2Service := NewSegL2Service(l2Repository)
-	txy.SegL2s, err = l2Service.Load(l2Dir)
+	l2Repository := infrastructure.NewFileSegRepository(schemaValidator)
+	l2Service := NewSegService(l2Repository)
+	txy.Segs, err = l2Service.Load(l2Dir)
 	if err != nil {
 		o11y.Log.Printf("Error loading L2 files from %s: %v\n", l2Dir, err)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")

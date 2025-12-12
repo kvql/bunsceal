@@ -10,7 +10,7 @@ import (
 func TestApplyInheritance(t *testing.T) {
 	t.Run("Inherits sensitivity from SegL1 when empty", func(t *testing.T) {
 		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod": {
 					ID:                   "prod",
 					Name:                 "Production",
@@ -20,7 +20,7 @@ func TestApplyInheritance(t *testing.T) {
 					CriticalityRationale: "Production outages directly impact customers and revenue.",
 				},
 			},
-			SegL2s: map[string]domain.SegL2{
+			Segs: map[string]domain.Seg{
 				"infra": {
 					Name:        "Infrastructure",
 					ID:          "infra",
@@ -40,7 +40,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		ApplyInheritance(&txy)
 
-		L1Overrides := txy.SegL2s["infra"].L1Overrides["prod"]
+		L1Overrides := txy.Segs["infra"].L1Overrides["prod"]
 		if L1Overrides.Sensitivity != "A" {
 			t.Errorf("Expected sensitivity 'A', got %s", L1Overrides.Sensitivity)
 		}
@@ -54,7 +54,7 @@ func TestApplyInheritance(t *testing.T) {
 
 	t.Run("Inherits criticality from SegL1 when empty", func(t *testing.T) {
 		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"staging": {
 					ID:                   "staging",
 					Name:                 "Staging",
@@ -64,7 +64,7 @@ func TestApplyInheritance(t *testing.T) {
 					CriticalityRationale: "Staging downtime impacts development velocity only.",
 				},
 			},
-			SegL2s: map[string]domain.SegL2{
+			Segs: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -84,7 +84,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		ApplyInheritance(&txy)
 
-		L1Overrides := txy.SegL2s["app"].L1Overrides["staging"]
+		L1Overrides := txy.Segs["app"].L1Overrides["staging"]
 		if L1Overrides.Criticality != "5" {
 			t.Errorf("Expected criticality '5', got %s", L1Overrides.Criticality)
 		}
@@ -95,14 +95,14 @@ func TestApplyInheritance(t *testing.T) {
 
 	t.Run("Does not inherit when sensitivity is set", func(t *testing.T) {
 		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod": {
 					ID:                   "prod",
 					Sensitivity:          "A",
 					SensitivityRationale: "Environment default rationale.",
 				},
 			},
-			SegL2s: map[string]domain.SegL2{
+			Segs: map[string]domain.Seg{
 				"sec": {
 					Name:        "Security",
 					ID:          "sec",
@@ -121,7 +121,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		ApplyInheritance(&txy)
 
-		L1Overrides := txy.SegL2s["sec"].L1Overrides["prod"]
+		L1Overrides := txy.Segs["sec"].L1Overrides["prod"]
 		if L1Overrides.Sensitivity != "B" {
 			t.Errorf("Expected sensitivity to remain 'B', got %s", L1Overrides.Sensitivity)
 		}
@@ -132,13 +132,13 @@ func TestApplyInheritance(t *testing.T) {
 
 	t.Run("Inherits compliance requirements when nil", func(t *testing.T) {
 		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod": {
 					ID:             "prod",
 					ComplianceReqs: []string{"pci-dss", "sox"},
 				},
 			},
-			SegL2s: map[string]domain.SegL2{
+			Segs: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -161,7 +161,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		ApplyInheritance(&txy)
 
-		L1Overrides := txy.SegL2s["app"].L1Overrides["prod"]
+		L1Overrides := txy.Segs["app"].L1Overrides["prod"]
 		if len(L1Overrides.ComplianceReqs) != 2 {
 			t.Errorf("Expected 2 inherited compliance reqs, got %d", len(L1Overrides.ComplianceReqs))
 		}
@@ -172,13 +172,13 @@ func TestApplyInheritance(t *testing.T) {
 
 	t.Run("Does not inherit compliance requirements when set", func(t *testing.T) {
 		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod": {
 					ID:             "prod",
 					ComplianceReqs: []string{"pci-dss", "sox", "hipaa"},
 				},
 			},
-			SegL2s: map[string]domain.SegL2{
+			Segs: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -202,7 +202,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		ApplyInheritance(&txy)
 
-		L1Overrides := txy.SegL2s["app"].L1Overrides["prod"]
+		L1Overrides := txy.Segs["app"].L1Overrides["prod"]
 		if len(L1Overrides.ComplianceReqs) != 1 {
 			t.Errorf("Expected custom compliance reqs to remain (1 item), got %d", len(L1Overrides.ComplianceReqs))
 		}
@@ -213,12 +213,12 @@ func TestApplyInheritance(t *testing.T) {
 
 	t.Run("Populates CompReqs map with full details", func(t *testing.T) {
 		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod": {
 					ID: "prod",
 				},
 			},
-			SegL2s: map[string]domain.SegL2{
+			Segs: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -241,7 +241,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		ApplyInheritance(&txy)
 
-		L1Overrides := txy.SegL2s["app"].L1Overrides["prod"]
+		L1Overrides := txy.Segs["app"].L1Overrides["prod"]
 		if len(L1Overrides.CompReqs) != 2 {
 			t.Errorf("Expected 2 entries in CompReqs map, got %d", len(L1Overrides.CompReqs))
 		}
@@ -263,12 +263,12 @@ func TestApplyInheritance(t *testing.T) {
 
 	t.Run("Skips invalid compliance requirements in CompReqs map", func(t *testing.T) {
 		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod": {
 					ID: "prod",
 				},
 			},
-			SegL2s: map[string]domain.SegL2{
+			Segs: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -290,7 +290,7 @@ func TestApplyInheritance(t *testing.T) {
 
 		ApplyInheritance(&txy)
 
-		L1Overrides := txy.SegL2s["app"].L1Overrides["prod"]
+		L1Overrides := txy.Segs["app"].L1Overrides["prod"]
 		if len(L1Overrides.CompReqs) != 1 {
 			t.Errorf("Expected only 1 valid entry in CompReqs map, got %d", len(L1Overrides.CompReqs))
 		}
@@ -299,9 +299,9 @@ func TestApplyInheritance(t *testing.T) {
 		}
 	})
 
-	t.Run("Handles multiple environments in one SegL2", func(t *testing.T) {
+	t.Run("Handles multiple environments in one Seg", func(t *testing.T) {
 		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod": {
 					ID:                   "prod",
 					Sensitivity:          "A",
@@ -317,7 +317,7 @@ func TestApplyInheritance(t *testing.T) {
 					CriticalityRationale: "Staging criticality.",
 				},
 			},
-			SegL2s: map[string]domain.SegL2{
+			Segs: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -338,12 +338,12 @@ func TestApplyInheritance(t *testing.T) {
 
 		ApplyInheritance(&txy)
 
-		prodDetails := txy.SegL2s["app"].L1Overrides["prod"]
+		prodDetails := txy.Segs["app"].L1Overrides["prod"]
 		if prodDetails.Sensitivity != "A" {
 			t.Errorf("Expected prod to inherit 'A', got %s", prodDetails.Sensitivity)
 		}
 
-		stagingDetails := txy.SegL2s["app"].L1Overrides["staging"]
+		stagingDetails := txy.Segs["app"].L1Overrides["staging"]
 		if stagingDetails.Sensitivity != "D" {
 			t.Errorf("Expected staging to inherit 'D', got %s", stagingDetails.Sensitivity)
 		}

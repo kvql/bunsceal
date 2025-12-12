@@ -3,8 +3,8 @@ package domain
 // Taxonomy is the root aggregate containing all taxonomy data.
 type Taxonomy struct {
 	ApiVersion        string
-	SegL1s            map[string]SegL1
-	SegL2s            map[string]SegL2
+	SegL1s            map[string]Seg
+	Segs              map[string]Seg
 	SensitivityLevels []string
 	CriticalityLevels []string
 	CompReqs          map[string]CompReq

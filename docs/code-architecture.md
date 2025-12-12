@@ -89,14 +89,9 @@ Purpose: Take individual list of segments and form a map
 Purpose: Population of the taxonomy object and application of business logic on core field
 Build the taxonomy Object
 
-
-
 #### Plugin
 
 Handle everything outside of the core taxonomy fields
 - Plugin Logic
     - Inheritance
     - Business Logic
-
-
-

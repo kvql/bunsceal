@@ -27,7 +27,7 @@ Separate validation from data access without breaking existing API
 - Test empty inputs, single items, duplicates
 - Verify error messages are descriptive
 
-#### 3. Refactor `LoadSegL1Files` and `LoadSegL2Files`
+#### 3. Refactor `LoadSegL1Files` and `LoadSegFiles`
 
 - Extract validation into separate function calls
 - Use `UniquenessValidator` for ID/name checks
@@ -58,21 +58,21 @@ Decouple data access from orchestration logic
 
 #### 1. Create `pkg/taxonomy/repository.go`
 
-- Define `SegL1Repository` and `SegL2Repository` interfaces
+- Define `SegL1Repository` and `SegRepository` interfaces
 - Document interface contracts
 - Define `LoadAll(source string) ([]T, error)` signature
 
 #### 2. Implement file-based repositories
 
 - Create `FileSegL1Repository` struct
-- Create `FileSegL2Repository` struct
+- Create `FileSegRepository` struct
 - Move file I/O and parsing logic from Load functions
 - Accept `SchemaValidator` as dependency in constructor
 - Write unit tests mocking file system where appropriate
 
 #### 3. Create `pkg/taxonomy/service.go`
 
-- Define `SegL1Service` and `SegL2Service` structs
+- Define `SegL1Service` and `SegService` structs
 - Accept repository and validator via constructor
 - Implement `LoadAndValidate(source string) (map[string]T, error)`
 - Handle orchestration: load → validate → convert to map
@@ -80,7 +80,7 @@ Decouple data access from orchestration logic
 #### 4. Refactor public API functions
 
 - `LoadSegL1Files` becomes wrapper around `SegL1Service`
-- `LoadSegL2Files` becomes wrapper around `SegL2Service`
+- `LoadSegFiles` becomes wrapper around `SegService`
 - Inject schema path as configurable parameter (with default) from config file used for naming
 - Breaking changes acceptable - no external consumers
 
@@ -115,8 +115,8 @@ Add S3 and HTTP repository implementations
 
 ### Phase 3 Tasks (TBD)
 
-- Implement `S3SegL1Repository` and `S3SegL2Repository`
-- Implement `HTTPSegL1Repository` and `HTTPSegL2Repository`
+- Implement `S3SegL1Repository` and `S3SegRepository`
+- Implement `HTTPSegL1Repository` and `HTTPSegRepository`
 - Add retry logic and error handling for network failures
 - Add integration tests with mocked network services
 - Document configuration for each repository type

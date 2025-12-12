@@ -65,7 +65,7 @@ func TestLogicRuleSet_ValidateAll(t *testing.T) {
 	t.Run("Returns empty results when all validations pass", func(t *testing.T) {
 		config := configdomain.DefaultConfig()
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"shared-service": {
 					ID:             "shared-service",
 					Name:           "Shared Service",
@@ -81,7 +81,7 @@ func TestLogicRuleSet_ValidateAll(t *testing.T) {
 					ComplianceReqs: []string{"req1"},
 				},
 			},
-			SegL2s: map[string]domain.SegL2{
+			Segs: map[string]domain.Seg{
 				"app": {
 					ID:   "app",
 					Name: "Application",
@@ -110,13 +110,13 @@ func TestLogicRuleSet_ValidateAll(t *testing.T) {
 		config := configdomain.DefaultConfig()
 		// Missing shared-service environment
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod": {
 					ID:   "prod",
 					Name: "Production",
 				},
 			},
-			SegL2s: map[string]domain.SegL2{},
+			Segs: map[string]domain.Seg{},
 			CompReqs: map[string]domain.CompReq{
 				"req1": {Name: "Requirement 1"},
 			},
@@ -148,7 +148,7 @@ func TestLogicRuleSet_ValidateAll(t *testing.T) {
 func TestLogicRuleSharedService_Validate(t *testing.T) {
 	t.Run("Fails when shared-service environment not found", func(t *testing.T) {
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod": {ID: "prod", Name: "Production"},
 			},
 			CompReqs: map[string]domain.CompReq{},
@@ -164,7 +164,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 
 	t.Run("Fails when shared-service has incorrect sensitivity", func(t *testing.T) {
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"shared-service": {
 					ID:             "shared-service",
 					Name:           "Shared Service",
@@ -188,7 +188,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 
 	t.Run("Fails when shared-service has incorrect criticality", func(t *testing.T) {
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"shared-service": {
 					ID:             "shared-service",
 					Name:           "Shared Service",
@@ -212,7 +212,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 
 	t.Run("Fails when shared-service missing compliance requirements", func(t *testing.T) {
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"shared-service": {
 					ID:             "shared-service",
 					Name:           "Shared Service",
@@ -237,7 +237,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 
 	t.Run("Passes when shared-service is correctly configured", func(t *testing.T) {
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"shared-service": {
 					ID:             "shared-service",
 					Name:           "Shared Service",
@@ -262,7 +262,7 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 
 	t.Run("Reports multiple errors for multiple issues", func(t *testing.T) {
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"shared-service": {
 					ID:             "shared-service",
 					Name:           "Shared Service",
@@ -289,11 +289,11 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 func TestLogicRuleUniqueness_Validate(t *testing.T) {
 	t.Run("Passes when all L1 names are unique", func(t *testing.T) {
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod":    {ID: "prod", Name: "Production"},
 				"staging": {ID: "staging", Name: "Staging"},
 			},
-			SegL2s: map[string]domain.SegL2{},
+			Segs: map[string]domain.Seg{},
 		}
 
 		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{
@@ -309,11 +309,11 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 
 	t.Run("Fails when L1 names are duplicated", func(t *testing.T) {
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod1": {ID: "prod1", Name: "Production"},
 				"prod2": {ID: "prod2", Name: "Production"}, // Duplicate name
 			},
-			SegL2s: map[string]domain.SegL2{},
+			Segs: map[string]domain.Seg{},
 		}
 
 		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{
@@ -329,8 +329,8 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 
 	t.Run("Passes when all L2 names are unique", func(t *testing.T) {
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{},
-			SegL2s: map[string]domain.SegL2{
+			SegL1s: map[string]domain.Seg{},
+			Segs: map[string]domain.Seg{
 				"app":  {ID: "app", Name: "Application"},
 				"data": {ID: "data", Name: "Data"},
 			},
@@ -349,8 +349,8 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 
 	t.Run("Fails when L2 names are duplicated", func(t *testing.T) {
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{},
-			SegL2s: map[string]domain.SegL2{
+			SegL1s: map[string]domain.Seg{},
+			Segs: map[string]domain.Seg{
 				"app1": {ID: "app1", Name: "Application"},
 				"app2": {ID: "app2", Name: "Application"}, // Duplicate name
 			},

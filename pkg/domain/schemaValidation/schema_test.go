@@ -66,14 +66,18 @@ func validSegL1WithLabels(labels []string) map[string]interface{} {
 	return data
 }
 
-// validSegL2Data returns a valid SegL2 data structure for testing
-func validSegL2Data() map[string]interface{} {
+// validSegData returns a valid Seg data structure for testing
+func validSegData() map[string]interface{} {
 	return map[string]interface{}{
-		"version":     "1.0",
-		"name":        "Application",
-		"id":          "app",
-		"description": "Application domain for all application-specific resources and services managed here",
-		"l1_parents":  []string{"prod"},
+		"version":               "1.0",
+		"name":                  "Application",
+		"id":                    "app",
+		"description":           "Application domain for all application-specific resources and services managed here",
+		"sensitivity":           "A",
+		"sensitivity_rationale": "Application handles customer data and requires strict access controls and monitoring",
+		"criticality":           "1",
+		"criticality_rationale": "Critical for business operations and customer service delivery with high availability requirements",
+		"l1_parents":            []string{"prod"},
 		"l1_overrides": map[string]interface{}{
 			"prod": map[string]interface{}{
 				"sensitivity":           "A",
@@ -85,31 +89,39 @@ func validSegL2Data() map[string]interface{} {
 	}
 }
 
-// validSegL2WithLabels returns a valid SegL2 data structure with labels
-func validSegL2WithLabels(labels []string) map[string]interface{} {
-	data := validSegL2Data()
+// validSegWithLabels returns a valid Seg data structure with labels
+func validSegWithLabels(labels []string) map[string]interface{} {
+	data := validSegData()
 	data["labels"] = labels
 	return data
 }
 
-// Helper type and function to eliminate duplication in SegL2 tests
-type segL2TestData struct {
-	Version     string                          `yaml:"version"`
-	Name        string                          `yaml:"name,omitempty"`
-	ID          string                          `yaml:"id"`
-	Description string                          `yaml:"description"`
-	L1Parents   []string                        `yaml:"l1_parents,omitempty"`
-	L1Overrides map[string]testdata.L1Overrides `yaml:"l1_overrides,omitempty"`
+// Helper type and function to eliminate duplication in Seg tests
+type SegTestData struct {
+	Version              string                          `yaml:"version"`
+	Name                 string                          `yaml:"name,omitempty"`
+	ID                   string                          `yaml:"id"`
+	Description          string                          `yaml:"description"`
+	Sensitivity          string                          `yaml:"sensitivity"`
+	SensitivityRationale string                          `yaml:"sensitivity_rationale"`
+	Criticality          string                          `yaml:"criticality"`
+	CriticalityRationale string                          `yaml:"criticality_rationale"`
+	L1Parents            []string                        `yaml:"l1_parents,omitempty"`
+	L1Overrides          map[string]testdata.L1Overrides `yaml:"l1_overrides,omitempty"`
 }
 
-func marshalSegL2(seg testdata.SegL2) ([]byte, error) {
-	return yaml.Marshal(segL2TestData{
-		Version:     "1.0",
-		Name:        seg.Name,
-		ID:          seg.ID,
-		Description: seg.Description,
-		L1Parents:   seg.L1Parents,
-		L1Overrides: seg.L1Overrides,
+func marshalSeg(seg testdata.Seg) ([]byte, error) {
+	return yaml.Marshal(SegTestData{
+		Version:              "1.0",
+		Name:                 seg.Name,
+		ID:                   seg.ID,
+		Description:          seg.Description,
+		Sensitivity:          seg.Sensitivity,
+		SensitivityRationale: seg.SensitivityRationale,
+		Criticality:          seg.Criticality,
+		CriticalityRationale: seg.CriticalityRationale,
+		L1Parents:            seg.L1Parents,
+		L1Overrides:          seg.L1Overrides,
 	})
 }
 
@@ -141,105 +153,93 @@ func TestValidateData_Config(t *testing.T) {
 
 func TestValidateData_SegL1(t *testing.T) {
 	t.Run("Valid SegL1 Production passes validation", func(t *testing.T) {
-		assertValidationPasses(t, testdata.ValidSegL1Production, "seg-level1.json")
+		assertValidationPasses(t, testdata.ValidSegL1Production, "seg-level.json")
 	})
 
 	t.Run("Valid SegL1 Staging passes validation", func(t *testing.T) {
-		assertValidationPasses(t, testdata.ValidSegL1Staging, "seg-level1.json")
+		assertValidationPasses(t, testdata.ValidSegL1Staging, "seg-level.json")
 	})
 
 	t.Run("Valid SegL1 SharedService passes validation", func(t *testing.T) {
-		assertValidationPasses(t, testdata.ValidSegL1SharedService, "seg-level1.json")
+		assertValidationPasses(t, testdata.ValidSegL1SharedService, "seg-level.json")
 	})
 
 	t.Run("Missing required name field fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_MissingName, "seg-level1.json")
+		assertValidationFails(t, testdata.InvalidSegL1_MissingName, "seg-level.json")
 	})
 
 	t.Run("Invalid ID pattern fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_InvalidID, "seg-level1.json")
+		assertValidationFails(t, testdata.InvalidSegL1_InvalidID, "seg-level.json")
 	})
 
 	t.Run("Short description fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_ShortDescription, "seg-level1.json")
+		assertValidationFails(t, testdata.InvalidSegL1_ShortDescription, "seg-level.json")
 	})
 
 	t.Run("Invalid sensitivity enum fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_InvalidSensitivity, "seg-level1.json")
+		assertValidationFails(t, testdata.InvalidSegL1_InvalidSensitivity, "seg-level.json")
 	})
 
 	t.Run("Invalid criticality enum fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_InvalidCriticality, "seg-level1.json")
+		assertValidationFails(t, testdata.InvalidSegL1_InvalidCriticality, "seg-level.json")
 	})
 
 	t.Run("Short rationale fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_ShortRationale, "seg-level1.json")
+		assertValidationFails(t, testdata.InvalidSegL1_ShortRationale, "seg-level.json")
 	})
 }
 
-func TestValidateData_SegL2(t *testing.T) {
+func TestValidateData_Seg(t *testing.T) {
 	validator, err := NewSchemaValidator(TestSchemaPath)
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
 
-	t.Run("Valid SegL2 Security passes validation", func(t *testing.T) {
-		data, err := marshalSegL2(testdata.ValidSegL2Security)
+	t.Run("Valid Seg Security passes validation", func(t *testing.T) {
+		data, err := marshalSeg(testdata.ValidSegSecurity)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
 
-		err = validator.ValidateData(data, "seg-level2.json")
+		err = validator.ValidateData(data, "seg-level.json")
 		if err != nil {
 			t.Errorf("Expected valid data to pass, got error: %v", err)
 		}
 	})
 
-	t.Run("Valid SegL2 Application passes validation", func(t *testing.T) {
-		data, err := marshalSegL2(testdata.ValidSegL2Application)
+	t.Run("Valid Seg Application passes validation", func(t *testing.T) {
+		data, err := marshalSeg(testdata.ValidSegApplication)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
 
-		err = validator.ValidateData(data, "seg-level2.json")
+		err = validator.ValidateData(data, "seg-level.json")
 		if err != nil {
 			t.Errorf("Expected valid data to pass, got error: %v", err)
 		}
 	})
 
 	t.Run("Missing required name field fails validation", func(t *testing.T) {
-		data, err := marshalSegL2(testdata.InvalidSegL2_MissingName)
+		data, err := marshalSeg(testdata.InvalidSeg_MissingName)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
 
-		err = validator.ValidateData(data, "seg-level2.json")
+		err = validator.ValidateData(data, "seg-level.json")
 		if err == nil {
 			t.Error("Expected validation to fail for missing name")
 		}
 	})
 
 	t.Run("Invalid ID pattern fails validation", func(t *testing.T) {
-		data, err := marshalSegL2(testdata.InvalidSegL2_InvalidID)
+		data, err := marshalSeg(testdata.InvalidSeg_InvalidID)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
 
-		err = validator.ValidateData(data, "seg-level2.json")
+		err = validator.ValidateData(data, "seg-level.json")
 		if err == nil {
 			t.Error("Expected validation to fail for invalid ID pattern")
-		}
-	})
-
-	t.Run("Empty environment details fails validation", func(t *testing.T) {
-		data, err := marshalSegL2(testdata.InvalidSegL2_NoL1Overrides)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "seg-level2.json")
-		if err == nil {
-			t.Error("Expected validation to fail for empty l1_overrides")
 		}
 	})
 }
@@ -299,7 +299,7 @@ func TestValidateData_JSON(t *testing.T) {
 			"criticality_rationale": "This is a test criticality rationale that is long enough to meet the minimum requirement."
 		}`)
 
-		err = validator.ValidateData(jsonData, "seg-level1.json")
+		err = validator.ValidateData(jsonData, "seg-level.json")
 		if err != nil {
 			t.Errorf("Expected valid JSON to pass, got error: %v", err)
 		}
@@ -315,7 +315,7 @@ func TestValidateData_ErrorHandling(t *testing.T) {
 	t.Run("Malformed data fails parsing", func(t *testing.T) {
 		malformed := []byte("this is not valid yaml or json{[")
 
-		err = validator.ValidateData(malformed, "seg-level1.json")
+		err = validator.ValidateData(malformed, "seg-level.json")
 		if err == nil {
 			t.Error("Expected error for malformed data")
 		}
@@ -427,7 +427,7 @@ func TestFormatValidationError(t *testing.T) {
 		// Create invalid data to trigger validation error
 		invalidData := []byte(`{"name": "test"}`)
 
-		err = validator.ValidateData(invalidData, "seg-level1.json")
+		err = validator.ValidateData(invalidData, "seg-level.json")
 		if err == nil {
 			t.Fatal("Expected validation error")
 		}
@@ -484,7 +484,7 @@ func TestValidateData_Labels(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				assertValidationPasses(t, validSegL1WithLabels(tc.labels), "seg-level1.json")
+				assertValidationPasses(t, validSegL1WithLabels(tc.labels), "seg-level.json")
 			})
 		}
 	})
@@ -506,7 +506,7 @@ func TestValidateData_Labels(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				assertValidationPasses(t, validSegL1WithLabels(tc.labels), "seg-level1.json")
+				assertValidationPasses(t, validSegL1WithLabels(tc.labels), "seg-level.json")
 			})
 		}
 	})
@@ -525,7 +525,7 @@ func TestValidateData_Labels(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				assertValidationFails(t, validSegL1WithLabels(tc.labels), "seg-level1.json")
+				assertValidationFails(t, validSegL1WithLabels(tc.labels), "seg-level.json")
 			})
 		}
 	})
@@ -546,26 +546,26 @@ func TestValidateData_Labels(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				assertValidationFails(t, validSegL1WithLabels(tc.labels), "seg-level1.json")
+				assertValidationFails(t, validSegL1WithLabels(tc.labels), "seg-level.json")
 			})
 		}
 	})
 
 	t.Run("Uniqueness constraint in SegL1", func(t *testing.T) {
-		assertValidationFails(t, validSegL1WithLabels([]string{"env:prod", "env:prod"}), "seg-level1.json")
+		assertValidationFails(t, validSegL1WithLabels([]string{"env:prod", "env:prod"}), "seg-level.json")
 	})
 
-	t.Run("Valid labels in SegL2", func(t *testing.T) {
-		assertValidationPasses(t, validSegL2WithLabels([]string{"domain:application", "tier:frontend"}), "seg-level2.json")
+	t.Run("Valid labels in Seg", func(t *testing.T) {
+		assertValidationPasses(t, validSegWithLabels([]string{"domain:application", "tier:frontend"}), "seg-level.json")
 	})
 
 	t.Run("Optional labels field", func(t *testing.T) {
 		t.Run("SegL1 without labels passes", func(t *testing.T) {
-			assertValidationPasses(t, validSegL1Data(), "seg-level1.json")
+			assertValidationPasses(t, validSegL1Data(), "seg-level.json")
 		})
 
-		t.Run("SegL2 without labels passes", func(t *testing.T) {
-			assertValidationPasses(t, validSegL2Data(), "seg-level2.json")
+		t.Run("Seg without labels passes", func(t *testing.T) {
+			assertValidationPasses(t, validSegData(), "seg-level.json")
 		})
 	})
 }

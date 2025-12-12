@@ -22,7 +22,7 @@ func NewSegL1Service(repository SegL1Repository) *SegL1Service {
 
 // Load loads SegL1 entities from the source, validates schema, ID uniqueness and performs postLoad, them,
 // and returns a map indexed by ID
-func (s *SegL1Service) Load(source string) (map[string]domain.SegL1, error) {
+func (s *SegL1Service) Load(source string) (map[string]domain.Seg, error) {
 	// Load entities from repository
 	segList, err := s.repository.LoadAll(source)
 	if err != nil {
@@ -39,7 +39,7 @@ func (s *SegL1Service) Load(source string) (map[string]domain.SegL1, error) {
 	}
 
 	// Build map from validated list
-	segL1Map := make(map[string]domain.SegL1)
+	segL1Map := make(map[string]domain.Seg)
 	for _, seg := range segList {
 		segL1Map[seg.ID] = seg
 	}
@@ -47,21 +47,21 @@ func (s *SegL1Service) Load(source string) (map[string]domain.SegL1, error) {
 	return segL1Map, nil
 }
 
-// SegL2Service orchestrates loading and validation of SegL2 entities
-type SegL2Service struct {
-	repository SegL2Repository
+// SegService orchestrates loading and validation of Seg entities
+type SegService struct {
+	repository SegRepository
 }
 
-// NewSegL2Service creates a new SegL2 service with the provided repository
-func NewSegL2Service(repository SegL2Repository) *SegL2Service {
-	return &SegL2Service{
+// NewSegService creates a new Seg service with the provided repository
+func NewSegService(repository SegRepository) *SegService {
+	return &SegService{
 		repository: repository,
 	}
 }
 
-// Load loads SegL2 entities from the source, validates them,
+// Load loads Seg entities from the source, validates them,
 // and returns a map indexed by ID
-func (s *SegL2Service) Load(source string) (map[string]domain.SegL2, error) {
+func (s *SegService) Load(source string) (map[string]domain.Seg, error) {
 	// Load entities from repository
 	segList, err := s.repository.LoadAll(source)
 	if err != nil {
@@ -78,10 +78,10 @@ func (s *SegL2Service) Load(source string) (map[string]domain.SegL2, error) {
 	}
 
 	// Build map from validated list
-	segL2Map := make(map[string]domain.SegL2)
+	SegMap := make(map[string]domain.Seg)
 	for _, seg := range segList {
-		segL2Map[seg.ID] = seg
+		SegMap[seg.ID] = seg
 	}
 
-	return segL2Map, nil
+	return SegMap, nil
 }

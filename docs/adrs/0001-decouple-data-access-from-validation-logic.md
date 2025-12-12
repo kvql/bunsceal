@@ -8,7 +8,7 @@ approved
 
 ## Context
 
-The current implementation of taxonomy data loading (`LoadSegL1Files`, `LoadSegL2Files`) violates the Single Responsibility Principle by combining multiple concerns in a single function:
+The current implementation of taxonomy data loading (`LoadSegL1Files`, `LoadSegFiles`) violates the Single Responsibility Principle by combining multiple concerns in a single function:
 
 - File I/O operations (reading directories and files)
 - Schema validation using JSON schemas
@@ -20,7 +20,7 @@ This monolithic structure creates several problems:
 
 1. **Testing Challenges**: Cannot test validation logic without performing actual file I/O operations
 2. **Tight Coupling**: Data source is hardcoded to filesystem, preventing alternative sources (HTTP, database, S3)
-3. **Code Duplication**: Uniqueness validation logic is duplicated between SegL1 and SegL2 implementations
+3. **Code Duplication**: Uniqueness validation logic is duplicated between SegL1 and Seg implementations
 4. **Configuration Issues**: Schema path is hardcoded (`./schema`), creating testing difficult
 5. **Maintainability**: Changes to validation require modifying functions that also handle I/O concerns
 
@@ -37,8 +37,8 @@ Implement a layered architecture that separates concerns into distinct responsib
 
 ### Layer 1: Repository (Data Access)
 
-- Define `SegL1Repository` and `SegL2Repository` interfaces
-- Implement file-based repositories (`FileSegL1Repository`, `FileSegL2Repository`)
+- Define `SegL1Repository` and `SegRepository` interfaces
+- Implement file-based repositories (`FileSegL1Repository`, `FileSegRepository`)
 - Responsibilities: File I/O, schema validation, parsing
 - Future: Easy to add HTTP, database, or other implementations
 
@@ -48,11 +48,11 @@ Implement a layered architecture that separates concerns into distinct responsib
 - Define `ValidationError` type for structured error reporting
 - Support composite validation patterns
 - Responsibilities: Business rule validation only
-- Reusable across SegL1, SegL2, and future entity types
+- Reusable across SegL1, Seg, and future entity types
 
 ### Layer 3: Service (Orchestration)
 
-- Implement `SegL1Service` and `SegL2Service`
+- Implement `SegL1Service` and `SegService`
 - Compose repository and validators via dependency injection
 - Responsibilities: Coordinate loading and validation workflow
 - Convert slice results to maps as needed
@@ -78,7 +78,7 @@ Implement a layered architecture that separates concerns into distinct responsib
 
 - **Complexity**: More files and indirection adds cognitive load for developers
 - **Migration Effort**: Existing code requires refactoring across 2 implementation phases
-- **Breaking Changes**: Callers of `LoadSegL1Files`/`LoadSegL2Files` will need updates
+- **Breaking Changes**: Callers of `LoadSegL1Files`/`LoadSegFiles` will need updates
 
 ### Risks to Mitigate
 

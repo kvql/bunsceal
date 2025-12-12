@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../../pkg/domain/schemas/seg-level1.json
+# yaml-language-server: $schema=../../../pkg/domain/schemas/seg-level.json
 ---
 name: Development
 id: dev

@@ -10,9 +10,9 @@ import (
 )
 
 type EnvImageData struct {
-	SegL2s        map[string]domain.L1Overrides
-	SegL2Names    map[string]string
-	SortedSegL2s  []string
+	Segs          map[string]domain.L1Overrides
+	SegNames      map[string]string
+	SortedSegs    []string
 	Criticalities map[string]bool
 }
 
@@ -85,34 +85,34 @@ func PrepTaxonomy(txy *domain.Taxonomy) map[string]EnvImageData {
 	data := make(map[string]EnvImageData)
 	for envId := range txy.SegL1s {
 		data[envId] = EnvImageData{
-			SegL2s:        make(map[string]domain.L1Overrides),
-			SegL2Names:    make(map[string]string),
+			Segs:          make(map[string]domain.L1Overrides),
+			SegNames:      make(map[string]string),
 			Criticalities: make(map[string]bool),
-			SortedSegL2s:  make([]string, 0),
+			SortedSegs:    make([]string, 0),
 		}
 	}
 
-	for _, sd := range txy.SegL2s {
+	for _, sd := range txy.Segs {
 		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
 		for _, l1ID := range sd.L1Parents {
 			// Lookup override (should exist after inheritance)
 			det, exists := sd.L1Overrides[l1ID]
 			if !exists {
 				// This should not happen if inheritance ran correctly
-				o11y.Log.Printf("WARNING: SegL2 '%s' has parent '%s' but no override data after inheritance - skipping\n", sd.ID, l1ID)
+				o11y.Log.Printf("WARNING: Seg '%s' has parent '%s' but no override data after inheritance - skipping\n", sd.ID, l1ID)
 				continue
 			}
 
 			envData := data[l1ID]
-			envData.SegL2s[sd.ID] = det
-			envData.SegL2Names[sd.ID] = sd.Name
+			envData.Segs[sd.ID] = det
+			envData.SegNames[sd.ID] = sd.Name
 			envData.Criticalities[det.Criticality] = true
-			envData.SortedSegL2s = append(data[l1ID].SortedSegL2s, sd.ID)
+			envData.SortedSegs = append(data[l1ID].SortedSegs, sd.ID)
 			data[l1ID] = envData
 		}
 	}
 	for _, envData := range data {
-		sort.Strings(envData.SortedSegL2s)
+		sort.Strings(envData.SortedSegs)
 	}
 	return data
 }

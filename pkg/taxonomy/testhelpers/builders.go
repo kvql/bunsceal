@@ -12,8 +12,8 @@ import (
 func NewTestTaxonomy() *domain.Taxonomy {
 	return &domain.Taxonomy{
 		ApiVersion:        "v1beta1",
-		SegL1s:            make(map[string]domain.SegL1),
-		SegL2s:            make(map[string]domain.SegL2),
+		SegL1s:            make(map[string]domain.Seg),
+		Segs:              make(map[string]domain.Seg),
 		CompReqs:          make(map[string]domain.CompReq),
 		SensitivityLevels: []string{"A", "B", "C", "D"},
 		CriticalityLevels: []string{"1", "2", "3", "4", "5"},
@@ -30,20 +30,20 @@ func NewCompleteTaxonomy() *domain.Taxonomy {
 }
 
 // WithSegL1 adds a SegL1 to the taxonomy
-func WithSegL1(txy *domain.Taxonomy, id string, seg domain.SegL1) *domain.Taxonomy {
+func WithSegL1(txy *domain.Taxonomy, id string, seg domain.Seg) *domain.Taxonomy {
 	if txy.SegL1s == nil {
-		txy.SegL1s = make(map[string]domain.SegL1)
+		txy.SegL1s = make(map[string]domain.Seg)
 	}
 	txy.SegL1s[id] = seg
 	return txy
 }
 
-// WithSegL2 adds a SegL2 to the taxonomy
-func WithSegL2(txy *domain.Taxonomy, id string, seg domain.SegL2) *domain.Taxonomy {
-	if txy.SegL2s == nil {
-		txy.SegL2s = make(map[string]domain.SegL2)
+// WithSeg adds a Seg to the taxonomy
+func WithSeg(txy *domain.Taxonomy, id string, seg domain.Seg) *domain.Taxonomy {
+	if txy.Segs == nil {
+		txy.Segs = make(map[string]domain.Seg)
 	}
-	txy.SegL2s[id] = seg
+	txy.Segs[id] = seg
 	return txy
 }
 
@@ -68,8 +68,8 @@ func WithStandardCompReqs(txy *domain.Taxonomy) *domain.Taxonomy {
 // --------------
 
 // NewProdSegL1 creates a standard production SegL1
-func NewProdSegL1() domain.SegL1 {
-	return domain.SegL1{
+func NewProdSegL1() domain.Seg {
+	return domain.Seg{
 		ID:                   "prod",
 		Name:                 "Production",
 		Description:          "Production environment with strict security controls for customer-facing services and data.",
@@ -82,8 +82,8 @@ func NewProdSegL1() domain.SegL1 {
 }
 
 // NewStagingSegL1 creates a standard staging SegL1
-func NewStagingSegL1() domain.SegL1 {
-	return domain.SegL1{
+func NewStagingSegL1() domain.Seg {
+	return domain.Seg{
 		ID:                   "staging",
 		Name:                 "Staging",
 		Description:          "Pre-production staging environment for final testing and validation before deployment cycles.",
@@ -96,8 +96,8 @@ func NewStagingSegL1() domain.SegL1 {
 }
 
 // NewSharedServiceSegL1 creates a standard shared-service SegL1
-func NewSharedServiceSegL1() domain.SegL1 {
-	return domain.SegL1{
+func NewSharedServiceSegL1() domain.Seg {
+	return domain.Seg{
 		ID:                   "shared-service",
 		Name:                 "Shared Service",
 		Description:          "Shared service environment hosting cross-account resources and centralised services with connectivity.",
@@ -110,8 +110,8 @@ func NewSharedServiceSegL1() domain.SegL1 {
 }
 
 // NewSegL1 creates a SegL1 with the given parameters
-func NewSegL1(id, name, sensitivity, criticality string, compReqs []string) domain.SegL1 {
-	return domain.SegL1{
+func NewSegL1(id, name, sensitivity, criticality string, compReqs []string) domain.Seg {
+	return domain.Seg{
 		ID:                   id,
 		Name:                 name,
 		Description:          "This is a valid description with sufficient length to meet minimum requirements for validation purposes.",
@@ -123,12 +123,12 @@ func NewSegL1(id, name, sensitivity, criticality string, compReqs []string) doma
 	}
 }
 
-// SegL2 Builders
+// Seg Builders
 // --------------
 
-// NewAppSegL2 creates a standard application SegL2
-func NewAppSegL2() domain.SegL2 {
-	return domain.SegL2{
+// NewAppSeg creates a standard application Seg
+func NewAppSeg() domain.Seg {
+	return domain.Seg{
 		Name:        "Application",
 		ID:          "app",
 		Description: "Application domain for core business services",
@@ -145,9 +145,9 @@ func NewAppSegL2() domain.SegL2 {
 	}
 }
 
-// NewSegL2 creates a SegL2 with the given parameters
+// NewSeg creates a Seg with the given parameters
 // L1Parents is auto-populated from overrides keys for backward compatibility
-func NewSegL2(id, name string, overrides map[string]domain.L1Overrides) domain.SegL2 {
+func NewSeg(id, name string, overrides map[string]domain.L1Overrides) domain.Seg {
 	// Extract L1Parents from overrides keys for backward compatibility
 	l1Parents := make([]string, 0, len(overrides))
 	for l1ID := range overrides {
@@ -155,7 +155,7 @@ func NewSegL2(id, name string, overrides map[string]domain.L1Overrides) domain.S
 	}
 	sort.Strings(l1Parents)
 
-	return domain.SegL2{
+	return domain.Seg{
 		Name:        name,
 		ID:          id,
 		Description: "This is a valid description with sufficient length to meet minimum requirements for validation purposes.",
@@ -164,10 +164,10 @@ func NewSegL2(id, name string, overrides map[string]domain.L1Overrides) domain.S
 	}
 }
 
-// NewSegL2WithParents creates a SegL2 with explicit parents and overrides
+// NewSegWithParents creates a Seg with explicit parents and overrides
 // Allows testing parent without override scenarios
-func NewSegL2WithParents(id, name string, l1Parents []string, overrides map[string]domain.L1Overrides) domain.SegL2 {
-	return domain.SegL2{
+func NewSegWithParents(id, name string, l1Parents []string, overrides map[string]domain.L1Overrides) domain.Seg {
+	return domain.Seg{
 		Name:        name,
 		ID:          id,
 		Description: "This is a valid description with sufficient length to meet minimum requirements for validation purposes.",

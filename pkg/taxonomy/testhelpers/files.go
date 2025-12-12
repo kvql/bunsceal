@@ -38,8 +38,8 @@ type SegL1Fixture struct {
 	Criticality string
 }
 
-// SegL2Fixture represents a minimal SegL2 for test file creation
-type SegL2Fixture struct {
+// SegFixture represents a minimal Seg for test file creation
+type SegFixture struct {
 	Name string
 	ID   string
 }
@@ -75,12 +75,12 @@ criticality_rationale: "Test rationale with sufficient length to meet the minimu
 	return tmpDir
 }
 
-// CreateSegL2Files creates a directory with SegL2 YAML files
+// CreateSegFiles creates a directory with Seg YAML files
 // Returns the temporary directory path
-func (tf *TestFiles) CreateSegL2Files(items []SegL2Fixture) string {
+func (tf *TestFiles) CreateSegFiles(items []SegFixture) string {
 	tf.t.Helper()
 
-	tmpDir, err := os.MkdirTemp("", "segl2-test-*")
+	tmpDir, err := os.MkdirTemp("", "Seg-test-*")
 	if err != nil {
 		tf.t.Fatalf("Failed to create temp directory: %v", err)
 	}
@@ -89,7 +89,11 @@ func (tf *TestFiles) CreateSegL2Files(items []SegL2Fixture) string {
 	template := `version: "1.0"
 name: "%s"
 id: "%s"
-description: "Test domain"
+description: "Test domain for validating file loading and parsing with minimum required length"
+sensitivity: "A"
+sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
+criticality: "1"
+criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
 l1_parents:
   - production
 l1_overrides:

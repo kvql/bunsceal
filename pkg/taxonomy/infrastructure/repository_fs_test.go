@@ -41,10 +41,10 @@ func TestFileSegL1Repository(t *testing.T) {
 	})
 }
 
-func TestFileSegL2Repository(t *testing.T) {
+func TestFileSegRepository(t *testing.T) {
 	t.Run("Fails with non-existent directory", func(t *testing.T) {
 		validator := schemaValidation.MustCreateValidator(t)
-		repository := NewFileSegL2Repository(validator)
+		repository := NewFileSegRepository(validator)
 
 		_, err := repository.LoadAll("/non/existent/path")
 		if err == nil {
@@ -54,21 +54,21 @@ func TestFileSegL2Repository(t *testing.T) {
 
 	t.Run("Loads correct count of files", func(t *testing.T) {
 		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegL2Files([]testhelpers.SegL2Fixture{
-			{Name: "Domain 1", ID: "domain1"},
-			{Name: "Domain 2", ID: "domain2"},
-			{Name: "Domain 3", ID: "domain3"},
+		tmpDir := files.CreateSegFiles([]testhelpers.SegFixture{
+			{Name: "Domain 1", ID: "domain-one"},
+			{Name: "Domain 2", ID: "domain-two"},
+			{Name: "Domain 3", ID: "domain-three"},
 		})
 
 		validator := schemaValidation.MustCreateValidator(t)
-		repository := NewFileSegL2Repository(validator)
-		segL2s, err := repository.LoadAll(tmpDir)
+		repository := NewFileSegRepository(validator)
+		Segs, err := repository.LoadAll(tmpDir)
 
 		if err != nil {
 			t.Fatalf("LoadAll: unexpected error: %v", err)
 		}
-		if len(segL2s) != 3 {
-			t.Errorf("Expected 3 SegL2s, got %d", len(segL2s))
+		if len(Segs) != 3 {
+			t.Errorf("Expected 3 Segs, got %d", len(Segs))
 		}
 	})
 }
@@ -120,11 +120,15 @@ id: "test"
 }
 
 func TestParseSDFile(t *testing.T) {
-	t.Run("Successfully parses valid SegL2 file", func(t *testing.T) {
+	t.Run("Successfully parses valid Seg file", func(t *testing.T) {
 		validYAML := `version: "1.0"
 name: "Test Domain"
 id: "test"
-description: "Test security domain"
+description: "Test security domain for validating file parsing and schema validation requirements"
+sensitivity: "A"
+sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
+criticality: "1"
+criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
 l1_parents:
   - production
 l1_overrides:
@@ -137,30 +141,34 @@ l1_overrides:
       - pci-dss
 `
 		files := testhelpers.NewTestFiles(t)
-		tmpFile := files.CreateYAMLFile("segl2", validYAML)
+		tmpFile := files.CreateYAMLFile("Seg", validYAML)
 
 		validator := schemaValidation.MustCreateValidator(t)
-		fl := NewFileSegL2Repository(validator)
-		segL2, err := fl.parseSegL2File(tmpFile)
+		fl := NewFileSegRepository(validator)
+		Seg, err := fl.parseSegFile(tmpFile)
 
 		if err != nil {
 			t.Fatalf("parseSDFile: unexpected error: %v", err)
 		}
-		if segL2.ID != "test" {
-			t.Errorf("SegL2 ID: got %v, want test", segL2.ID)
+		if Seg.ID != "test" {
+			t.Errorf("Seg ID: got %v, want test", Seg.ID)
 		}
-		if segL2.Name != "Test Domain" {
-			t.Errorf("SegL2 Name: got %v, want Test Domain", segL2.Name)
+		if Seg.Name != "Test Domain" {
+			t.Errorf("Seg Name: got %v, want Test Domain", Seg.Name)
 		}
-		if segL2.Prominence != 1 {
-			t.Errorf("SegL2 prominence got %v, expected default 1", segL2.Prominence)
+		if Seg.Prominence != 1 {
+			t.Errorf("Seg prominence got %v, expected default 1", Seg.Prominence)
 		}
 	})
 	t.Run("Setting prominence", func(t *testing.T) {
 		validYAML := `version: "1.0"
 name: "Test Domain"
 id: "test"
-description: "Test security domain"
+description: "Test security domain for validating prominence settings and configuration options"
+sensitivity: "A"
+sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
+criticality: "1"
+criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
 prominence: 2
 l1_parents:
   - production
@@ -168,19 +176,21 @@ l1_overrides:
   production:
     sensitivity: "A"
     sensitivity_rationale: "Test rationale with sufficient length. Test rationale with sufficient length."
+    criticality: "1"
+    criticality_rationale: "Test rationale with sufficient length. Test rationale with sufficient length."
 `
 		files := testhelpers.NewTestFiles(t)
-		tmpFile := files.CreateYAMLFile("segl2", validYAML)
+		tmpFile := files.CreateYAMLFile("Seg", validYAML)
 
 		validator := schemaValidation.MustCreateValidator(t)
-		fl := NewFileSegL2Repository(validator)
-		segL2, err := fl.parseSegL2File(tmpFile)
+		fl := NewFileSegRepository(validator)
+		Seg, err := fl.parseSegFile(tmpFile)
 
 		if err != nil {
 			t.Fatalf("parseSDFile: unexpected error: %v", err)
 		}
-		if segL2.Prominence != 2 {
-			t.Errorf("SegL2 prominence got %v, expected default 2", segL2.Prominence)
+		if Seg.Prominence != 2 {
+			t.Errorf("Seg prominence got %v, expected default 2", Seg.Prominence)
 		}
 	})
 
@@ -188,18 +198,24 @@ l1_overrides:
 		invalidYAML := `version: "99.0"
 name: "Test Domain"
 id: "test"
-description: "Test domain"
+description: "Test domain for validating unsupported version error handling and detection"
+sensitivity: "A"
+sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
+criticality: "1"
+criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
 l1_overrides:
   production:
     sensitivity: "A"
     sensitivity_rationale: "Test rationale with sufficient length."
+    criticality: "1"
+    criticality_rationale: "Test rationale with sufficient length."
 `
 		files := testhelpers.NewTestFiles(t)
-		tmpFile := files.CreateYAMLFile("segl2", invalidYAML)
+		tmpFile := files.CreateYAMLFile("Seg", invalidYAML)
 
 		validator := schemaValidation.MustCreateValidator(t)
-		fl := NewFileSegL2Repository(validator)
-		_, err := fl.parseSegL2File(tmpFile)
+		fl := NewFileSegRepository(validator)
+		_, err := fl.parseSegFile(tmpFile)
 
 		if err == nil {
 			t.Error("Expected error for unsupported version but got nil")
@@ -210,23 +226,31 @@ l1_overrides:
 		invalidYAML := `version: "1.0"
 name: "Test Domain"
 id: "test"
-description: "Test security domain"
+description: "Test security domain for validating l1_overrides key consistency with parents"
+sensitivity: "A"
+sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
+criticality: "1"
+criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
 l1_parents:
   - production
 l1_overrides:
   production:
     sensitivity: "A"
     sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
+    criticality: "1"
+    criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
   staging:
     sensitivity: "D"
     sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
+    criticality: "5"
+    criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
 `
 		files := testhelpers.NewTestFiles(t)
-		tmpFile := files.CreateYAMLFile("segl2", invalidYAML)
+		tmpFile := files.CreateYAMLFile("Seg", invalidYAML)
 
 		validator := schemaValidation.MustCreateValidator(t)
-		fl := NewFileSegL2Repository(validator)
-		_, err := fl.parseSegL2File(tmpFile)
+		fl := NewFileSegRepository(validator)
+		_, err := fl.parseSegFile(tmpFile)
 
 		if err == nil {
 			t.Error("Expected L1 consistency validation error but got nil")

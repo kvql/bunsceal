@@ -14,7 +14,7 @@ The `pkg/taxonomy` package has grown organically to ~18 Go files in a flat struc
 
 Current file naming is unclear and inconsistent:
 - `secenv.go` - Not obvious this handles SegL1 (security environments)
-- `secdomain.go` - Not obvious this handles SegL2 (security domains)
+- `secdomain.go` - Not obvious this handles Seg (security domains)
 - `compscope.go` - Not obvious this handles compliance requirements
 - `business_logic.go` - Too generic, doesn't indicate what business logic
 - `validator.go` - Doesn't indicate which validation (uniqueness, schema, cross-entity)
@@ -61,7 +61,7 @@ Create `domain/` and `validation/` subdirectories to separate pure domain models
 ```text
 pkg/taxonomy/
 ├── domain/                    # Domain models and constants (no external dependencies)
-│   ├── models.go              # Taxonomy, SegL1, SegL2, CompReq, L1Overrides
+│   ├── models.go              # Taxonomy, SegL1, Seg, CompReq, L1Overrides
 │   ├── constants.go           # SensitivityLevels, CriticalityLevels, ApiVersion
 │   └── config.go              # Config, TermDef, TermConfig (data structures only)
 │
@@ -71,7 +71,7 @@ pkg/taxonomy/
 │   └── schema.go              # SchemaValidator, JSON schema validation
 │
 ├── loader_segl1.go            # LoadSegL1Files (from secenv.go)
-├── loader_segl2.go            # LoadSegL2Files (from secdomain.go)
+├── loader_Seg.go            # LoadSegFiles (from secdomain.go)
 ├── loader_compreq.go          # LoadCompScope (from compscope.go)
 ├── loader_config.go           # LoadConfig, DefaultConfig (from config.go functions)
 │
@@ -95,12 +95,12 @@ pkg/taxonomy/
 │
 ├── repository/                # Created when needed
 │   ├── segl1_repository.go    # SegL1Repository interface + FileSegL1Repository
-│   ├── segl2_repository.go    # SegL2Repository interface + FileSegL2Repository
+│   ├── Seg_repository.go    # SegRepository interface + FileSegRepository
 │   └── compreq_repository.go  # CompReqRepository interface + FileCompReqRepository
 │
 ├── service/                   # Created when needed
 │   ├── segl1_service.go       # SegL1Service: repository → validation → transformation
-│   ├── segl2_service.go       # SegL2Service
+│   ├── Seg_service.go       # SegService
 │   └── taxonomy_service.go    # TaxonomyService: CompleteAndValidateTaxonomy
 │
 └── (loader_*.go renamed to match new architecture)
@@ -117,7 +117,7 @@ pkg/taxonomy/
 | `business_logic.go` | `validation/cross_entity.go` | Business rules validation |
 | `schema_validator.go` | `validation/schema.go` | Infrastructure for validation |
 | `secenv.go` | `loader_segl1.go` | Clear prefix, stays at root until Phase 2 |
-| `secdomain.go` | `loader_segl2.go` | Clear prefix, stays at root until Phase 2 |
+| `secdomain.go` | `loader_Seg.go` | Clear prefix, stays at root until Phase 2 |
 | `compscope.go` | `loader_compreq.go` | Clear prefix, stays at root until Phase 2 |
 | `config.go` (functions) | `loader_config.go` | Loading logic with clear prefix |
 | `taxonomy.go` (inheritance) | `inheritance.go` | Already has clear name |
@@ -141,7 +141,7 @@ validation/
   schema_test.go                # ← from schema_validator_test.go
 
 loader_segl1_test.go            # ← from loading_test.go SegL1 tests
-loader_segl2_test.go            # ← from loading_test.go SegL2 tests
+loader_Seg_test.go            # ← from loading_test.go Seg tests
 loader_compreq_test.go          # ← from loading_test.go CompReq tests
 loader_config_test.go           # ← from config_test.go
 inheritance_test.go             # ← existing
@@ -169,7 +169,7 @@ inheritance.go  → domain/
 **Immediate Value with Reduced Risk**
 
 - Solves discoverability problem now with `domain/` and `validation/` directories
-- Clear file naming (`loader_segl1.go`, `loader_segl2.go`) makes purpose obvious
+- Clear file naming (`loader_segl1.go`, `loader_Seg.go`) makes purpose obvious
 - Much smaller migration effort (~2-3 hours vs 7-9 hours)
 - No premature abstraction - repository/service layers added only when needed
 
@@ -184,7 +184,7 @@ inheritance.go  → domain/
 
 - Domain models isolated from external dependencies
 - Validation logic reusable and testable independently
-- Loading logic still separated by entity (SegL1, SegL2, CompReq)
+- Loading logic still separated by entity (SegL1, Seg, CompReq)
 
 **Incremental Migration Path**
 
@@ -274,7 +274,7 @@ inheritance.go  → domain/
 ```text
 pkg/
   segl1/          # All SegL1 code (loading, validation, service)
-  segl2/          # All SegL2 code
+  Seg/          # All Seg code
   compreq/        # All compliance requirement code
   taxonomy/       # Orchestration only
 ```
@@ -293,7 +293,7 @@ pkg/taxonomy/
     repository.go
     service.go
     validator.go
-  segl2/
+  Seg/
     repository.go
     service.go
     validator.go
@@ -354,7 +354,7 @@ pkg/taxonomy/
 **Step 4: Rename Root-Level Files**
 
 1. Rename `secenv.go` → `loader_segl1.go`
-2. Rename `secdomain.go` → `loader_segl2.go`
+2. Rename `secdomain.go` → `loader_Seg.go`
 3. Rename `compscope.go` → `loader_compreq.go`
 4. Extract loading functions from `config.go` → `loader_config.go`
 5. Update imports to use `domain` and `validation` packages

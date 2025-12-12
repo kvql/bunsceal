@@ -8,13 +8,13 @@ import (
 func ValidateL2Definition(txy *domain.Taxonomy) (bool, int) {
 	valid := true
 	failures := 0
-	// Loop through SegL2s and validate default risk levels
-	for _, secDomain := range txy.SegL2s {
+	// Loop through Segs and validate default risk levels
+	for _, secDomain := range txy.Segs {
 		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
 		for _, l1ID := range secDomain.L1Parents {
 			// Validate parent L1 exists in taxonomy
 			if _, ok := txy.SegL1s[l1ID]; !ok {
-				o11y.Log.Printf("Invalid L1 parent for SegL2 %s: %s\n", secDomain.Name, l1ID)
+				o11y.Log.Printf("Invalid L1 parent for Seg %s: %s\n", secDomain.Name, l1ID)
 				failures++
 				valid = false
 				continue // Skip compliance validation for invalid parent
@@ -24,7 +24,7 @@ func ValidateL2Definition(txy *domain.Taxonomy) (bool, int) {
 			sdEnv, exists := secDomain.L1Overrides[l1ID]
 			if !exists {
 				// This should not happen if inheritance ran correctly
-				o11y.Log.Printf("ERROR: SegL2 '%s' has parent '%s' but no override data after inheritance\n", secDomain.Name, l1ID)
+				o11y.Log.Printf("ERROR: Seg '%s' has parent '%s' but no override data after inheritance\n", secDomain.Name, l1ID)
 				failures++
 				valid = false
 				continue

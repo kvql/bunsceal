@@ -19,7 +19,7 @@ func TestBuildRowsMap(t *testing.T) {
 		}
 
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod":    {},
 				"staging": {},
 				"dev":     {},
@@ -55,7 +55,7 @@ func TestBuildRowsMap(t *testing.T) {
 		}
 
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod":           {},
 				"staging":        {},
 				"dev":            {},
@@ -103,7 +103,7 @@ func TestBuildRowsMap(t *testing.T) {
 		}
 
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"production": {},
 				"dev":        {},
 			},
@@ -132,7 +132,7 @@ func TestBuildRowsMap(t *testing.T) {
 		}
 
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"production": {},
 				"staging":    {},
 			},
@@ -164,7 +164,7 @@ func TestBuildRowsMap(t *testing.T) {
 		}
 
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod":    {},
 				"staging": {},
 				"dev":     {},
@@ -190,7 +190,7 @@ func TestBuildRowsMap(t *testing.T) {
 		}
 
 		txy := &domain.Taxonomy{
-			SegL1s: map[string]domain.SegL1{
+			SegL1s: map[string]domain.Seg{
 				"prod":    {},
 				"staging": {},
 				"dev":     {},

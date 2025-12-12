@@ -168,8 +168,8 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 			// Loop through security domains in the current environment
 			batch := NewBatchVars(envId)
 
-			for _, sdId := range imageData[envId].SortedSegL2s {
-				sdEnvDet := imageData[envId].SegL2s[sdId]
+			for _, sdId := range imageData[envId].SortedSegs {
+				sdEnvDet := imageData[envId].Segs[sdId]
 				crit := sdEnvDet.Criticality
 				// Setup batch subgraphs and bump when necessary
 				if batch.Count[crit] > batch.Limit || batch.Count[crit] == 0 {
@@ -183,7 +183,7 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 				// Add security domain nodes
 				// -------------------------
 				// Add emphasis to the label (map returns 0 if not found)
-				label := FormatSdLabel(txy, "", envId, sdId, showClass, txy.SegL2s[sdId].Prominence)
+				label := FormatSdLabel(txy, "", envId, sdId, showClass, txy.Segs[sdId].Prominence)
 				sdNodeAtt := FormatNode(label, sdEnvDet.Sensitivity) // attributes to format the node
 				sdNodeName := fmt.Sprintf("\"sd_node_%s_%s\"", strings.ReplaceAll(envId, "-", "_"), strings.ReplaceAll(sdId, "-", "_"))
 				// Add security domain node to the batch subgraph
@@ -290,13 +290,13 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *configdomain.Config, compName st
 			// ------------------------------------------
 			batch := NewBatchVars(envId)
 
-			for _, sdId := range imageData[envId].SortedSegL2s {
+			for _, sdId := range imageData[envId].SortedSegs {
 				scope := "out"
-				if _, ok := imageData[envId].SegL2s[sdId].CompReqs[compName]; ok {
+				if _, ok := imageData[envId].Segs[sdId].CompReqs[compName]; ok {
 					scope = "in"
 				}
 				if showOutOfScope || scope == "in" {
-					sdEnvDet := imageData[envId].SegL2s[sdId]
+					sdEnvDet := imageData[envId].Segs[sdId]
 					//crit := sdEnvDet.Criticality
 					// Setup batch subgraphs and bump when necessary
 					if batch.Count[scope] > batch.Limit || batch.Count[scope] == 0 {
@@ -310,7 +310,7 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *configdomain.Config, compName st
 					// Add security domain nodes
 					// -------------------------
 					// Add emphasis to the label (map returns 0 if not found)
-					label := FormatSdLabel(txy, "", envId, sdId, false, txy.SegL2s[sdId].Prominence)
+					label := FormatSdLabel(txy, "", envId, sdId, false, txy.Segs[sdId].Prominence)
 					sdNodeAtt := FormatNode(label, sdEnvDet.Sensitivity) // attributes to format the node
 					// Make out of scope nodes less visible in the graph by removing filled style (font needs to be bright if fill removed)
 					if scope == "out" {

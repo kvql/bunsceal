@@ -14,18 +14,18 @@
       "description": "Map of environment ID -> SegL1",
       "patternProperties": {
         "^[a-z-]{1,15}$": {
-          "$ref": "./seg-level1.json"
+          "$ref": "./seg-level.json"
         }
       },
       "additionalProperties": false,
       "minProperties": 1
     },
-    "segL2s": {
+    "Segs": {
       "type": "object",
-      "description": "Map of security domain ID -> SegL2",
+      "description": "Map of security domain ID -> Seg",
       "patternProperties": {
         "^[a-z0-9-]{1,15}$": {
-          "$ref": "./seg-level2.json"
+          "$ref": "./seg-level.json"
         }
       },
       "additionalProperties": false,
@@ -61,7 +61,7 @@
   "required": [
     "apiVersion",
     "segL1s",
-    "segL2s",
+    "Segs",
     "sensitivityLevels",
     "criticalityLevels",
     "compReqs"

@@ -23,12 +23,16 @@ type L1Overrides struct {
 	CompReqs             map[string]CompReq `yaml:"comp_reqs,omitempty"`
 }
 
-type SegL2 struct {
-	Name        string                 `yaml:"name"`
-	ID          string                 `yaml:"id"`
-	Description string                 `yaml:"description"`
-	L1Parents   []string               `yaml:"l1_parents,omitempty"`
-	L1Overrides map[string]L1Overrides `yaml:"l1_overrides"`
+type Seg struct {
+	Name                 string                 `yaml:"name"`
+	ID                   string                 `yaml:"id"`
+	Description          string                 `yaml:"description"`
+	Sensitivity          string                 `yaml:"sensitivity"`
+	SensitivityRationale string                 `yaml:"sensitivity_rationale"`
+	Criticality          string                 `yaml:"criticality"`
+	CriticalityRationale string                 `yaml:"criticality_rationale"`
+	L1Parents            []string               `yaml:"l1_parents,omitempty"`
+	L1Overrides          map[string]L1Overrides `yaml:"l1_overrides,omitempty"`
 }
 
 type CompReq struct {
@@ -40,7 +44,7 @@ type CompReq struct {
 type Taxonomy struct {
 	ApiVersion        string             `yaml:"api_version"`
 	SegL1s            map[string]SegL1   `yaml:"seg_l1s"`
-	SegL2s            map[string]SegL2   `yaml:"seg_l2s"`
+	Segs              map[string]Seg     `yaml:"seg_l2s"`
 	SensitivityLevels []string           `yaml:"sensitivity_levels"`
 	CriticalityLevels []string           `yaml:"criticality_levels"`
 	CompReqs          map[string]CompReq `yaml:"comp_reqs"`
@@ -179,13 +183,17 @@ var InvalidSegL1_ShortRationale = SegL1{
 	CriticalityRationale: "Also too short",
 }
 
-// Valid SegL2 Fixtures
+// Valid Seg Fixtures
 
-var ValidSegL2Security = SegL2{
-	Name:        "Security",
-	ID:          "sec",
-	Description: "Security domain for security tooling and monitoring infrastructure",
-	L1Parents:   []string{"production", "staging"},
+var ValidSegSecurity = Seg{
+	Name:                 "Security",
+	ID:                   "sec",
+	Description:          "Security domain for security tooling and monitoring infrastructure across environments",
+	Sensitivity:          "B",
+	SensitivityRationale: "Security logs contain sensitive metadata but not direct customer PII or financial data requiring lower classification.",
+	Criticality:          "2",
+	CriticalityRationale: "Security monitoring downtime impacts compliance and incident response but doesn't directly affect customer-facing services.",
+	L1Parents:            []string{"production", "staging"},
 	L1Overrides: map[string]L1Overrides{
 		"production": {
 			Sensitivity:          "B",
@@ -204,11 +212,15 @@ var ValidSegL2Security = SegL2{
 	},
 }
 
-var ValidSegL2Application = SegL2{
-	Name:        "Application",
-	ID:          "app",
-	Description: "Application domain for core business application services",
-	L1Parents:   []string{"production"},
+var ValidSegApplication = Seg{
+	Name:                 "Application",
+	ID:                   "app",
+	Description:          "Application domain for core business application services and workloads",
+	Sensitivity:          "A",
+	SensitivityRationale: "Production applications handle customer PII, payment information, and other regulated data requiring highest protection.",
+	Criticality:          "1",
+	CriticalityRationale: "Application services are customer-facing and directly generate revenue, requiring maximum availability and performance.",
+	L1Parents:            []string{"production"},
 	L1Overrides: map[string]L1Overrides{
 		"production": {
 			Sensitivity:          "A",
@@ -220,12 +232,16 @@ var ValidSegL2Application = SegL2{
 	},
 }
 
-// SegL2 with inheritance (empty env details)
-var ValidSegL2WithInheritance = SegL2{
-	Name:        "Infrastructure",
-	ID:          "infra",
-	Description: "Infrastructure domain that inherits all settings from environments",
-	L1Parents:   []string{"production", "staging"},
+// Seg with inheritance (empty env details)
+var ValidSegWithInheritance = Seg{
+	Name:                 "Infrastructure",
+	ID:                   "infra",
+	Description:          "Infrastructure domain that inherits all settings from parent environments",
+	Sensitivity:          "A",
+	SensitivityRationale: "Infrastructure components provide foundational services and access to resources requiring highest protection.",
+	Criticality:          "1",
+	CriticalityRationale: "Infrastructure failures cascade across all services making availability critical for operations.",
+	L1Parents:            []string{"production", "staging"},
 	L1Overrides: map[string]L1Overrides{
 		"production": {
 			// Empty - should inherit from production SegL1
@@ -236,41 +252,57 @@ var ValidSegL2WithInheritance = SegL2{
 	},
 }
 
-// SegL2 with full inheritance (no overrides in YAML)
-var ValidSegL2FullInheritance = SegL2{
-	Name:        "Monitoring",
-	ID:          "mon",
-	Description: "Monitoring domain that fully inherits from all parent environments without any overrides",
-	L1Parents:   []string{"production", "staging"},
-	L1Overrides: map[string]L1Overrides{}, // Empty - will be populated by inheritance
+// Seg with full inheritance (no overrides in YAML)
+var ValidSegFullInheritance = Seg{
+	Name:                 "Monitoring",
+	ID:                   "mon",
+	Description:          "Monitoring domain that fully inherits from all parent environments without overrides",
+	Sensitivity:          "C",
+	SensitivityRationale: "Monitoring systems collect observability data with limited sensitive information requiring moderate protection.",
+	Criticality:          "3",
+	CriticalityRationale: "Monitoring outages reduce visibility but don't directly impact customer-facing operations.",
+	L1Parents:            []string{"production", "staging"},
+	L1Overrides:          map[string]L1Overrides{}, // Empty - will be populated by inheritance
 }
 
-// Invalid SegL2 Fixtures
+// Invalid Seg Fixtures
 
-var InvalidSegL2_MissingName = SegL2{
-	ID:          "invalid",
-	Description: "Missing name field",
-	L1Parents:   []string{"production"},
+var InvalidSeg_MissingName = Seg{
+	ID:                   "invalid",
+	Description:          "Missing name field for testing validation rules and error handling behavior",
+	Sensitivity:          "A",
+	SensitivityRationale: "Test sensitivity rationale with sufficient length to meet the minimum character requirement.",
+	Criticality:          "1",
+	CriticalityRationale: "Test criticality rationale with sufficient length to meet the minimum character requirement.",
+	L1Parents:            []string{"production"},
 	L1Overrides: map[string]L1Overrides{
 		"production": {},
 	},
 }
 
-var InvalidSegL2_InvalidID = SegL2{
-	Name:        "Invalid ID",
-	ID:          "Invalid_ID!",
-	Description: "ID contains invalid characters",
-	L1Parents:   []string{"production"},
+var InvalidSeg_InvalidID = Seg{
+	Name:                 "Invalid ID",
+	ID:                   "Invalid_ID!",
+	Description:          "ID contains invalid characters for testing validation rules and error handling",
+	Sensitivity:          "A",
+	SensitivityRationale: "Test sensitivity rationale with sufficient length to meet the minimum character requirement.",
+	Criticality:          "1",
+	CriticalityRationale: "Test criticality rationale with sufficient length to meet the minimum character requirement.",
+	L1Parents:            []string{"production"},
 	L1Overrides: map[string]L1Overrides{
 		"production": {},
 	},
 }
 
-var InvalidSegL2_NoL1Overrides = SegL2{
-	Name:        "No Environments",
-	ID:          "no-env",
-	Description: "Security domain with no environment details defined",
-	L1Overrides: map[string]L1Overrides{},
+var InvalidSeg_NoL1Overrides = Seg{
+	Name:                 "No Environments",
+	ID:                   "no-env",
+	Description:          "Security domain with no environment details defined for testing validation rules",
+	Sensitivity:          "A",
+	SensitivityRationale: "Test sensitivity rationale with sufficient length to meet the minimum character requirement.",
+	Criticality:          "1",
+	CriticalityRationale: "Test criticality rationale with sufficient length to meet the minimum character requirement.",
+	L1Overrides:          map[string]L1Overrides{},
 	// No L1Parents - should fail schema validation (anyOf requires one field)
 }
 
@@ -303,9 +335,9 @@ var ValidCompleteTaxonomy = Taxonomy{
 		"staging":        ValidSegL1Staging,
 		"shared-service": ValidSegL1SharedService,
 	},
-	SegL2s: map[string]SegL2{
-		"sec": ValidSegL2Security,
-		"app": ValidSegL2Application,
+	Segs: map[string]Seg{
+		"sec": ValidSegSecurity,
+		"app": ValidSegApplication,
 	},
 	SensitivityLevels: []string{"A", "B", "C", "D"},
 	CriticalityLevels: []string{"1", "2", "3", "4", "5"},

@@ -7,7 +7,7 @@ import (
 
 func TestSegL1_ParseLabels(t *testing.T) {
 	t.Run("Parses valid key:value pairs", func(t *testing.T) {
-		seg := &SegL1{
+		seg := &Seg{
 			Labels: []string{"env:prod", "region:us-east-1"},
 		}
 
@@ -28,7 +28,7 @@ func TestSegL1_ParseLabels(t *testing.T) {
 	})
 
 	t.Run("Handles values containing colons", func(t *testing.T) {
-		seg := &SegL1{
+		seg := &Seg{
 			Labels: []string{"url:https://example.com:8080"},
 		}
 
@@ -43,7 +43,7 @@ func TestSegL1_ParseLabels(t *testing.T) {
 	})
 
 	t.Run("Empty labels slice succeeds", func(t *testing.T) {
-		seg := &SegL1{
+		seg := &Seg{
 			Labels: []string{},
 		}
 
@@ -58,7 +58,7 @@ func TestSegL1_ParseLabels(t *testing.T) {
 	})
 
 	t.Run("Initialises nil ParsedLabels map", func(t *testing.T) {
-		seg := &SegL1{
+		seg := &Seg{
 			Labels:       []string{"key:value"},
 			ParsedLabels: nil,
 		}
@@ -77,7 +77,7 @@ func TestSegL1_ParseLabels(t *testing.T) {
 	})
 
 	t.Run("Returns error for invalid format", func(t *testing.T) {
-		seg := &SegL1{
+		seg := &Seg{
 			Labels: []string{"invalid-no-colon"},
 		}
 
@@ -126,7 +126,7 @@ func TestSegL1_ParseLabels(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				seg := &SegL1{Labels: tc.labels}
+				seg := &Seg{Labels: tc.labels}
 				err := seg.ParseLabels()
 				if err != nil {
 					t.Fatalf("Expected no error, got %v", err)
@@ -140,4 +140,103 @@ func TestSegL1_ParseLabels(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestSeg_ValidateL1Consistency(t *testing.T) {
+	tests := []struct {
+		name        string
+		Seg         Seg
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "Valid - all override keys in parents",
+			Seg: Seg{
+				L1Parents: []string{"prod", "staging"},
+				L1Overrides: map[string]L1Overrides{
+					"prod":    {},
+					"staging": {},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Valid - subset of parents have overrides",
+			Seg: Seg{
+				L1Parents: []string{"prod", "staging", "dev"},
+				L1Overrides: map[string]L1Overrides{
+					"prod": {},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Valid - empty overrides",
+			Seg: Seg{
+				L1Parents:   []string{"prod"},
+				L1Overrides: map[string]L1Overrides{},
+			},
+			expectError: false,
+		},
+		{
+			name: "Valid - nil overrides",
+			Seg: Seg{
+				L1Parents:   []string{"prod"},
+				L1Overrides: nil,
+			},
+			expectError: false,
+		},
+		{
+			name: "Invalid - override key not in parents",
+			Seg: Seg{
+				L1Parents: []string{"prod"},
+				L1Overrides: map[string]L1Overrides{
+					"prod":    {},
+					"staging": {},
+				},
+			},
+			expectError: true,
+			errorMsg:    "l1_overrides contains key 'staging' which is not in l1_parents",
+		},
+		{
+			name: "Invalid - multiple override keys not in parents",
+			Seg: Seg{
+				L1Parents: []string{"prod"},
+				L1Overrides: map[string]L1Overrides{
+					"staging": {},
+					"dev":     {},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "Invalid - no parents but has overrides",
+			Seg: Seg{
+				L1Parents: []string{},
+				L1Overrides: map[string]L1Overrides{
+					"prod": {},
+				},
+			},
+			expectError: true,
+			errorMsg:    "l1_overrides contains key 'prod' which is not in l1_parents",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.Seg.ValidateL1Consistency()
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got nil")
+				} else if tt.errorMsg != "" && err.Error() != tt.errorMsg {
+					t.Errorf("Expected error message '%s' but got '%s'", tt.errorMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no error but got: %v", err)
+				}
+			}
+		})
+	}
 }

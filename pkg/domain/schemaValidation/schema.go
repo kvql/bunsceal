@@ -25,8 +25,7 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 	// Load all schema files
 	schemaFiles := []string{
 		"common.json",
-		"seg-level1.json",
-		"seg-level2.json",
+		"seg-level.json",
 		"l1-overrides.json",
 		"compliance-reqs.json",
 		"compliance-req.json",

@@ -1,9 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/kvql/bunsceal/pkg/domain/schemas/seg-level2.json",
-  "title": "SegL2",
-  "description": "Segmentation Level 2 definitions, including per-environment overrides",
+  "$id": "https://github.com/kvql/bunsceal/pkg/domain/schemas/seg-level.json",
+  "title": "Security Environment (SegL1)",
+  "description": "Definition of a security environment (SegL1)",
   "type": "object",
+    "required": [
+    "name",
+    "id",
+    "description"
+  ],
+  "additionalProperties": false,
   "properties": {
     "version": {
       "type": "string",
@@ -15,11 +21,29 @@
       "minLength": 1
     },
     "id": {
-      "$ref": "./common.json#/$defs/sdId"
+      "$ref": "./common.json#/$defs/envId"
     },
     "description": {
-      "type": "string",
-      "minLength": 1
+      "$ref": "./common.json#/$defs/longDescription"
+    },
+    "sensitivity": {
+      "$ref": "./common.json#/$defs/sensitivityCode"
+    },
+    "sensitivity_rationale": {
+      "$ref": "./common.json#/$defs/longDescription"
+    },
+    "criticality": {
+      "$ref": "./common.json#/$defs/criticalityCode"
+    },
+    "criticality_rationale": {
+      "$ref": "./common.json#/$defs/longDescription"
+    },
+    "compliance_reqs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
     },
     "l1_parents": {
       "type": "array",
@@ -54,13 +78,5 @@
     "labels": {
       "$ref": "./common.json#/$defs/labels"
     }
-  },
-  "required": [
-    "version",
-    "name",
-    "id",
-    "description",
-    "l1_parents"
-  ],
-  "additionalProperties": false
+  }
 }

@@ -131,7 +131,7 @@ func (r *LogicRuleUniqueness) Validate(taxonomy *domain.Taxonomy) []error {
 
 		// Check L2 names
 		l2Values := make(map[string]bool)
-		for _, seg := range taxonomy.SegL2s {
+		for _, seg := range taxonomy.Segs {
 			val, err := seg.GetKeyString(key)
 			if err != nil {
 				return []error{err}

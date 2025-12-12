@@ -5,7 +5,7 @@
 **BREAKING CHANGE:** L2 segments now require an explicit `l1_parents` field to define parent relationships. The old pattern of using `l1_overrides` map keys for parent selection is no longer supported.
 
 **What changed:**
-- `l1_parents` field is now **required** in all SegL2 YAML files
+- `l1_parents` field is now **required** in all Seg YAML files
 - `l1_overrides` map keys are no longer used to determine parent relationships
 - The `l1_overrides` field remains for storing override data only
 
@@ -141,7 +141,7 @@ l1_overrides: {}  # Will inherit all values
 ## Schema Changes
 
 The JSON schema now enforces:
-- `l1_parents` is **required** (must be present in all SegL2 files)
+- `l1_parents` is **required** (must be present in all Seg files)
 - `l1_parents` must have at least one entry (minItems: 1)
 - `l1_parents` must have unique entries (no duplicates)
 - `l1_overrides` can be empty (for full inheritance scenarios)
@@ -149,7 +149,7 @@ The JSON schema now enforces:
 ## Troubleshooting
 
 ### Error: "missing properties: 'l1_parents'"
-**Cause:** SegL2 YAML file is missing the required `l1_parents` field
+**Cause:** Seg YAML file is missing the required `l1_parents` field
 
 **Fix:** Add the `l1_parents` field with at least one L1 parent ID
 
@@ -171,7 +171,7 @@ l1_overrides:
   prod: {...}
 ```
 
-### Error: "SegL2 'X' has parent 'Y' but no override data after inheritance"
+### Error: "Seg 'X' has parent 'Y' but no override data after inheritance"
 **Cause:** Internal error - inheritance didn't populate override data
 
 **Fix:** Check that the parent L1 segment exists in your taxonomy
@@ -179,7 +179,7 @@ l1_overrides:
 ## Questions & Support
 
 **Q: Do I need to migrate immediately?**
-A: Yes. This is a breaking change. All SegL2 YAML files must have the `l1_parents` field.
+A: Yes. This is a breaking change. All Seg YAML files must have the `l1_parents` field.
 
 **Q: Can I have both l1_parents and l1_overrides?**
 A: Yes! `l1_parents` defines the parent relationships (required), and `l1_overrides` provides override data (optional - can be empty for full inheritance).

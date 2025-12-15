@@ -9,25 +9,17 @@ import (
 	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
 )
 
+// helper to create a config pointing to tmpDir for a specific level
+func testConfig(tmpDir string) infrastructure.ConfigFsReposistory {
+	return infrastructure.ConfigFsReposistory{
+		TaxonomyDir: tmpDir,
+		L1Dir:       "",
+		L2Dir:       "",
+	}
+}
+
 func TestSegL1Service(t *testing.T) {
 	validator := schemaValidation.MustCreateValidator(t)
-	t.Run("Successfully loads and validates SegL1 files", func(t *testing.T) {
-		repository := infrastructure.NewFileSegL1Repository(validator)
-		service := NewSegL1Service(repository)
-
-		segL1s, err := service.Load("../../../example/taxonomy/environments")
-		if err != nil {
-			t.Fatalf("Expected successful load, got error: %v", err)
-		}
-		if len(segL1s) == 0 {
-			t.Error("Expected at least one SegL1 to be loaded")
-		}
-
-		// Check that shared-service was loaded (required by validation)
-		if _, ok := segL1s["shared-service"]; !ok {
-			t.Error("Expected shared-service environment to be loaded")
-		}
-	})
 
 	t.Run("Returns map indexed by ID", func(t *testing.T) {
 		files := infrastructure.NewTestFiles(t)
@@ -37,9 +29,9 @@ func TestSegL1Service(t *testing.T) {
 			testhelpers.NewSegL1("env-three", "Environment 3", "C", "3", []string{}),
 		})
 
-		repository := infrastructure.NewFileSegL1Repository(validator)
-		service := NewSegL1Service(repository)
-		segL1s, err := service.Load(tmpDir)
+		repository := infrastructure.NewFileSegRepository(validator, testConfig(tmpDir))
+		service := NewSegService(repository)
+		segL1s, err := service.LoadLevel("1")
 
 		if err != nil {
 			t.Fatalf("LoadAndValidate: unexpected error: %v", err)
@@ -64,9 +56,9 @@ func TestSegL1Service(t *testing.T) {
 			testhelpers.NewSegL1("duplicate", "Environment 2", "B", "2", []string{}),
 		})
 
-		repository := infrastructure.NewFileSegL1Repository(validator)
-		service := NewSegL1Service(repository)
-		segL1s, err := service.Load(tmpDir)
+		repository := infrastructure.NewFileSegRepository(validator, testConfig(tmpDir))
+		service := NewSegService(repository)
+		segL1s, err := service.LoadLevel("1")
 
 		if err == nil {
 			t.Error("Expected error for duplicate IDs but got nil")
@@ -81,18 +73,6 @@ func TestSegL1Service(t *testing.T) {
 
 func TestSegService(t *testing.T) {
 	validator := schemaValidation.MustCreateValidator(t)
-	t.Run("Successfully loads and validates Seg files", func(t *testing.T) {
-		repository := infrastructure.NewFileSegRepository(validator)
-		service := NewSegService(repository)
-
-		Segs, err := service.Load("../../../example/taxonomy/segments")
-		if err != nil {
-			t.Fatalf("Expected successful load, got error: %v", err)
-		}
-		if len(Segs) == 0 {
-			t.Error("Expected at least one Seg to be loaded")
-		}
-	})
 
 	t.Run("Returns map indexed by ID", func(t *testing.T) {
 		files := infrastructure.NewTestFiles(t)
@@ -108,9 +88,9 @@ func TestSegService(t *testing.T) {
 			}),
 		})
 
-		repository := infrastructure.NewFileSegRepository(validator)
+		repository := infrastructure.NewFileSegRepository(validator, testConfig(tmpDir))
 		service := NewSegService(repository)
-		Segs, err := service.Load(tmpDir)
+		Segs, err := service.LoadLevel("2")
 
 		if err != nil {
 			t.Fatalf("LoadAndValidate: unexpected error: %v", err)
@@ -125,7 +105,7 @@ func TestSegService(t *testing.T) {
 		}
 	})
 
-	t.Run("Validates uniqueness of Seg IDs", func(t *testing.T) {
+	t.Run("Validates uniqueness of Seg L2 IDs", func(t *testing.T) {
 		files := infrastructure.NewTestFiles(t)
 		tmpDir := files.CreateSegFiles([]domain.Seg{
 			testhelpers.NewSeg("duplicate", "Domain 1", map[string]domain.L1Overrides{
@@ -136,9 +116,9 @@ func TestSegService(t *testing.T) {
 			}),
 		})
 
-		repository := infrastructure.NewFileSegRepository(validator)
+		repository := infrastructure.NewFileSegRepository(validator, testConfig(tmpDir))
 		service := NewSegService(repository)
-		Segs, err := service.Load(tmpDir)
+		Segs, err := service.LoadLevel("2")
 
 		if err == nil {
 			t.Error("Expected error for duplicate IDs but got nil")

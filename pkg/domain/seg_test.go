@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+// Test overview
+// - Label parsing
+// - l1 override conn
+
 func TestSegL1_ParseLabels(t *testing.T) {
 	t.Run("Parses valid key:value pairs", func(t *testing.T) {
 		seg := &Seg{

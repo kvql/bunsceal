@@ -30,8 +30,8 @@ func TestLoadConfig_MissingFile(t *testing.T) {
 		if cfg.SchemaPath != defaults.SchemaPath {
 			t.Errorf("Expected default SchemaPath '%s', got '%s'", defaults.SchemaPath, cfg.SchemaPath)
 		}
-		if cfg.TaxonomyPath != defaults.TaxonomyPath {
-			t.Errorf("Expected default TaxonomyPath '%s', got '%s'", defaults.TaxonomyPath, cfg.TaxonomyPath)
+		if cfg.FsRepository.TaxonomyDir != defaults.FsRepository.TaxonomyDir {
+			t.Errorf("Expected default TaxonomyPath '%s', got '%s'", defaults.FsRepository.TaxonomyDir, cfg.FsRepository.TaxonomyDir)
 		}
 	})
 }
@@ -245,8 +245,8 @@ func TestLoadConfig_missingLevel(t *testing.T) {
 		if cfg.SchemaPath != defaults.SchemaPath {
 			t.Errorf("Expected default SchemaPath '%s', got '%s'", defaults.SchemaPath, cfg.SchemaPath)
 		}
-		if cfg.TaxonomyPath != filepath.Join(tmpDir, defaults.TaxonomyPath) {
-			t.Errorf("Expected default TaxonomyPath '%s', got '%s'", defaults.TaxonomyPath, cfg.TaxonomyPath)
+		if cfg.FsRepository.TaxonomyDir != filepath.Join(tmpDir, defaults.FsRepository.TaxonomyDir) {
+			t.Errorf("Expected default TaxonomyPath '%s', got '%s'", defaults.FsRepository.TaxonomyDir, cfg.FsRepository.TaxonomyDir)
 		}
 	})
 }

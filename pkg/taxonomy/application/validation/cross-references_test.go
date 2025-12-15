@@ -12,7 +12,7 @@ func TestValidateL1Definitions(t *testing.T) {
 		txy := WithSegL1(
 			WithStandardCompReqs(NewTestTaxonomy()),
 			"prod",
-			NewProdSegL1(),
+			NewSegL1("prod", "Test", "A", "1", []string{"pci-dss", "sox"}),
 		)
 
 		valid := ValidateL1Comp(txy)
@@ -27,7 +27,7 @@ func TestValidateL1Definitions(t *testing.T) {
 				"https://www.pcisecuritystandards.org/",
 			)),
 			"prod",
-			NewSegL1("prod", "Production", "A", "1", []string{"invalid-scope"}),
+			NewSegL1("prod", "Test", "A", "1", []string{"invalid-scope"}),
 		)
 
 		valid := ValidateL1Comp(txy)
@@ -38,7 +38,7 @@ func TestValidateL1Definitions(t *testing.T) {
 		txy := WithSegL1(
 			NewTestTaxonomy(),
 			"staging",
-			NewStagingSegL1(),
+			NewSegL1("staging", "Test", "D", "5", nil),
 		)
 
 		valid := ValidateL1Comp(txy)
@@ -56,10 +56,12 @@ func TestValidateL2Definition(t *testing.T) {
 					"https://www.pcisecuritystandards.org/",
 				)),
 				"prod",
-				NewSegL1("prod", "Production", "A", "1", []string{}),
+				NewSegL1("prod", "Test", "A", "1", nil),
 			),
 			"app",
-			NewAppSeg(),
+			NewSeg("app", "Test", map[string]domain.L1Overrides{
+				"prod": NewL1Override("A", "1", []string{"pci-dss"}),
+			}),
 		)
 
 		valid, failures := ValidateL2Definition(txy)

@@ -55,6 +55,8 @@ func (s *Seg) PostLoad(level string) error {
 	// Set level if not already set
 	if s.Level == "" {
 		s.Level = level
+	} else if s.Level != level {
+		return fmt.Errorf("level (%s) passed as argument, doesn't match level field (%s)", level, s.Level)
 	}
 
 	// Validate level-specific required fields

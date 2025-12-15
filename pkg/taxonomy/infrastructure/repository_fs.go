@@ -11,116 +11,64 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// FileSegL1Repository implements taxonomy.SegL1Repository for file-based data sources
-type FileSegL1Repository struct {
-	schemaValidator *schemaValidation.SchemaValidator
+type LevelPaths map[string]string
+
+// ConfigFsReposistory If relative path set for TaxonomyDir, config file path used as the base.
+type ConfigFsReposistory struct {
+	TaxonomyDir string `yaml:"taxonomy_path,omitempty"`
+	L1Dir       string `yaml:"l1_dir"`
+	L2Dir       string `yaml:"l2_dir"`
 }
 
-// NewFileSegL1Repository creates a new file-based SegL1 repository
-// schemaValidator is used to validate each file against the JSON schema
-func NewFileSegL1Repository(schemaValidator *schemaValidation.SchemaValidator) *FileSegL1Repository {
-	return &FileSegL1Repository{
-		schemaValidator: schemaValidator,
+func (cfs *ConfigFsReposistory) GetLevelPath(level string) (string, error) {
+	var path string
+	switch level {
+	case "1":
+		path = filepath.Join(cfs.TaxonomyDir, cfs.L1Dir)
+	case "2":
+		path = filepath.Join(cfs.TaxonomyDir, cfs.L2Dir)
+	default:
+		return "", fmt.Errorf("no path found for level %s", level)
 	}
-}
-
-// LoadAll loads all SegL1 files from the specified directory
-// Returns a slice of SegL1 entities or an error if loading fails
-// Performs schema validation but NOT business rule validation
-func (r *FileSegL1Repository) LoadAll(segL1Dir string) ([]domain.Seg, error) {
-	files, err := os.ReadDir(segL1Dir)
-	if err != nil {
-		return nil, err
-	}
-
-	var segList []domain.Seg
-	var parseErrors []error
-
-	for _, file := range files {
-		if !file.IsDir() {
-			filePath := filepath.Join(segL1Dir, file.Name())
-			segL1, err := r.parseSegL1File(filePath)
-			if err != nil {
-				o11y.Log.Printf("Error parsing file %s: %v\n", filePath, err)
-				parseErrors = append(parseErrors, err)
-				continue
-			}
-			segList = append(segList, segL1)
-		}
-	}
-
-	if len(parseErrors) > 0 {
-		return nil, fmt.Errorf("failed to parse %d file(s) in directory: %s", len(parseErrors), segL1Dir)
-	}
-
-	return segList, nil
-}
-
-func (r *FileSegL1Repository) parseSegL1File(filePath string) (domain.Seg, error) {
-	return parseSegL1File(filePath, r.schemaValidator)
-}
-
-type version struct {
-	Version string `yaml:"version"`
-}
-
-// parseSegL1File parses a single SegL1 file with schema validation
-func parseSegL1File(filePath string, schemaValidator *schemaValidation.SchemaValidator) (domain.Seg, error) {
-	// #nosec G304 -- filePath comes from config-specified taxonomy directory, not user input
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return domain.Seg{}, err
-	}
-
-	if validationErr := schemaValidator.ValidateData(data, "seg-level.json"); validationErr != nil {
-		return domain.Seg{}, fmt.Errorf("schema validation failed for %s: %w", filePath, validationErr)
-	}
-
-	var segL1 domain.Seg
-	if err = yaml.Unmarshal(data, &segL1); err != nil {
-		return domain.Seg{}, err
-	}
-
-	// PostLoad handles defaults, label parsing, and L1 validation
-	if err = segL1.PostLoad("1"); err != nil {
-		return domain.Seg{}, fmt.Errorf("PostLoad validation failed for %s: %w", filePath, err)
-	}
-
-	return segL1, nil
+	return path, nil
 }
 
 // FileSegRepository implements taxonomy.SegRepository for file-based data sources
 type FileSegRepository struct {
 	schemaValidator *schemaValidation.SchemaValidator
+	config          ConfigFsReposistory
 }
 
 // NewFileSegRepository creates a new file-based Seg repository
 // schemaValidator is used to validate each file against the JSON schema
-func NewFileSegRepository(schemaValidator *schemaValidation.SchemaValidator) *FileSegRepository {
+func NewFileSegRepository(schemaValidator *schemaValidation.SchemaValidator, cfg ConfigFsReposistory) *FileSegRepository {
 	return &FileSegRepository{
 		schemaValidator: schemaValidator,
+		config:          cfg,
 	}
 }
 
-// LoadAll loads all Seg files from the specified directory
-// Returns a slice of Seg entities or an error if loading fails
-// Performs schema validation but NOT business rule validation
-func (r *FileSegRepository) LoadAll(SegDir string) ([]domain.Seg, error) {
+func (r *FileSegRepository) LoadLevel(level string) ([]domain.Seg, error) {
 	var segList []domain.Seg
 	var parseErrors []error
 
-	err := filepath.WalkDir(SegDir, func(path string, d os.DirEntry, err error) error {
+	path, err := r.config.GetLevelPath(level)
+	if err != nil {
+		return nil, err
+	}
+
+	err = filepath.WalkDir(path, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if !d.IsDir() {
-			Seg, err := r.parseSegFile(path)
+			seg, err := r.parseSegFile(path, level)
 			if err != nil {
 				o11y.Log.Printf("Error parsing file %s: %v\n", path, err)
 				parseErrors = append(parseErrors, err)
 				return nil // Continue walking despite parse error
 			}
-			segList = append(segList, Seg)
+			segList = append(segList, seg)
 		}
 		return nil
 	})
@@ -130,42 +78,32 @@ func (r *FileSegRepository) LoadAll(SegDir string) ([]domain.Seg, error) {
 	}
 
 	if len(parseErrors) > 0 {
-		return nil, fmt.Errorf("failed to parse %d file(s) in directory: %s", len(parseErrors), SegDir)
+		return nil, fmt.Errorf("failed to parse %d file(s) in directory: %s", len(parseErrors), path)
 	}
 
 	return segList, nil
 }
 
-func (r *FileSegRepository) parseSegFile(filePath string) (domain.Seg, error) {
+func (r *FileSegRepository) parseSegFile(filePath string, level string) (domain.Seg, error) {
 	// #nosec G304 -- filePath comes from config-specified taxonomy directory, not user input
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return domain.Seg{}, fmt.Errorf("failed to read file %s: %w", filePath, err)
 	}
 
-	var fileVersion version
-	if err = yaml.Unmarshal(data, &fileVersion); err != nil {
-		return domain.Seg{}, fmt.Errorf("failed to parse version from file %s: %w", filePath, err)
+	if validationErr := r.schemaValidator.ValidateData(data, "seg-level.json"); validationErr != nil {
+		return domain.Seg{}, fmt.Errorf("schema validation failed for %s: %w", filePath, validationErr)
 	}
 
-	switch fileVersion.Version {
-	case "1.0":
-		if validationErr := r.schemaValidator.ValidateData(data, "seg-level.json"); validationErr != nil {
-			return domain.Seg{}, fmt.Errorf("schema validation failed for %s: %w", filePath, validationErr)
-		}
-
-		var Seg domain.Seg
-		if err = yaml.Unmarshal(data, &Seg); err != nil {
-			return domain.Seg{}, fmt.Errorf("failed to unmarshal file %s: %w", filePath, err)
-		}
-
-		// PostLoad handles defaults, L1 consistency validation, and label parsing
-		if err = Seg.PostLoad("2"); err != nil {
-			return domain.Seg{}, fmt.Errorf("PostLoad validation failed for %s: %w", filePath, err)
-		}
-
-		return Seg, nil
-	default:
-		return domain.Seg{}, fmt.Errorf("unsupported version %s in file %s", fileVersion.Version, filePath)
+	var seg domain.Seg
+	if err = yaml.Unmarshal(data, &seg); err != nil {
+		return domain.Seg{}, fmt.Errorf("failed to unmarshal file %s: %w", filePath, err)
 	}
+
+	// PostLoad handles defaults, validation, and label parsing
+	if err = seg.PostLoad(level); err != nil {
+		return domain.Seg{}, fmt.Errorf("PostLoad validation failed for %s: %w", filePath, err)
+	}
+
+	return seg, nil
 }

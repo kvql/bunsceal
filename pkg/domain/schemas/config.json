@@ -23,49 +23,64 @@
       "$ref": "./common.json#/$defs/filePath",
       "description": "Directory path containing JSON schema files for validation. Defaults to './schema' if not specified."
     },
-    "taxonomy_path": {
-      "$ref": "./common.json#/$defs/filePath",
-      "description": "Directory path containing JSON schema files for validation. Defaults to './schema' if not specified."
+    "fs_repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "taxonomy_path": { "$ref": "./common.json#/$defs/filePath",
+          "description": "Directory path containing JSON schema files for validation. Defaults to './schema' if not specified."
+        },
+        "l1_dir": {
+          "$ref": "./common.json#/$defs/filePath",
+          "description": "Name of directory with L1 taxonomy files"
+        },
+        "l2_dir": {
+          "$ref": "./common.json#/$defs/filePath",
+          "description": "Name of directory with L2 taxonomy files"
+        }
+      }
     },
     "visuals": {
       "type": "object",
       "description": "Configuration options for visualisation functions",
+      "additionalProperties": false,
       "properties": {
         "l1_layout": {
           "type": "object",
           "description": "Map of row numbers to ordered arrays of L1 identifiers for layout control",
+          "additionalProperties": false,
           "patternProperties": {
             "^[0-9]+$": {
               "type": "array",
               "items": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
-        },
-        "additionalProperties": false
+        }
       }
     },
     "rules": {
       "type": "object",
       "description": "Configuration for business logic validation rules",
+      "additionalProperties": false,
       "properties": {
         "shared_service": {
           "type": "object",
           "description": "Configuration for shared-service environment validation rule",
+          "additionalProperties": false,
           "properties": {
             "enabled": {
               "type": "boolean",
               "description": "Enable or disable the shared-service validation rule",
               "default": true
             }
-          },
-          "additionalProperties": false
+          }
         },
         "uniqueness": {
           "type": "object",
           "description": "Configuration for uniqueness validation across taxonomy entities",
+          "additionalProperties": false,
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -80,11 +95,9 @@
               },
               "default": ["name"]
             }
-          },
-          "additionalProperties": false
+          }
         }
-      },
-      "additionalProperties": false
+      }
     }
   }
 }

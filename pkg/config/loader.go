@@ -59,8 +59,10 @@ func LoadConfig(configPath, configSchemaPath string) (domain.Config, error) {
 	merged := loadedConfig.Merge()
 	configDir := filepath.Dir(configPath)
 
-	if merged.TaxonomyPath != "" && (!strings.HasPrefix(merged.TaxonomyPath, "/") || !strings.HasPrefix(merged.TaxonomyPath, "\\")) {
-		merged.TaxonomyPath = filepath.Join(configDir, merged.TaxonomyPath)
+	// Update Taxonomy path if relative
+	if merged.FsRepository.TaxonomyDir != "" && (!strings.HasPrefix(merged.FsRepository.TaxonomyDir, "/") || !strings.HasPrefix(merged.FsRepository.TaxonomyDir, "\\")) {
+		merged.FsRepository.TaxonomyDir = filepath.Join(configDir, merged.FsRepository.TaxonomyDir)
 	}
+
 	return merged, nil
 }

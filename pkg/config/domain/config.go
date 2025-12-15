@@ -1,18 +1,22 @@
 // Package domain provides configuration models for the taxonomy system.
 package domain
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
+)
 
 // DefaultSchemaPath is the default location for JSON schemas
 const DefaultSchemaPath = "./pkg/domain/schemas"
 
 // Config represents the taxonomy configuration.
 type Config struct {
-	Terminology  TermConfig       `yaml:"terminology"`
-	SchemaPath   string           `yaml:"schema_path,omitempty"`
-	TaxonomyPath string           `yaml:"taxonomy_path,omitempty"`
-	Visuals      VisualsDef       `yaml:"visuals,omitempty"`
-	Rules        LogicRulesConfig `yaml:"rules,omitempty"`
+	Terminology  TermConfig                         `yaml:"terminology"`
+	SchemaPath   string                             `yaml:"schema_path,omitempty"`
+	Visuals      VisualsDef                         `yaml:"visuals,omitempty"`
+	Rules        LogicRulesConfig                   `yaml:"rules,omitempty"`
+	FsRepository infrastructure.ConfigFsReposistory `yaml:"fs_repository,omitempty"`
 }
 
 // TermConfig holds terminology configuration for L1 and L2 segments.
@@ -58,14 +62,21 @@ func (c Config) Merge() Config {
 	result := Config{
 		Terminology:  c.Terminology.Merge(defaults.Terminology),
 		SchemaPath:   defaults.SchemaPath,
-		TaxonomyPath: defaults.TaxonomyPath,
+		FsRepository: defaults.FsRepository,
 		Visuals:      c.Visuals,
 	}
 	if c.SchemaPath != "" {
 		result.SchemaPath = c.SchemaPath
 	}
-	if c.TaxonomyPath != "" {
-		result.TaxonomyPath = c.TaxonomyPath
+
+	if c.FsRepository.L1Dir != "" {
+		result.FsRepository.L1Dir = c.FsRepository.L1Dir
+	}
+	if c.FsRepository.L2Dir != "" {
+		result.FsRepository.L2Dir = c.FsRepository.L2Dir
+	}
+	if c.FsRepository.TaxonomyDir != "" {
+		result.FsRepository.TaxonomyDir = c.FsRepository.TaxonomyDir
 	}
 	return result
 }
@@ -112,14 +123,18 @@ func DefaultConfig() Config {
 				Plural:   "Segments",
 			},
 		},
-		SchemaPath:   DefaultSchemaPath,
-		TaxonomyPath: "taxonomy",
+		SchemaPath: DefaultSchemaPath,
 		Rules: LogicRulesConfig{
 			SharedService: GeneralBooleanConfig{Enabled: true},
 			Uniqueness: UniquenessConfig{
 				Enabled:   true,
 				CheckKeys: []string{"name"},
 			},
+		},
+		FsRepository: infrastructure.ConfigFsReposistory{
+			TaxonomyDir: "taxonomy",
+			L1Dir:       "environments",
+			L2Dir:       "segments",
 		},
 	}
 }

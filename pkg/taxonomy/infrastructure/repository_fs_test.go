@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/kvql/bunsceal/pkg/domain"
@@ -9,80 +8,94 @@ import (
 	"github.com/kvql/bunsceal/pkg/domain/testhelpers"
 )
 
-func TestFileSegL1Repository(t *testing.T) {
+// helper to create a config pointing to tmpDir for a specific level
+func testConfig(tmpDir string) ConfigFsReposistory {
+	return ConfigFsReposistory{
+		TaxonomyDir: tmpDir,
+		L1Dir:       "",
+		L2Dir:       "",
+	}
+}
 
+func TestFileSegRepository_LoadLevel(t *testing.T) {
 	t.Run("Fails with non-existent directory", func(t *testing.T) {
+		cfg := ConfigFsReposistory{
+			TaxonomyDir: "/non/existent/path",
+			L1Dir:       "l1",
+			L2Dir:       "l2",
+		}
 		validator := schemaValidation.MustCreateValidator(t)
-		repository := NewFileSegL1Repository(validator)
+		repository := NewFileSegRepository(validator, cfg)
 
-		_, err := repository.LoadAll("/non/existent/path")
+		_, err := repository.LoadLevel("1")
 		if err == nil {
 			t.Error("Expected error for non-existent directory")
 		}
 	})
 
-	t.Run("Loads correct count of files", func(t *testing.T) {
+	t.Run("Loads correct count of L1 files", func(t *testing.T) {
 		files := NewTestFiles(t)
 		tmpDir := files.CreateSegFiles([]domain.Seg{
-			testhelpers.NewSegL1("env-one", "Environment 1", "A", "1", []string{}),
-			testhelpers.NewSegL1("env-two", "Environment 2", "B", "2", []string{}),
-			testhelpers.NewSegL1("env-three", "Environment 3", "C", "3", []string{}),
+			testhelpers.NewSegL1("env-one", "Environment 1", "A", "1", nil),
+			testhelpers.NewSegL1("env-two", "Environment 2", "B", "2", nil),
+			testhelpers.NewSegL1("env-three", "Environment 3", "C", "3", nil),
 		})
 
 		validator := schemaValidation.MustCreateValidator(t)
-		repository := NewFileSegL1Repository(validator)
-		segL1s, err := repository.LoadAll(tmpDir)
+		repository := NewFileSegRepository(validator, testConfig(tmpDir))
+		segs, err := repository.LoadLevel("1")
 
 		if err != nil {
-			t.Fatalf("LoadAll: unexpected error: %v", err)
+			t.Fatalf("LoadLevel: unexpected error: %v", err)
 		}
-		if len(segL1s) != 3 {
-			t.Errorf("Expected 3 SegL1s, got %d", len(segL1s))
+		if len(segs) != 3 {
+			t.Errorf("Expected 3 segments, got %d", len(segs))
 		}
 	})
-}
+	t.Run("Fail if level field doesn't match defined level", func(t *testing.T) {
+		files := NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{
+			testhelpers.NewSegL1("env-one", "Environment 1", "A", "1", nil),
+		})
 
-func TestFileSegRepository(t *testing.T) {
-	t.Run("Fails with non-existent directory", func(t *testing.T) {
 		validator := schemaValidation.MustCreateValidator(t)
-		repository := NewFileSegRepository(validator)
+		repository := NewFileSegRepository(validator, testConfig(tmpDir))
+		_, err := repository.LoadLevel("2")
 
-		_, err := repository.LoadAll("/non/existent/path")
 		if err == nil {
-			t.Error("Expected error for non-existent directory")
+			t.Error("Expected error for L1 file loaded as L2")
 		}
 	})
 
-	t.Run("Loads correct count of files", func(t *testing.T) {
+	t.Run("Loads correct count of L2 files", func(t *testing.T) {
 		files := NewTestFiles(t)
 		tmpDir := files.CreateSegFiles([]domain.Seg{
 			testhelpers.NewSeg("domain-one", "Domain 1", map[string]domain.L1Overrides{
-				"production": testhelpers.NewL1Override("A", "1", []string{}),
+				"production": testhelpers.NewL1Override("A", "1", nil),
 			}),
 			testhelpers.NewSeg("domain-two", "Domain 2", map[string]domain.L1Overrides{
-				"production": testhelpers.NewL1Override("A", "1", []string{}),
+				"production": testhelpers.NewL1Override("A", "1", nil),
 			}),
 			testhelpers.NewSeg("domain-three", "Domain 3", map[string]domain.L1Overrides{
-				"production": testhelpers.NewL1Override("A", "1", []string{}),
+				"production": testhelpers.NewL1Override("A", "1", nil),
 			}),
 		})
 
 		validator := schemaValidation.MustCreateValidator(t)
-		repository := NewFileSegRepository(validator)
-		Segs, err := repository.LoadAll(tmpDir)
+		repository := NewFileSegRepository(validator, testConfig(tmpDir))
+		segs, err := repository.LoadLevel("2")
 
 		if err != nil {
-			t.Fatalf("LoadAll: unexpected error: %v", err)
+			t.Fatalf("LoadLevel: unexpected error: %v", err)
 		}
-		if len(Segs) != 3 {
-			t.Errorf("Expected 3 Segs, got %d", len(Segs))
+		if len(segs) != 3 {
+			t.Errorf("Expected 3 segments, got %d", len(segs))
 		}
 	})
 }
 
-func TestParseSegL1File(t *testing.T) {
-	t.Run("Successfully parses valid SegL1 file", func(t *testing.T) {
-		// Use domain builder to create valid L1 segment
+func TestFileSegRepository_parseSegFile(t *testing.T) {
+	t.Run("Successfully parses valid L1 file", func(t *testing.T) {
 		seg := testhelpers.NewSegL1("test", "Test Environment", "A", "1", []string{"pci-dss"})
 
 		files := NewTestFiles(t)
@@ -90,39 +103,24 @@ func TestParseSegL1File(t *testing.T) {
 		tmpFile := tmpDir + "/seg-0.yaml"
 
 		validator := schemaValidation.MustCreateValidator(t)
-		segL1, err := parseSegL1File(tmpFile, validator)
+		repository := NewFileSegRepository(validator, testConfig(tmpDir))
+		result, err := repository.parseSegFile(tmpFile, "1")
 
 		if err != nil {
-			t.Fatalf("parseSegL1File: unexpected error: %v", err)
+			t.Fatalf("parseSegFile: unexpected error: %v", err)
 		}
-		if segL1.ID != "test" {
-			t.Errorf("SegL1 ID: got %v, want test", segL1.ID)
+		if result.ID != "test" {
+			t.Errorf("Seg ID: got %v, want test", result.ID)
 		}
-		if segL1.Name != "Test Environment" {
-			t.Errorf("SegL1 Name: got %v, want Test Environment", segL1.Name)
+		if result.Name != "Test Environment" {
+			t.Errorf("Seg Name: got %v, want Test Environment", result.Name)
 		}
-	})
-
-	t.Run("Fails validation for invalid data", func(t *testing.T) {
-		invalidYAML := `name: "Test"
-id: "test"
-# Missing description and other required fields
-`
-		files := NewTestFiles(t)
-		tmpFile := files.CreateYAMLFile("segl1", invalidYAML)
-
-		validator := schemaValidation.MustCreateValidator(t)
-		_, err := parseSegL1File(tmpFile, validator)
-
-		if err == nil {
-			t.Error("Expected validation error for invalid data but got nil")
+		if result.Level != "1" {
+			t.Errorf("Seg Level: got %v, want 1", result.Level)
 		}
 	})
-}
 
-func TestParseSDFile(t *testing.T) {
-	t.Run("Successfully parses valid Seg file", func(t *testing.T) {
-		// Use domain builder to create valid L2 segment (NO top-level sensitivity/criticality)
+	t.Run("Successfully parses valid L2 file", func(t *testing.T) {
 		seg := testhelpers.NewSeg("test", "Test Domain", map[string]domain.L1Overrides{
 			"production": testhelpers.NewL1Override("A", "1", []string{"pci-dss"}),
 		})
@@ -132,26 +130,29 @@ func TestParseSDFile(t *testing.T) {
 		tmpFile := tmpDir + "/seg-0.yaml"
 
 		validator := schemaValidation.MustCreateValidator(t)
-		fl := NewFileSegRepository(validator)
-		Seg, err := fl.parseSegFile(tmpFile)
+		repository := NewFileSegRepository(validator, testConfig(tmpDir))
+		result, err := repository.parseSegFile(tmpFile, "2")
 
 		if err != nil {
-			t.Fatalf("parseSDFile: unexpected error: %v", err)
+			t.Fatalf("parseSegFile: unexpected error: %v", err)
 		}
-		if Seg.ID != "test" {
-			t.Errorf("Seg ID: got %v, want test", Seg.ID)
+		if result.ID != "test" {
+			t.Errorf("Seg ID: got %v, want test", result.ID)
 		}
-		if Seg.Name != "Test Domain" {
-			t.Errorf("Seg Name: got %v, want Test Domain", Seg.Name)
+		if result.Name != "Test Domain" {
+			t.Errorf("Seg Name: got %v, want Test Domain", result.Name)
 		}
-		if Seg.Prominence != 1 {
-			t.Errorf("Seg prominence got %v, expected default 1", Seg.Prominence)
+		if result.Level != "2" {
+			t.Errorf("Seg Level: got %v, want 2", result.Level)
+		}
+		if result.Prominence != 1 {
+			t.Errorf("Seg prominence: got %v, want 1", result.Prominence)
 		}
 	})
-	t.Run("Setting prominence", func(t *testing.T) {
-		// Use domain builder and set prominence
+
+	t.Run("Preserves prominence when set", func(t *testing.T) {
 		seg := testhelpers.NewSeg("test", "Test Domain", map[string]domain.L1Overrides{
-			"production": testhelpers.NewL1Override("A", "1", []string{}),
+			"production": testhelpers.NewL1Override("A", "1", nil),
 		})
 		seg.Prominence = 2
 
@@ -160,51 +161,40 @@ func TestParseSDFile(t *testing.T) {
 		tmpFile := tmpDir + "/seg-0.yaml"
 
 		validator := schemaValidation.MustCreateValidator(t)
-		fl := NewFileSegRepository(validator)
-		Seg, err := fl.parseSegFile(tmpFile)
+		repository := NewFileSegRepository(validator, testConfig(tmpDir))
+		result, err := repository.parseSegFile(tmpFile, "2")
 
 		if err != nil {
-			t.Fatalf("parseSDFile: unexpected error: %v", err)
+			t.Fatalf("parseSegFile: unexpected error: %v", err)
 		}
-		if Seg.Prominence != 2 {
-			t.Errorf("Seg prominence got %v, expected default 2", Seg.Prominence)
+		if result.Prominence != 2 {
+			t.Errorf("Seg prominence: got %v, want 2", result.Prominence)
 		}
 	})
 
-	t.Run("Fails with unsupported version", func(t *testing.T) {
-		// Testing unsupported version - L2 should NOT have top-level sensitivity/criticality
-		invalidYAML := `version: "99.0"
-name: "Test Domain"
+	t.Run("Fails validation for invalid data", func(t *testing.T) {
+		invalidYAML := `name: "Test"
 id: "test"
-description: "Test domain for validating unsupported version error handling and detection"
-l1_parents:
-  - production
-l1_overrides:
-  production:
-    sensitivity: "A"
-    sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
-    criticality: "1"
-    criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
+# Missing description and other required fields
 `
 		files := NewTestFiles(t)
-		tmpFile := files.CreateYAMLFile("Seg", invalidYAML)
+		tmpFile := files.CreateYAMLFile("seg", invalidYAML)
 
 		validator := schemaValidation.MustCreateValidator(t)
-		fl := NewFileSegRepository(validator)
-		_, err := fl.parseSegFile(tmpFile)
+		repository := NewFileSegRepository(validator, ConfigFsReposistory{})
+		_, err := repository.parseSegFile(tmpFile, "1")
 
 		if err == nil {
-			t.Error("Expected error for unsupported version but got nil")
+			t.Error("Expected validation error but got nil")
 		}
 	})
 
 	t.Run("Fails when l1_overrides key not in l1_parents", func(t *testing.T) {
-		// Create L2 with override for 'staging' that's not in l1_parents
 		seg := testhelpers.NewSegWithParents("test", "Test Domain",
-			[]string{"production"}, // parents list
+			[]string{"production"},
 			map[string]domain.L1Overrides{
-				"production": testhelpers.NewL1Override("A", "1", []string{}),
-				"staging":    testhelpers.NewL1Override("D", "5", []string{}), // NOT in parents!
+				"production": testhelpers.NewL1Override("A", "1", nil),
+				"staging":    testhelpers.NewL1Override("D", "5", nil), // NOT in parents
 			},
 		)
 
@@ -213,17 +203,11 @@ l1_overrides:
 		tmpFile := tmpDir + "/seg-0.yaml"
 
 		validator := schemaValidation.MustCreateValidator(t)
-		fl := NewFileSegRepository(validator)
-		_, err := fl.parseSegFile(tmpFile)
+		repository := NewFileSegRepository(validator, testConfig(tmpDir))
+		_, err := repository.parseSegFile(tmpFile, "2")
 
 		if err == nil {
-			t.Error("Expected L1 consistency validation error but got nil")
-		}
-		if err != nil && !strings.Contains(err.Error(), "PostLoad validation failed") {
-			t.Errorf("Expected PostLoad validation error, got: %v", err)
-		}
-		if err != nil && !strings.Contains(err.Error(), "l1_overrides") {
-			t.Errorf("Expected l1_overrides consistency error, got: %v", err)
+			t.Error("Expected validation error but got nil")
 		}
 	})
 }

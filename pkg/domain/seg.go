@@ -8,20 +8,21 @@ import (
 
 // Seg represents a Level 1 segment (Environment).
 type Seg struct {
-	Name                 string                 `yaml:"name" json:"name"`
-	ID                   string                 `yaml:"id" json:"id"`
-	Description          string                 `yaml:"description" json:"description"`
-	Level                string                 `yaml:"level,omitempty" json:"level,omitempty"`
-	Sensitivity          string                 `yaml:"sensitivity,omitempty" json:"sensitivity,omitempty"`                     //Depricated - migrating to label
-	SensitivityRationale string                 `yaml:"sensitivity_rationale,omitempty" json:"sensitivity_rationale,omitempty"` //Depricated - migrating to label
-	Criticality          string                 `yaml:"criticality,omitempty" json:"criticality,omitempty"`                     //Depricated - migrating to label
-	CriticalityRationale string                 `yaml:"criticality_rationale,omitempty" json:"criticality_rationale,omitempty"` //Depricated - migrating to label
-	ComplianceReqs       []string               `yaml:"compliance_reqs,omitempty" json:"compliance_reqs,omitempty"`             //Depricated - migrating to label
-	L1Parents            []string               `yaml:"l1_parents,omitempty" json:"l1_parents,omitempty"`
-	L1Overrides          map[string]L1Overrides `yaml:"l1_overrides,omitempty" json:"l1_overrides,omitempty"`
-	Prominence           int                    `yaml:"prominence,omitempty" json:"prominence,omitempty"`
-	Labels               []string               `yaml:"labels" json:"labels,omitempty"`
-	ParsedLabels         map[string]string      `yaml:"-" json:"-"`
+	Name                 string                       `yaml:"name" json:"name"`
+	ID                   string                       `yaml:"id" json:"id"`
+	Description          string                       `yaml:"description" json:"description"`
+	Level                string                       `yaml:"level,omitempty" json:"level,omitempty"`
+	Sensitivity          string                       `yaml:"sensitivity,omitempty" json:"sensitivity,omitempty"`                     //Depricated - migrating to label
+	SensitivityRationale string                       `yaml:"sensitivity_rationale,omitempty" json:"sensitivity_rationale,omitempty"` //Depricated - migrating to label
+	Criticality          string                       `yaml:"criticality,omitempty" json:"criticality,omitempty"`                     //Depricated - migrating to label
+	CriticalityRationale string                       `yaml:"criticality_rationale,omitempty" json:"criticality_rationale,omitempty"` //Depricated - migrating to label
+	ComplianceReqs       []string                     `yaml:"compliance_reqs,omitempty" json:"compliance_reqs,omitempty"`             //Depricated - migrating to label
+	L1Parents            []string                     `yaml:"l1_parents,omitempty" json:"l1_parents,omitempty"`
+	L1Overrides          map[string]L1Overrides       `yaml:"l1_overrides,omitempty" json:"l1_overrides,omitempty"`
+	Prominence           int                          `yaml:"prominence,omitempty" json:"prominence,omitempty"`
+	Labels               []string                     `yaml:"labels" json:"labels,omitempty"`
+	ParsedLabels         map[string]string            `yaml:"-" json:"-"`
+	LabelNamespaces      map[string]map[string]string `yaml:"-" json:"-"`
 }
 
 type L1Overrides struct {
@@ -121,7 +122,6 @@ func (s *Seg) ValidateL1Consistency() error {
 			return fmt.Errorf("l1_overrides contains key '%s' which is not in l1_parents", overrideKey)
 		}
 	}
-
 	return nil
 }
 
@@ -129,9 +129,14 @@ func (s *Seg) ValidateL1Consistency() error {
 // Expects format "key:value" where keys follow DNS-like naming (alphanumeric + ./_-)
 // and values support AWS-compliant tag characters (alphanumeric + ./_-+=:@ and spaces).
 // Values may contain colons (e.g., "url:https://example.com:8080").
+// The function also extracts and group namespaced labels.
+// example formot bunsceal.plugin.classification/key
 func (s *Seg) ParseLabels() error {
 	if s.ParsedLabels == nil {
 		s.ParsedLabels = make(map[string]string)
+	}
+	if s.LabelNamespaces == nil {
+		s.LabelNamespaces = make(map[string]map[string]string)
 	}
 	for _, label := range s.Labels {
 		k := strings.SplitN(label, ":", 2)
@@ -139,6 +144,15 @@ func (s *Seg) ParseLabels() error {
 			s.ParsedLabels[k[0]] = k[1]
 		} else {
 			return fmt.Errorf("label format invalid, expected key:value")
+		}
+		nsRaw := strings.SplitN(k[0], "/", 2)
+		if len(nsRaw) == 2 {
+			if _, exists := s.LabelNamespaces[nsRaw[0]]; exists {
+				s.LabelNamespaces[nsRaw[0]][nsRaw[1]] = k[1]
+			} else {
+				s.LabelNamespaces[nsRaw[0]] = make(map[string]string)
+				s.LabelNamespaces[nsRaw[0]][nsRaw[1]] = k[1]
+			}
 		}
 	}
 	return nil

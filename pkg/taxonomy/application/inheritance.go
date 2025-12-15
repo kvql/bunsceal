@@ -2,18 +2,11 @@ package application
 
 import (
 	"github.com/kvql/bunsceal/pkg/domain"
-	"github.com/kvql/bunsceal/pkg/taxonomy/application/validation"
 )
 
 // ApplyInheritance applies inheritance rules for taxonomy segments and validates cross-entity references.
 // Returns true if all validations pass, false otherwise.
-func ApplyInheritance(txy *domain.Taxonomy) bool {
-	// Validate L1 definitions reference valid compliance requirements
-	valid := validation.ValidateL1Comp(txy)
-	if !valid {
-		return valid
-	}
-
+func ApplyInheritance(txy *domain.Taxonomy) {
 	// Loop through env details for each security domain and update risk compliance if not set based on env default
 	for _, Seg := range txy.Segs {
 		// Initialize L1Overrides map if nil (enables parent-without-override pattern)
@@ -55,8 +48,4 @@ func ApplyInheritance(txy *domain.Taxonomy) bool {
 			Seg.L1Overrides[l1ID] = l1Override
 		}
 	}
-
-	// Validate L2 definitions after inheritance
-	valid, _ = validation.ValidateL2Definition(txy)
-	return valid
 }

@@ -4,6 +4,7 @@ package domain
 import (
 	"strings"
 
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
 )
 
@@ -17,6 +18,7 @@ type Config struct {
 	Visuals      VisualsDef                         `yaml:"visuals,omitempty"`
 	Rules        LogicRulesConfig                   `yaml:"rules,omitempty"`
 	FsRepository infrastructure.ConfigFsReposistory `yaml:"fs_repository,omitempty"`
+	Plugins      plugins.ConfigPlugins              `yaml:"plugins"`
 }
 
 // TermConfig holds terminology configuration for L1 and L2 segments.

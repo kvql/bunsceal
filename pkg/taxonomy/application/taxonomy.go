@@ -56,10 +56,24 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
+	// Validate L1 definitions reference valid compliance requirements
+	valid := validation.ValidateL1Comp(&txy)
+	if !valid {
+		o11y.Log.Println("Taxonomy is invalid: L1 definitions reference valid compliance requirements")
+		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+
 	// Apply inheritance and validate cross-entity references
-	valid := ApplyInheritance(&txy)
+	ApplyInheritance(&txy)
 	if !valid {
 		o11y.Log.Println("Taxonomy is invalid: cross-entity validation failed")
+		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+
+	// Validate L2 definitions after inheritance
+	valid, _ = validation.ValidateL2Definition(&txy)
+	if !valid {
+		o11y.Log.Println("Taxonomy is invalid: Validate L2 definitions after inheritance")
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 

@@ -131,7 +131,7 @@ func NewAppSeg() domain.Seg {
 	return domain.Seg{
 		Name:        "Application",
 		ID:          "app",
-		Description: "Application domain for core business services",
+		Description: "Application domain for core business services and customer-facing workloads requiring highest security standards.",
 		L1Parents:   []string{"prod"},
 		L1Overrides: map[string]domain.L1Overrides{
 			"prod": {

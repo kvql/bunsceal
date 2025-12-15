@@ -81,8 +81,9 @@ func parseSegL1File(filePath string, schemaValidator *schemaValidation.SchemaVal
 		return domain.Seg{}, err
 	}
 
-	if err = segL1.ParseLabels(); err != nil {
-		return domain.Seg{}, err
+	// PostLoad handles defaults, label parsing, and L1 validation
+	if err = segL1.PostLoad("1"); err != nil {
+		return domain.Seg{}, fmt.Errorf("PostLoad validation failed for %s: %w", filePath, err)
 	}
 
 	return segL1, nil
@@ -158,16 +159,11 @@ func (r *FileSegRepository) parseSegFile(filePath string) (domain.Seg, error) {
 			return domain.Seg{}, fmt.Errorf("failed to unmarshal file %s: %w", filePath, err)
 		}
 
-		Seg.SetDefaults()
-
-		// Validate that l1_overrides keys are subset of l1_parents
-		if err = Seg.ValidateL1Consistency(); err != nil {
-			return domain.Seg{}, fmt.Errorf("L1 consistency validation failed for %s: %w", filePath, err)
+		// PostLoad handles defaults, L1 consistency validation, and label parsing
+		if err = Seg.PostLoad("2"); err != nil {
+			return domain.Seg{}, fmt.Errorf("PostLoad validation failed for %s: %w", filePath, err)
 		}
 
-		if err = Seg.ParseLabels(); err != nil {
-			return domain.Seg{}, err
-		}
 		return Seg, nil
 	default:
 		return domain.Seg{}, fmt.Errorf("unsupported version %s in file %s", fileVersion.Version, filePath)

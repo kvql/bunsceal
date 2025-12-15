@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
-	"github.com/kvql/bunsceal/pkg/taxonomy/testhelpers"
 )
 
 func TestLoadCompScope(t *testing.T) {
@@ -35,7 +34,7 @@ func TestLoadCompScope(t *testing.T) {
 	})
 
 	t.Run("Fails with invalid YAML", func(t *testing.T) {
-		files := testhelpers.NewTestFiles(t)
+		files := NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("compliance-req", "this is not valid yaml: {[")
 
 		_, err := LoadCompScope(tmpFile, validator)

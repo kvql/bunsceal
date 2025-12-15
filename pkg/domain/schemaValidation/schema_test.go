@@ -8,9 +8,45 @@ import (
 	"testing"
 
 	"github.com/kvql/bunsceal/pkg/domain"
-	"github.com/kvql/bunsceal/pkg/taxonomy/testdata"
+	"github.com/kvql/bunsceal/pkg/domain/testhelpers"
 	"gopkg.in/yaml.v3"
 )
+
+// Config test fixtures for schema validation testing
+type Config struct {
+	Terminology TermConfig `yaml:"terminology"`
+}
+type InvalidConfig struct {
+	Terminology InvalidTermConfig `yaml:"terminology"`
+}
+type TermConfig struct {
+	L1 TermDef `yaml:"l1,omitempty"`
+	L2 TermDef `yaml:"l2,omitempty"`
+}
+type InvalidTermConfig struct {
+	L4 TermDef `yaml:"l4"`
+}
+type TermDef struct {
+	Singular string `yaml:"singular"`
+	Plural   string `yaml:"plural"`
+}
+
+var invalidConfigSchema = InvalidConfig{
+	Terminology: InvalidTermConfig{
+		L4: TermDef{
+			Singular: "dfas",
+			Plural:   "fdasdfas",
+		},
+	},
+}
+var validConfigSchema = Config{
+	Terminology: TermConfig{
+		L1: TermDef{
+			Singular: "dfas",
+			Plural:   "fdasdfas",
+		},
+	},
+}
 
 func expectValidatorError(t *testing.T, schemaPath string) {
 	t.Helper()
@@ -98,19 +134,19 @@ func validSegWithLabels(labels []string) map[string]interface{} {
 
 // Helper type and function to eliminate duplication in Seg tests
 type SegTestData struct {
-	Version              string                          `yaml:"version"`
-	Name                 string                          `yaml:"name,omitempty"`
-	ID                   string                          `yaml:"id"`
-	Description          string                          `yaml:"description"`
-	Sensitivity          string                          `yaml:"sensitivity"`
-	SensitivityRationale string                          `yaml:"sensitivity_rationale"`
-	Criticality          string                          `yaml:"criticality"`
-	CriticalityRationale string                          `yaml:"criticality_rationale"`
-	L1Parents            []string                        `yaml:"l1_parents,omitempty"`
-	L1Overrides          map[string]testdata.L1Overrides `yaml:"l1_overrides,omitempty"`
+	Version              string                        `yaml:"version"`
+	Name                 string                        `yaml:"name,omitempty"`
+	ID                   string                        `yaml:"id"`
+	Description          string                        `yaml:"description"`
+	Sensitivity          string                        `yaml:"sensitivity,omitempty"`
+	SensitivityRationale string                        `yaml:"sensitivity_rationale,omitempty"`
+	Criticality          string                        `yaml:"criticality,omitempty"`
+	CriticalityRationale string                        `yaml:"criticality_rationale,omitempty"`
+	L1Parents            []string                      `yaml:"l1_parents,omitempty"`
+	L1Overrides          map[string]domain.L1Overrides `yaml:"l1_overrides,omitempty"`
 }
 
-func marshalSeg(seg testdata.Seg) ([]byte, error) {
+func marshalSeg(seg domain.Seg) ([]byte, error) {
 	return yaml.Marshal(SegTestData{
 		Version:              "1.0",
 		Name:                 seg.Name,
@@ -143,49 +179,59 @@ func TestNewSchemaValidator(t *testing.T) {
 
 func TestValidateData_Config(t *testing.T) {
 	t.Run("Valid config level keys", func(t *testing.T) {
-		assertValidationPasses(t, testdata.ValidConfigSchema, "config.json")
+		assertValidationPasses(t, validConfigSchema, "config.json")
 	})
 
 	t.Run("Invalid level key fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidConfigSchema, "config.json")
+		assertValidationFails(t, invalidConfigSchema, "config.json")
 	})
 }
 
 func TestValidateData_SegL1(t *testing.T) {
 	t.Run("Valid SegL1 Production passes validation", func(t *testing.T) {
-		assertValidationPasses(t, testdata.ValidSegL1Production, "seg-level.json")
+		assertValidationPasses(t, testhelpers.NewProdSegL1(), "seg-level.json")
 	})
 
 	t.Run("Valid SegL1 Staging passes validation", func(t *testing.T) {
-		assertValidationPasses(t, testdata.ValidSegL1Staging, "seg-level.json")
+		assertValidationPasses(t, testhelpers.NewStagingSegL1(), "seg-level.json")
 	})
 
 	t.Run("Valid SegL1 SharedService passes validation", func(t *testing.T) {
-		assertValidationPasses(t, testdata.ValidSegL1SharedService, "seg-level.json")
+		assertValidationPasses(t, testhelpers.NewSharedServiceSegL1(), "seg-level.json")
 	})
 
 	t.Run("Missing required name field fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_MissingName, "seg-level.json")
+		seg := testhelpers.NewSegL1("test", "", "A", "1", []string{})
+		seg.Name = ""
+		assertValidationFails(t, seg, "seg-level.json")
 	})
 
 	t.Run("Invalid ID pattern fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_InvalidID, "seg-level.json")
+		seg := testhelpers.NewSegL1("Invalid_ID_With_Capitals", "Invalid ID", "A", "1", []string{})
+		assertValidationFails(t, seg, "seg-level.json")
 	})
 
 	t.Run("Short description fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_ShortDescription, "seg-level.json")
+		seg := testhelpers.NewSegL1("short", "Short Desc", "A", "1", []string{})
+		seg.Description = "Too short"
+		assertValidationFails(t, seg, "seg-level.json")
 	})
 
 	t.Run("Invalid sensitivity enum fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_InvalidSensitivity, "seg-level.json")
+		seg := testhelpers.NewSegL1("invalid-sens", "Invalid Sensitivity", "Z", "1", []string{})
+		assertValidationFails(t, seg, "seg-level.json")
 	})
 
 	t.Run("Invalid criticality enum fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_InvalidCriticality, "seg-level.json")
+		seg := testhelpers.NewSegL1("invalid-crit", "Invalid Criticality", "A", "9", []string{})
+		assertValidationFails(t, seg, "seg-level.json")
 	})
 
 	t.Run("Short rationale fails validation", func(t *testing.T) {
-		assertValidationFails(t, testdata.InvalidSegL1_ShortRationale, "seg-level.json")
+		seg := testhelpers.NewSegL1("short-rat", "Short Rationale", "A", "1", []string{})
+		seg.SensitivityRationale = "Too short"
+		seg.CriticalityRationale = "Also too short"
+		assertValidationFails(t, seg, "seg-level.json")
 	})
 }
 
@@ -196,7 +242,10 @@ func TestValidateData_Seg(t *testing.T) {
 	}
 
 	t.Run("Valid Seg Security passes validation", func(t *testing.T) {
-		data, err := marshalSeg(testdata.ValidSegSecurity)
+		seg := testhelpers.NewSeg("sec", "Security", map[string]domain.L1Overrides{
+			"production": testhelpers.NewL1Override("B", "2", []string{"sox"}),
+		})
+		data, err := marshalSeg(seg)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
@@ -208,7 +257,7 @@ func TestValidateData_Seg(t *testing.T) {
 	})
 
 	t.Run("Valid Seg Application passes validation", func(t *testing.T) {
-		data, err := marshalSeg(testdata.ValidSegApplication)
+		data, err := marshalSeg(testhelpers.NewAppSeg())
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
@@ -220,7 +269,11 @@ func TestValidateData_Seg(t *testing.T) {
 	})
 
 	t.Run("Missing required name field fails validation", func(t *testing.T) {
-		data, err := marshalSeg(testdata.InvalidSeg_MissingName)
+		seg := testhelpers.NewSeg("invalid", "", map[string]domain.L1Overrides{
+			"production": testhelpers.NewL1Override("A", "1", []string{}),
+		})
+		seg.Name = ""
+		data, err := marshalSeg(seg)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
@@ -232,7 +285,10 @@ func TestValidateData_Seg(t *testing.T) {
 	})
 
 	t.Run("Invalid ID pattern fails validation", func(t *testing.T) {
-		data, err := marshalSeg(testdata.InvalidSeg_InvalidID)
+		seg := testhelpers.NewSeg("Invalid_ID!", "Invalid ID", map[string]domain.L1Overrides{
+			"production": testhelpers.NewL1Override("A", "1", []string{}),
+		})
+		data, err := marshalSeg(seg)
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
@@ -251,7 +307,7 @@ func TestValidateData_CompReqs(t *testing.T) {
 	}
 
 	t.Run("Valid compliance requirements pass validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testdata.ValidCompReqs)
+		data, err := yaml.Marshal(testhelpers.NewStandardCompReqs())
 		if err != nil {
 			t.Fatalf("Failed to marshal fixture: %v", err)
 		}
@@ -322,7 +378,7 @@ func TestValidateData_ErrorHandling(t *testing.T) {
 	})
 
 	t.Run("Non-existent schema file fails", func(t *testing.T) {
-		data, _ := yaml.Marshal(testdata.ValidSegL1Production)
+		data, _ := yaml.Marshal(testhelpers.NewProdSegL1())
 
 		err = validator.ValidateData(data, "non-existent.json")
 		if err == nil {

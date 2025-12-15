@@ -4,8 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
-	"github.com/kvql/bunsceal/pkg/taxonomy/testhelpers"
+	"github.com/kvql/bunsceal/pkg/domain/testhelpers"
 )
 
 func TestFileSegL1Repository(t *testing.T) {
@@ -21,11 +22,11 @@ func TestFileSegL1Repository(t *testing.T) {
 	})
 
 	t.Run("Loads correct count of files", func(t *testing.T) {
-		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegL1Files([]testhelpers.SegL1Fixture{
-			{Name: "Environment 1", ID: "env-one", Sensitivity: "A", Criticality: "1"},
-			{Name: "Environment 2", ID: "env-two", Sensitivity: "B", Criticality: "2"},
-			{Name: "Environment 3", ID: "env-three", Sensitivity: "C", Criticality: "3"},
+		files := NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{
+			testhelpers.NewSegL1("env-one", "Environment 1", "A", "1", []string{}),
+			testhelpers.NewSegL1("env-two", "Environment 2", "B", "2", []string{}),
+			testhelpers.NewSegL1("env-three", "Environment 3", "C", "3", []string{}),
 		})
 
 		validator := schemaValidation.MustCreateValidator(t)
@@ -53,11 +54,17 @@ func TestFileSegRepository(t *testing.T) {
 	})
 
 	t.Run("Loads correct count of files", func(t *testing.T) {
-		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegFiles([]testhelpers.SegFixture{
-			{Name: "Domain 1", ID: "domain-one"},
-			{Name: "Domain 2", ID: "domain-two"},
-			{Name: "Domain 3", ID: "domain-three"},
+		files := NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{
+			testhelpers.NewSeg("domain-one", "Domain 1", map[string]domain.L1Overrides{
+				"production": testhelpers.NewL1Override("A", "1", []string{}),
+			}),
+			testhelpers.NewSeg("domain-two", "Domain 2", map[string]domain.L1Overrides{
+				"production": testhelpers.NewL1Override("A", "1", []string{}),
+			}),
+			testhelpers.NewSeg("domain-three", "Domain 3", map[string]domain.L1Overrides{
+				"production": testhelpers.NewL1Override("A", "1", []string{}),
+			}),
 		})
 
 		validator := schemaValidation.MustCreateValidator(t)
@@ -75,18 +82,12 @@ func TestFileSegRepository(t *testing.T) {
 
 func TestParseSegL1File(t *testing.T) {
 	t.Run("Successfully parses valid SegL1 file", func(t *testing.T) {
-		validYAML := `name: "Test Environment"
-id: "test"
-description: "This is a test environment with sufficient description length to meet minimum requirements for validation."
-sensitivity: "A"
-sensitivity_rationale: "Test sensitivity rationale with sufficient length to meet the minimum character requirement for descriptions."
-criticality: "1"
-criticality_rationale: "Test criticality rationale with sufficient length to meet the minimum character requirement for descriptions."
-compliance_reqs:
-  - pci-dss
-`
-		files := testhelpers.NewTestFiles(t)
-		tmpFile := files.CreateYAMLFile("segl1", validYAML)
+		// Use domain builder to create valid L1 segment
+		seg := testhelpers.NewSegL1("test", "Test Environment", "A", "1", []string{"pci-dss"})
+
+		files := NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{seg})
+		tmpFile := tmpDir + "/seg-0.yaml"
 
 		validator := schemaValidation.MustCreateValidator(t)
 		segL1, err := parseSegL1File(tmpFile, validator)
@@ -107,7 +108,7 @@ compliance_reqs:
 id: "test"
 # Missing description and other required fields
 `
-		files := testhelpers.NewTestFiles(t)
+		files := NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("segl1", invalidYAML)
 
 		validator := schemaValidation.MustCreateValidator(t)
@@ -121,27 +122,14 @@ id: "test"
 
 func TestParseSDFile(t *testing.T) {
 	t.Run("Successfully parses valid Seg file", func(t *testing.T) {
-		validYAML := `version: "1.0"
-name: "Test Domain"
-id: "test"
-description: "Test security domain for validating file parsing and schema validation requirements"
-sensitivity: "A"
-sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
-criticality: "1"
-criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
-l1_parents:
-  - production
-l1_overrides:
-  production:
-    sensitivity: "A"
-    sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
-    criticality: "1"
-    criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
-    compliance_reqs:
-      - pci-dss
-`
-		files := testhelpers.NewTestFiles(t)
-		tmpFile := files.CreateYAMLFile("Seg", validYAML)
+		// Use domain builder to create valid L2 segment (NO top-level sensitivity/criticality)
+		seg := testhelpers.NewSeg("test", "Test Domain", map[string]domain.L1Overrides{
+			"production": testhelpers.NewL1Override("A", "1", []string{"pci-dss"}),
+		})
+
+		files := NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{seg})
+		tmpFile := tmpDir + "/seg-0.yaml"
 
 		validator := schemaValidation.MustCreateValidator(t)
 		fl := NewFileSegRepository(validator)
@@ -161,26 +149,15 @@ l1_overrides:
 		}
 	})
 	t.Run("Setting prominence", func(t *testing.T) {
-		validYAML := `version: "1.0"
-name: "Test Domain"
-id: "test"
-description: "Test security domain for validating prominence settings and configuration options"
-sensitivity: "A"
-sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
-criticality: "1"
-criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
-prominence: 2
-l1_parents:
-  - production
-l1_overrides:
-  production:
-    sensitivity: "A"
-    sensitivity_rationale: "Test rationale with sufficient length. Test rationale with sufficient length."
-    criticality: "1"
-    criticality_rationale: "Test rationale with sufficient length. Test rationale with sufficient length."
-`
-		files := testhelpers.NewTestFiles(t)
-		tmpFile := files.CreateYAMLFile("Seg", validYAML)
+		// Use domain builder and set prominence
+		seg := testhelpers.NewSeg("test", "Test Domain", map[string]domain.L1Overrides{
+			"production": testhelpers.NewL1Override("A", "1", []string{}),
+		})
+		seg.Prominence = 2
+
+		files := NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{seg})
+		tmpFile := tmpDir + "/seg-0.yaml"
 
 		validator := schemaValidation.MustCreateValidator(t)
 		fl := NewFileSegRepository(validator)
@@ -195,22 +172,21 @@ l1_overrides:
 	})
 
 	t.Run("Fails with unsupported version", func(t *testing.T) {
+		// Testing unsupported version - L2 should NOT have top-level sensitivity/criticality
 		invalidYAML := `version: "99.0"
 name: "Test Domain"
 id: "test"
 description: "Test domain for validating unsupported version error handling and detection"
-sensitivity: "A"
-sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
-criticality: "1"
-criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
+l1_parents:
+  - production
 l1_overrides:
   production:
     sensitivity: "A"
-    sensitivity_rationale: "Test rationale with sufficient length."
+    sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
     criticality: "1"
-    criticality_rationale: "Test rationale with sufficient length."
+    criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
 `
-		files := testhelpers.NewTestFiles(t)
+		files := NewTestFiles(t)
 		tmpFile := files.CreateYAMLFile("Seg", invalidYAML)
 
 		validator := schemaValidation.MustCreateValidator(t)
@@ -223,30 +199,18 @@ l1_overrides:
 	})
 
 	t.Run("Fails when l1_overrides key not in l1_parents", func(t *testing.T) {
-		invalidYAML := `version: "1.0"
-name: "Test Domain"
-id: "test"
-description: "Test security domain for validating l1_overrides key consistency with parents"
-sensitivity: "A"
-sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
-criticality: "1"
-criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation purposes."
-l1_parents:
-  - production
-l1_overrides:
-  production:
-    sensitivity: "A"
-    sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
-    criticality: "1"
-    criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
-  staging:
-    sensitivity: "D"
-    sensitivity_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
-    criticality: "5"
-    criticality_rationale: "Test rationale with sufficient length to meet the minimum character requirement for validation."
-`
-		files := testhelpers.NewTestFiles(t)
-		tmpFile := files.CreateYAMLFile("Seg", invalidYAML)
+		// Create L2 with override for 'staging' that's not in l1_parents
+		seg := testhelpers.NewSegWithParents("test", "Test Domain",
+			[]string{"production"}, // parents list
+			map[string]domain.L1Overrides{
+				"production": testhelpers.NewL1Override("A", "1", []string{}),
+				"staging":    testhelpers.NewL1Override("D", "5", []string{}), // NOT in parents!
+			},
+		)
+
+		files := NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{seg})
+		tmpFile := tmpDir + "/seg-0.yaml"
 
 		validator := schemaValidation.MustCreateValidator(t)
 		fl := NewFileSegRepository(validator)
@@ -255,8 +219,11 @@ l1_overrides:
 		if err == nil {
 			t.Error("Expected L1 consistency validation error but got nil")
 		}
-		if err != nil && !strings.Contains(err.Error(), "L1 consistency validation failed") {
-			t.Errorf("Expected L1 consistency error, got: %v", err)
+		if err != nil && !strings.Contains(err.Error(), "PostLoad validation failed") {
+			t.Errorf("Expected PostLoad validation error, got: %v", err)
+		}
+		if err != nil && !strings.Contains(err.Error(), "l1_overrides") {
+			t.Errorf("Expected l1_overrides consistency error, got: %v", err)
 		}
 	})
 }

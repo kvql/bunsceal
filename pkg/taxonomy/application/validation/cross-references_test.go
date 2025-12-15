@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/kvql/bunsceal/pkg/domain"
-	. "github.com/kvql/bunsceal/pkg/taxonomy/testhelpers"
+	. "github.com/kvql/bunsceal/pkg/domain/testhelpers"
 )
 
 func TestValidateL1Definitions(t *testing.T) {

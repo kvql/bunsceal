@@ -3,9 +3,10 @@ package application
 import (
 	"testing"
 
+	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
+	"github.com/kvql/bunsceal/pkg/domain/testhelpers"
 	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
-	"github.com/kvql/bunsceal/pkg/taxonomy/testhelpers"
 )
 
 func TestSegL1Service(t *testing.T) {
@@ -29,11 +30,11 @@ func TestSegL1Service(t *testing.T) {
 	})
 
 	t.Run("Returns map indexed by ID", func(t *testing.T) {
-		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegL1Files([]testhelpers.SegL1Fixture{
-			{Name: "Environment 1", ID: "env-one", Sensitivity: "A", Criticality: "1"},
-			{Name: "Environment 2", ID: "env-two", Sensitivity: "B", Criticality: "2"},
-			{Name: "Environment 3", ID: "env-three", Sensitivity: "C", Criticality: "3"},
+		files := infrastructure.NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{
+			testhelpers.NewSegL1("env-one", "Environment 1", "A", "1", []string{}),
+			testhelpers.NewSegL1("env-two", "Environment 2", "B", "2", []string{}),
+			testhelpers.NewSegL1("env-three", "Environment 3", "C", "3", []string{}),
 		})
 
 		repository := infrastructure.NewFileSegL1Repository(validator)
@@ -57,10 +58,10 @@ func TestSegL1Service(t *testing.T) {
 	})
 
 	t.Run("Validates uniqueness of SegL1 IDs", func(t *testing.T) {
-		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegL1Files([]testhelpers.SegL1Fixture{
-			{Name: "Environment 1", ID: "duplicate", Sensitivity: "A", Criticality: "1"},
-			{Name: "Environment 2", ID: "duplicate", Sensitivity: "B", Criticality: "2"},
+		files := infrastructure.NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{
+			testhelpers.NewSegL1("duplicate", "Environment 1", "A", "1", []string{}),
+			testhelpers.NewSegL1("duplicate", "Environment 2", "B", "2", []string{}),
 		})
 
 		repository := infrastructure.NewFileSegL1Repository(validator)
@@ -94,11 +95,17 @@ func TestSegService(t *testing.T) {
 	})
 
 	t.Run("Returns map indexed by ID", func(t *testing.T) {
-		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegFiles([]testhelpers.SegFixture{
-			{Name: "Domain 1", ID: "domain-one"},
-			{Name: "Domain 2", ID: "domain-two"},
-			{Name: "Domain 3", ID: "domain-three"},
+		files := infrastructure.NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{
+			testhelpers.NewSeg("domain-one", "Domain 1", map[string]domain.L1Overrides{
+				"production": testhelpers.NewL1Override("A", "1", []string{}),
+			}),
+			testhelpers.NewSeg("domain-two", "Domain 2", map[string]domain.L1Overrides{
+				"production": testhelpers.NewL1Override("A", "1", []string{}),
+			}),
+			testhelpers.NewSeg("domain-three", "Domain 3", map[string]domain.L1Overrides{
+				"production": testhelpers.NewL1Override("A", "1", []string{}),
+			}),
 		})
 
 		repository := infrastructure.NewFileSegRepository(validator)
@@ -119,10 +126,14 @@ func TestSegService(t *testing.T) {
 	})
 
 	t.Run("Validates uniqueness of Seg IDs", func(t *testing.T) {
-		files := testhelpers.NewTestFiles(t)
-		tmpDir := files.CreateSegFiles([]testhelpers.SegFixture{
-			{Name: "Domain 1", ID: "duplicate"},
-			{Name: "Domain 2", ID: "duplicate"},
+		files := infrastructure.NewTestFiles(t)
+		tmpDir := files.CreateSegFiles([]domain.Seg{
+			testhelpers.NewSeg("duplicate", "Domain 1", map[string]domain.L1Overrides{
+				"production": testhelpers.NewL1Override("A", "1", []string{}),
+			}),
+			testhelpers.NewSeg("duplicate", "Domain 2", map[string]domain.L1Overrides{
+				"production": testhelpers.NewL1Override("A", "1", []string{}),
+			}),
 		})
 
 		repository := infrastructure.NewFileSegRepository(validator)

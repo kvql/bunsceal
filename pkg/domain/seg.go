@@ -11,7 +11,7 @@ type Seg struct {
 	Name                 string                 `yaml:"name" json:"name"`
 	ID                   string                 `yaml:"id" json:"id"`
 	Description          string                 `yaml:"description" json:"description"`
-	Level                string                 `yaml:"level" json:"level"`
+	Level                string                 `yaml:"level,omitempty" json:"level,omitempty"`
 	Sensitivity          string                 `yaml:"sensitivity,omitempty" json:"sensitivity,omitempty"`                     //Depricated - migrating to label
 	SensitivityRationale string                 `yaml:"sensitivity_rationale,omitempty" json:"sensitivity_rationale,omitempty"` //Depricated - migrating to label
 	Criticality          string                 `yaml:"criticality,omitempty" json:"criticality,omitempty"`                     //Depricated - migrating to label
@@ -21,7 +21,7 @@ type Seg struct {
 	L1Overrides          map[string]L1Overrides `yaml:"l1_overrides,omitempty" json:"l1_overrides,omitempty"`
 	Prominence           int                    `yaml:"prominence,omitempty" json:"prominence,omitempty"`
 	Labels               []string               `yaml:"labels" json:"labels,omitempty"`
-	ParsedLabels         map[string]string      `json:"-"`
+	ParsedLabels         map[string]string      `yaml:"-" json:"-"`
 }
 
 type L1Overrides struct {
@@ -51,23 +51,46 @@ func (s Seg) GetKeyString(key string) (string, error) {
 	return val, nil
 }
 
-// ParseLabels converts labels string array into ParsedLabels map.
-// Expects format "key:value" where keys follow DNS-like naming (alphanumeric + ./_-)
-// and values support AWS-compliant tag characters (alphanumeric + ./_-+=:@ and spaces).
-// Values may contain colons (e.g., "url:https://example.com:8080").
-func (s *Seg) ParseLabels() error {
-	if s.ParsedLabels == nil {
-		s.ParsedLabels = make(map[string]string)
+func (s *Seg) PostLoad(level string) error {
+	// Set level if not already set
+	if s.Level == "" {
+		s.Level = level
 	}
-	for _, label := range s.Labels {
-		k := strings.SplitN(label, ":", 2)
-		if len(k) == 2 {
-			s.ParsedLabels[k[0]] = k[1]
-		} else {
-			return fmt.Errorf("label format invalid, expected key:value")
+
+	// Validate level-specific required fields
+	switch level {
+	case "1":
+		// L1 segments require top-level sensitivity/criticality
+		if s.Criticality == "" {
+			return fmt.Errorf("L1 segment missing required field: Criticality")
 		}
+		if s.CriticalityRationale == "" {
+			return fmt.Errorf("L1 segment missing required field: CriticalityRationale")
+		}
+		if s.Sensitivity == "" {
+			return fmt.Errorf("L1 segment missing required field: Sensitivity")
+		}
+		if s.SensitivityRationale == "" {
+			return fmt.Errorf("L1 segment missing required field: SensitivityRationale")
+		}
+	case "2":
+		// L2 segments require L1Parents
+		if len(s.L1Parents) == 0 {
+			return fmt.Errorf("L2 segment missing required field: L1Parents")
+		}
+		// Validate L1Overrides keys match L1Parents
+		if err := s.ValidateL1Consistency(); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unsupported segment level: %s", level)
 	}
-	return nil
+
+	// Apply defaults
+	s.SetDefaults()
+
+	// Parse labels into map
+	return s.ParseLabels()
 }
 
 func (s *Seg) SetDefaults() {
@@ -97,5 +120,24 @@ func (s *Seg) ValidateL1Consistency() error {
 		}
 	}
 
+	return nil
+}
+
+// ParseLabels converts labels string array into ParsedLabels map.
+// Expects format "key:value" where keys follow DNS-like naming (alphanumeric + ./_-)
+// and values support AWS-compliant tag characters (alphanumeric + ./_-+=:@ and spaces).
+// Values may contain colons (e.g., "url:https://example.com:8080").
+func (s *Seg) ParseLabels() error {
+	if s.ParsedLabels == nil {
+		s.ParsedLabels = make(map[string]string)
+	}
+	for _, label := range s.Labels {
+		k := strings.SplitN(label, ":", 2)
+		if len(k) == 2 {
+			s.ParsedLabels[k[0]] = k[1]
+		} else {
+			return fmt.Errorf("label format invalid, expected key:value")
+		}
+	}
 	return nil
 }

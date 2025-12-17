@@ -14,7 +14,7 @@ func MustCreateValidator(t *testing.T) *SchemaValidator {
 
 func MustCreateValidatorWithPath(t *testing.T, schemaPath string) *SchemaValidator {
 	t.Helper()
-	validator, err := NewSchemaValidator(schemaPath)
+	validator, err := NewSchemaValidator(schemaPath, SchemaBaseURL)
 	if err != nil {
 		t.Fatalf("Failed to create schema validator with path %s: %v", schemaPath, err)
 	}

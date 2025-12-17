@@ -396,18 +396,18 @@ func FormatEnvLabel(txy *domain.Taxonomy, prefix string, envID string, showClass
 func FormatSdLabel(txy *domain.Taxonomy, prefix string, envID string, sdID string, showClass bool, emphasis int) string {
 
 	// graph without Compliance reqs until process around them is finalised
-	label := fmt.Sprintf("%s%s", prefix, txy.Segs[sdID].Name)
+	label := fmt.Sprintf("%s%s", prefix, txy.SegsL2s[sdID].Name)
 
 	if showClass {
 		label = fmt.Sprintf("\"%s%s\\n%s\\nClassification: %s%s%s\"",
 			strings.Repeat("\n", emphasis),
 			label, strings.Repeat("_", len(label)),
-			strings.ToUpper(txy.Segs[sdID].L1Overrides[envID].Sensitivity),
-			strings.ToUpper(txy.Segs[sdID].L1Overrides[envID].Criticality),
+			strings.ToUpper(txy.SegsL2s[sdID].L1Overrides[envID].Sensitivity),
+			strings.ToUpper(txy.SegsL2s[sdID].L1Overrides[envID].Criticality),
 			strings.Repeat("\n", emphasis),
 		)
 	} else {
-		label = fmt.Sprintf("\"%s%s (%s)%s\"", strings.Repeat("\n", emphasis), label, txy.Segs[sdID].ID, strings.Repeat("\n", emphasis))
+		label = fmt.Sprintf("\"%s%s (%s)%s\"", strings.Repeat("\n", emphasis), label, txy.SegsL2s[sdID].ID, strings.Repeat("\n", emphasis))
 	}
 	return label
 }

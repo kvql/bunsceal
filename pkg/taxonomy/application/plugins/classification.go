@@ -61,6 +61,14 @@ func (p ClassificationsPlugin) ValidateLabels(seg *domain.Seg) PluginValidationR
 			result.Errors = append(result.Errors, fmt.Errorf("segment %s, rationale too short for label %s", seg.ID, p.Namespace+"/"+k))
 		}
 	}
-	result.Valid = true
+	result.Valid = len(result.Errors) == 0
 	return result
+}
+
+func (p ClassificationsPlugin) GetEnabled() bool {
+	return p.Config.Common.LabelInheritance
+}
+
+func (p ClassificationsPlugin) GetNamespace() string {
+	return p.Namespace
 }

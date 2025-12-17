@@ -10,8 +10,13 @@ import (
 	"github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
 	"github.com/kvql/bunsceal/pkg/o11y"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 	"gopkg.in/yaml.v3"
 )
+
+var defaultConfigSchemaPath = "pkg/config/schemas"
+
+const configSchemaBaseURL = "https://github.com/kvql/bunsceal/pkg/config/schemas/"
 
 // LoadConfig loads configuration from the specified path.
 // If configPath is empty, loads from taxDir/config.yaml.
@@ -22,14 +27,20 @@ func LoadConfig(configPath, configSchemaPath string) (domain.Config, error) {
 
 	// Use default schema path if not provided
 	if configSchemaPath == "" {
-		configSchemaPath = domain.DefaultSchemaPath
+		configSchemaPath = defaultConfigSchemaPath
 	}
 
-	schemaValidator, err := schemaValidation.NewSchemaValidator(configSchemaPath)
+	// Plugin schemas must be registered before compilation (config.json refs plugins.json)
+	pluginSchemas := []schemaValidation.ExternalSchema{
+		{JSON: plugins.ClassificationsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/plugin-classifications.json"},
+		{JSON: plugins.PluginsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/plugins.json"},
+	}
+	schemaValidator, err := schemaValidation.NewSchemaValidator(configSchemaPath, configSchemaBaseURL, pluginSchemas...)
 	if err != nil {
 		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
 		return domain.Config{}, errors.New("failed to initialise schema validator")
 	}
+
 	// Determine config file location
 	if configPath == "" {
 		configPath = filepath.Join("config.yaml")

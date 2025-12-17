@@ -19,7 +19,7 @@ func NewTestTaxonomy() *domain.Taxonomy {
 	return &domain.Taxonomy{
 		ApiVersion:        "v1beta1",
 		SegL1s:            make(map[string]domain.Seg),
-		Segs:              make(map[string]domain.Seg),
+		SegsL2s:           make(map[string]domain.Seg),
 		CompReqs:          make(map[string]domain.CompReq),
 		SensitivityLevels: []string{"A", "B", "C", "D"},
 		CriticalityLevels: []string{"1", "2", "3", "4", "5"},
@@ -46,10 +46,10 @@ func WithSegL1(txy *domain.Taxonomy, id string, seg domain.Seg) *domain.Taxonomy
 
 // WithSeg adds a Seg to the taxonomy
 func WithSeg(txy *domain.Taxonomy, id string, seg domain.Seg) *domain.Taxonomy {
-	if txy.Segs == nil {
-		txy.Segs = make(map[string]domain.Seg)
+	if txy.SegsL2s == nil {
+		txy.SegsL2s = make(map[string]domain.Seg)
 	}
-	txy.Segs[id] = seg
+	txy.SegsL2s[id] = seg
 	return txy
 }
 

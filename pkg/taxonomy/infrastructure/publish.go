@@ -11,6 +11,8 @@ import (
 )
 
 // GenLocalTaxonomy generates a local taxonomy file
+// TODO: Update JSON output to use ParsedLabels map instead of Labels array
+// See: Labels field should have json:"-" and ParsedLabels should have json:"labels,omitempty"
 func GenLocalTaxonomy(tx domain.Taxonomy, dir string) error {
 	// Check if provided directory exists
 	if _, err := os.Stat(dir); os.IsNotExist(err) {

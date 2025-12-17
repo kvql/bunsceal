@@ -92,7 +92,7 @@ func PrepTaxonomy(txy *domain.Taxonomy) map[string]EnvImageData {
 		}
 	}
 
-	for _, sd := range txy.Segs {
+	for _, sd := range txy.SegsL2s {
 		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
 		for _, l1ID := range sd.L1Parents {
 			// Lookup override (should exist after inheritance)

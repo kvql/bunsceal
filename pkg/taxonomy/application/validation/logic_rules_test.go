@@ -81,7 +81,7 @@ func TestLogicRuleSet_ValidateAll(t *testing.T) {
 					ComplianceReqs: []string{"req1"},
 				},
 			},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"app": {
 					ID:   "app",
 					Name: "Application",
@@ -116,7 +116,7 @@ func TestLogicRuleSet_ValidateAll(t *testing.T) {
 					Name: "Production",
 				},
 			},
-			Segs: map[string]domain.Seg{},
+			SegsL2s: map[string]domain.Seg{},
 			CompReqs: map[string]domain.CompReq{
 				"req1": {Name: "Requirement 1"},
 			},
@@ -293,7 +293,7 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 				"prod":    {ID: "prod", Name: "Production"},
 				"staging": {ID: "staging", Name: "Staging"},
 			},
-			Segs: map[string]domain.Seg{},
+			SegsL2s: map[string]domain.Seg{},
 		}
 
 		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{
@@ -313,7 +313,7 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 				"prod1": {ID: "prod1", Name: "Production"},
 				"prod2": {ID: "prod2", Name: "Production"}, // Duplicate name
 			},
-			Segs: map[string]domain.Seg{},
+			SegsL2s: map[string]domain.Seg{},
 		}
 
 		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{
@@ -330,7 +330,7 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 	t.Run("Passes when all L2 names are unique", func(t *testing.T) {
 		txy := &domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"app":  {ID: "app", Name: "Application"},
 				"data": {ID: "data", Name: "Data"},
 			},
@@ -350,7 +350,7 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 	t.Run("Fails when L2 names are duplicated", func(t *testing.T) {
 		txy := &domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"app1": {ID: "app1", Name: "Application"},
 				"app2": {ID: "app2", Name: "Application"}, // Duplicate name
 			},

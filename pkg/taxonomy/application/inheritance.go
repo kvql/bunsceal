@@ -2,22 +2,24 @@ package application
 
 import (
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/o11y"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 )
 
 // ApplyInheritance applies inheritance rules for taxonomy segments and validates cross-entity references.
-// Returns true if all validations pass, false otherwise.
-func ApplyInheritance(txy *domain.Taxonomy) {
+// Pass nil for pluginsList to skip plugin label inheritance (backwards compatible).
+func ApplyInheritance(txy *domain.Taxonomy, pluginsList *plugins.Plugins) error {
 	// Loop through env details for each security domain and update risk compliance if not set based on env default
-	for _, Seg := range txy.Segs {
+	for _, seg := range txy.SegsL2s {
 		// Initialize L1Overrides map if nil (enables parent-without-override pattern)
-		if Seg.L1Overrides == nil {
-			Seg.L1Overrides = make(map[string]domain.L1Overrides)
+		if seg.L1Overrides == nil {
+			seg.L1Overrides = make(map[string]domain.L1Overrides)
 		}
 
 		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
-		for _, l1ID := range Seg.L1Parents {
+		for _, l1ID := range seg.L1Parents {
 			// Get existing override or create empty struct for full inheritance
-			l1Override, exists := Seg.L1Overrides[l1ID]
+			l1Override, exists := seg.L1Overrides[l1ID]
 			if !exists {
 				l1Override = domain.L1Overrides{}
 			}
@@ -45,7 +47,17 @@ func ApplyInheritance(txy *domain.Taxonomy) {
 				}
 			}
 			// Write back override (creates new entry if didn't exist)
-			Seg.L1Overrides[l1ID] = l1Override
+			seg.L1Overrides[l1ID] = l1Override
+
+			// Apply plugin label inheritance for L2 segments
+			if pluginsList != nil {
+				err := pluginsList.ApplyPluginInheritance(txy.SegL1s[l1ID], &seg)
+				if err != nil {
+					o11y.Log.Println(err)
+					return err
+				}
+			}
 		}
 	}
+	return nil
 }

@@ -31,26 +31,9 @@ type TermDef struct {
 	Plural   string `yaml:"plural"`
 }
 
-var invalidConfigSchema = InvalidConfig{
-	Terminology: InvalidTermConfig{
-		L4: TermDef{
-			Singular: "dfas",
-			Plural:   "fdasdfas",
-		},
-	},
-}
-var validConfigSchema = Config{
-	Terminology: TermConfig{
-		L1: TermDef{
-			Singular: "dfas",
-			Plural:   "fdasdfas",
-		},
-	},
-}
-
 func expectValidatorError(t *testing.T, schemaPath string) {
 	t.Helper()
-	_, err := NewSchemaValidator(schemaPath)
+	_, err := NewSchemaValidator(schemaPath, SchemaBaseURL)
 	if err == nil {
 		t.Errorf("Expected validator creation to fail for path %s, but it succeeded", schemaPath)
 	}
@@ -111,16 +94,6 @@ func TestNewSchemaValidator(t *testing.T) {
 
 	t.Run("Fails with non-existent schema directory", func(t *testing.T) {
 		expectValidatorError(t, "/non/existent/path")
-	})
-}
-
-func TestValidateData_Config(t *testing.T) {
-	t.Run("Valid config level keys", func(t *testing.T) {
-		assertValidationPasses(t, validConfigSchema, "config.json")
-	})
-
-	t.Run("Invalid level key fails validation", func(t *testing.T) {
-		assertValidationFails(t, invalidConfigSchema, "config.json")
 	})
 }
 
@@ -189,7 +162,7 @@ func TestValidateData_Seg(t *testing.T) {
 }
 
 func TestValidateData_CompReqs(t *testing.T) {
-	validator, err := NewSchemaValidator(TestSchemaPath)
+	validator, err := NewSchemaValidator(TestSchemaPath, SchemaBaseURL)
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -227,7 +200,7 @@ func TestValidateData_CompReqs(t *testing.T) {
 }
 
 func TestValidateData_JSON(t *testing.T) {
-	validator, err := NewSchemaValidator(TestSchemaPath)
+	validator, err := NewSchemaValidator(TestSchemaPath, SchemaBaseURL)
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -251,7 +224,7 @@ func TestValidateData_JSON(t *testing.T) {
 }
 
 func TestValidateData_ErrorHandling(t *testing.T) {
-	validator, err := NewSchemaValidator(TestSchemaPath)
+	validator, err := NewSchemaValidator(TestSchemaPath, SchemaBaseURL)
 	if err != nil {
 		t.Fatalf("Failed to create validator: %v", err)
 	}
@@ -363,7 +336,7 @@ func TestConvertYAMLToJSON(t *testing.T) {
 
 func TestFormatValidationError(t *testing.T) {
 	t.Run("Formats jsonschema.ValidationError", func(t *testing.T) {
-		validator, err := NewSchemaValidator(TestSchemaPath)
+		validator, err := NewSchemaValidator(TestSchemaPath, SchemaBaseURL)
 		if err != nil {
 			t.Fatalf("Failed to create validator: %v", err)
 		}
@@ -406,7 +379,7 @@ func TestNewSchemaValidator_ErrorCases(t *testing.T) {
 			t.Fatalf("Failed to write test file: %v", err)
 		}
 
-		_, err = NewSchemaValidator(tmpDir)
+		_, err = NewSchemaValidator(tmpDir, SchemaBaseURL)
 		if err == nil {
 			t.Error("Expected error for invalid JSON schema")
 		}

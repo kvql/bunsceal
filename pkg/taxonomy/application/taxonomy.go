@@ -2,11 +2,13 @@ package application
 
 import (
 	"errors"
+	"fmt"
 
 	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
 	"github.com/kvql/bunsceal/pkg/o11y"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 	"github.com/kvql/bunsceal/pkg/taxonomy/application/validation"
 	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
 )
@@ -23,7 +25,7 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 
 	// Load L1 segments using configured directory name
 
-	schemaValidator, err := schemaValidation.NewSchemaValidator(cfg.SchemaPath)
+	schemaValidator, err := schemaValidation.NewSchemaValidator(cfg.SchemaPath, schemaValidation.SchemaBaseURL)
 	if err != nil {
 		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
 		return domain.Taxonomy{}, errors.New("failed to initialise schema validator")
@@ -37,13 +39,13 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 	FsRepository := infrastructure.NewFileSegRepository(schemaValidator, cfg.FsRepository)
 	FsService := NewSegService(FsRepository)
 
-	txy.Segs, err = FsService.LoadLevel("1")
+	txy.SegsL2s, err = FsService.LoadLevel("1")
 	if err != nil {
 		o11y.Log.Printf("Error loading L1 files. %s", err)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
-	txy.Segs, err = FsService.LoadLevel("2")
+	txy.SegsL2s, err = FsService.LoadLevel("2")
 	if err != nil {
 		o11y.Log.Printf("Error loading L2 files. %s", err)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
@@ -63,10 +65,26 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
-	// Apply inheritance and validate cross-entity references
-	ApplyInheritance(&txy)
-	if !valid {
-		o11y.Log.Println("Taxonomy is invalid: cross-entity validation failed")
+	// Load plugins from config
+	var pluginsList *plugins.Plugins
+	if cfg.Plugins.Classifications != nil {
+		pluginsList = &plugins.Plugins{Plugins: make(map[string]plugins.Plugin)}
+		err = pluginsList.LoadPlugins(cfg.Plugins)
+		if err != nil {
+			o11y.Log.Printf("error loading plugins: %s", err)
+			return domain.Taxonomy{}, errors.New("failed to load plugins")
+		}
+	}
+
+	// Apply inheritance (includes plugin label inheritance)
+
+	if err = ApplyInheritance(&txy, pluginsList); err != nil {
+		o11y.Log.Println("Taxonomy is invalid: plugin label validation failed")
+		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
+	}
+	// Validate plugin labels AFTER inheritance
+	if err := ValidatePluginLabels(&txy, pluginsList); err != nil {
+		o11y.Log.Println("Taxonomy is invalid: plugin label validation failed")
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
@@ -104,4 +122,22 @@ func ValidateCoreLogic(txy *domain.Taxonomy, cfg configdomain.Config) bool {
 	}
 
 	return true
+}
+
+// ValidatePluginLabels validates all segment labels against loaded plugins.
+// Must be called AFTER ApplyInheritance since children may inherit labels.
+func ValidatePluginLabels(txy *domain.Taxonomy, pluginsList *plugins.Plugins) error {
+	if pluginsList == nil {
+		return nil
+	}
+
+	errs := pluginsList.ValidateAllSegments(txy.SegL1s, txy.SegsL2s)
+	if len(errs) > 0 {
+		for _, err := range errs {
+			o11y.Log.Println(err)
+		}
+		return fmt.Errorf("plugin label validation failed with %d error(s)", len(errs))
+	}
+
+	return nil
 }

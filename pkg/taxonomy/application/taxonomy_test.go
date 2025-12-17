@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 )
 
 func TestApplyInheritance(t *testing.T) {
@@ -20,7 +21,7 @@ func TestApplyInheritance(t *testing.T) {
 					CriticalityRationale: "Production outages directly impact customers and revenue.",
 				},
 			},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"infra": {
 					Name:        "Infrastructure",
 					ID:          "infra",
@@ -38,9 +39,9 @@ func TestApplyInheritance(t *testing.T) {
 			CompReqs: map[string]domain.CompReq{},
 		}
 
-		ApplyInheritance(&txy)
+		ApplyInheritance(&txy, nil)
 
-		L1Overrides := txy.Segs["infra"].L1Overrides["prod"]
+		L1Overrides := txy.SegsL2s["infra"].L1Overrides["prod"]
 		if L1Overrides.Sensitivity != "A" {
 			t.Errorf("Expected sensitivity 'A', got %s", L1Overrides.Sensitivity)
 		}
@@ -64,7 +65,7 @@ func TestApplyInheritance(t *testing.T) {
 					CriticalityRationale: "Staging downtime impacts development velocity only.",
 				},
 			},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -82,9 +83,9 @@ func TestApplyInheritance(t *testing.T) {
 			CompReqs: map[string]domain.CompReq{},
 		}
 
-		ApplyInheritance(&txy)
+		ApplyInheritance(&txy, nil)
 
-		L1Overrides := txy.Segs["app"].L1Overrides["staging"]
+		L1Overrides := txy.SegsL2s["app"].L1Overrides["staging"]
 		if L1Overrides.Criticality != "5" {
 			t.Errorf("Expected criticality '5', got %s", L1Overrides.Criticality)
 		}
@@ -102,7 +103,7 @@ func TestApplyInheritance(t *testing.T) {
 					SensitivityRationale: "Environment default rationale.",
 				},
 			},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"sec": {
 					Name:        "Security",
 					ID:          "sec",
@@ -119,9 +120,9 @@ func TestApplyInheritance(t *testing.T) {
 			CompReqs: map[string]domain.CompReq{},
 		}
 
-		ApplyInheritance(&txy)
+		ApplyInheritance(&txy, nil)
 
-		L1Overrides := txy.Segs["sec"].L1Overrides["prod"]
+		L1Overrides := txy.SegsL2s["sec"].L1Overrides["prod"]
 		if L1Overrides.Sensitivity != "B" {
 			t.Errorf("Expected sensitivity to remain 'B', got %s", L1Overrides.Sensitivity)
 		}
@@ -138,7 +139,7 @@ func TestApplyInheritance(t *testing.T) {
 					ComplianceReqs: []string{"pci-dss", "sox"},
 				},
 			},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -159,9 +160,9 @@ func TestApplyInheritance(t *testing.T) {
 			},
 		}
 
-		ApplyInheritance(&txy)
+		ApplyInheritance(&txy, nil)
 
-		L1Overrides := txy.Segs["app"].L1Overrides["prod"]
+		L1Overrides := txy.SegsL2s["app"].L1Overrides["prod"]
 		if len(L1Overrides.ComplianceReqs) != 2 {
 			t.Errorf("Expected 2 inherited compliance reqs, got %d", len(L1Overrides.ComplianceReqs))
 		}
@@ -178,7 +179,7 @@ func TestApplyInheritance(t *testing.T) {
 					ComplianceReqs: []string{"pci-dss", "sox", "hipaa"},
 				},
 			},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -200,9 +201,9 @@ func TestApplyInheritance(t *testing.T) {
 			},
 		}
 
-		ApplyInheritance(&txy)
+		ApplyInheritance(&txy, nil)
 
-		L1Overrides := txy.Segs["app"].L1Overrides["prod"]
+		L1Overrides := txy.SegsL2s["app"].L1Overrides["prod"]
 		if len(L1Overrides.ComplianceReqs) != 1 {
 			t.Errorf("Expected custom compliance reqs to remain (1 item), got %d", len(L1Overrides.ComplianceReqs))
 		}
@@ -218,7 +219,7 @@ func TestApplyInheritance(t *testing.T) {
 					ID: "prod",
 				},
 			},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -239,9 +240,9 @@ func TestApplyInheritance(t *testing.T) {
 			},
 		}
 
-		ApplyInheritance(&txy)
+		ApplyInheritance(&txy, nil)
 
-		L1Overrides := txy.Segs["app"].L1Overrides["prod"]
+		L1Overrides := txy.SegsL2s["app"].L1Overrides["prod"]
 		if len(L1Overrides.CompReqs) != 2 {
 			t.Errorf("Expected 2 entries in CompReqs map, got %d", len(L1Overrides.CompReqs))
 		}
@@ -268,7 +269,7 @@ func TestApplyInheritance(t *testing.T) {
 					ID: "prod",
 				},
 			},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -288,9 +289,9 @@ func TestApplyInheritance(t *testing.T) {
 			},
 		}
 
-		ApplyInheritance(&txy)
+		ApplyInheritance(&txy, nil)
 
-		L1Overrides := txy.Segs["app"].L1Overrides["prod"]
+		L1Overrides := txy.SegsL2s["app"].L1Overrides["prod"]
 		if len(L1Overrides.CompReqs) != 1 {
 			t.Errorf("Expected only 1 valid entry in CompReqs map, got %d", len(L1Overrides.CompReqs))
 		}
@@ -317,7 +318,7 @@ func TestApplyInheritance(t *testing.T) {
 					CriticalityRationale: "Staging criticality.",
 				},
 			},
-			Segs: map[string]domain.Seg{
+			SegsL2s: map[string]domain.Seg{
 				"app": {
 					Name:        "Application",
 					ID:          "app",
@@ -336,16 +337,103 @@ func TestApplyInheritance(t *testing.T) {
 			CompReqs: map[string]domain.CompReq{},
 		}
 
-		ApplyInheritance(&txy)
+		ApplyInheritance(&txy, nil)
 
-		prodDetails := txy.Segs["app"].L1Overrides["prod"]
+		prodDetails := txy.SegsL2s["app"].L1Overrides["prod"]
 		if prodDetails.Sensitivity != "A" {
 			t.Errorf("Expected prod to inherit 'A', got %s", prodDetails.Sensitivity)
 		}
 
-		stagingDetails := txy.Segs["app"].L1Overrides["staging"]
+		stagingDetails := txy.SegsL2s["app"].L1Overrides["staging"]
 		if stagingDetails.Sensitivity != "D" {
 			t.Errorf("Expected staging to inherit 'D', got %s", stagingDetails.Sensitivity)
+		}
+	})
+}
+
+func TestValidatePluginLabels(t *testing.T) {
+	t.Run("Returns nil when no plugins configured", func(t *testing.T) {
+		txy := domain.Taxonomy{
+			SegL1s:  map[string]domain.Seg{},
+			SegsL2s: map[string]domain.Seg{},
+		}
+
+		err := ValidatePluginLabels(&txy, nil)
+
+		if err != nil {
+			t.Errorf("Expected nil error for nil plugins, got %v", err)
+		}
+	})
+
+	t.Run("Fails when segment has invalid plugin label value", func(t *testing.T) {
+		config := &plugins.ClassificationsConfig{
+			Common:          plugins.PluginsCommonSettings{LabelInheritance: true},
+			RationaleLength: 10,
+			Definitions: map[string]plugins.ClassificationDefinition{
+				"sensitivity": {
+					DescriptiveName: "Sensitivity",
+					Values:          map[string]string{"high": "High", "low": "Low"},
+				},
+			},
+		}
+		pluginsList := &plugins.Plugins{Plugins: make(map[string]plugins.Plugin)}
+		pluginsList.Plugins["classifications"] = plugins.NewClassificationPlugin(config, plugins.NsPrefix)
+
+		seg := domain.Seg{
+			ID:   "prod",
+			Name: "Production",
+			Labels: []string{
+				"bunsceal.plugin.classifications/sensitivity:invalid-value",
+				"bunsceal.plugin.classifications/sensitivity_rationale:Test rationale",
+			},
+		}
+		seg.ParseLabels()
+
+		txy := domain.Taxonomy{
+			SegL1s:  map[string]domain.Seg{"prod": seg},
+			SegsL2s: map[string]domain.Seg{},
+		}
+
+		err := ValidatePluginLabels(&txy, pluginsList)
+
+		if err == nil {
+			t.Error("Expected validation error for invalid classification value")
+		}
+	})
+
+	t.Run("Passes when segment has valid plugin labels", func(t *testing.T) {
+		config := &plugins.ClassificationsConfig{
+			Common:          plugins.PluginsCommonSettings{LabelInheritance: true},
+			RationaleLength: 10,
+			Definitions: map[string]plugins.ClassificationDefinition{
+				"sensitivity": {
+					DescriptiveName: "Sensitivity",
+					Values:          map[string]string{"high": "High", "low": "Low"},
+				},
+			},
+		}
+		pluginsList := &plugins.Plugins{Plugins: make(map[string]plugins.Plugin)}
+		pluginsList.Plugins["classifications"] = plugins.NewClassificationPlugin(config, plugins.NsPrefix)
+
+		seg := domain.Seg{
+			ID:   "prod",
+			Name: "Production",
+			Labels: []string{
+				"bunsceal.plugin.classifications/sensitivity:high",
+				"bunsceal.plugin.classifications/sensitivity_rationale:Valid rationale here",
+			},
+		}
+		seg.ParseLabels()
+
+		txy := domain.Taxonomy{
+			SegL1s:  map[string]domain.Seg{"prod": seg},
+			SegsL2s: map[string]domain.Seg{},
+		}
+
+		err := ValidatePluginLabels(&txy, pluginsList)
+
+		if err != nil {
+			t.Errorf("Expected no error for valid labels, got %v", err)
 		}
 	})
 }

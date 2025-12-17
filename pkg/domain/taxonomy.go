@@ -4,7 +4,7 @@ package domain
 type Taxonomy struct {
 	ApiVersion        string
 	SegL1s            map[string]Seg
-	Segs              map[string]Seg
+	SegsL2s           map[string]Seg
 	SensitivityLevels []string
 	CriticalityLevels []string
 	CompReqs          map[string]CompReq

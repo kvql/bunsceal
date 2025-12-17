@@ -11,28 +11,38 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const SchemaBaseURL = "https://github.com/kvql/bunsceal/pkg/domain/schemas/"
+
 // SchemaValidator provides JSON schema validation for taxonomy entities
 type SchemaValidator struct {
 	compiler *jsonschema.Compiler
 	schemas  map[string]*jsonschema.Schema
 }
 
+// ExternalSchema represents a schema to be registered from a JSON string
+type ExternalSchema struct {
+	JSON string // JSON schema content
+	ID   string // Schema $id URL
+}
+
 // NewSchemaValidator creates and initialises a schema validator with all taxonomy schemas
-func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
+// externalSchemas are registered before compilation to support $ref resolution
+func NewSchemaValidator(schemaDir string, schemaBaseURL string, externalSchemas ...ExternalSchema) (*SchemaValidator, error) {
 	compiler := jsonschema.NewCompiler()
 	// Note: Draft version is auto-detected from $schema field in each JSON schema file
-
-	// Load all schema files
-	schemaFiles := []string{
-		"common.json",
-		"seg-level.json",
-		"l1-overrides.json",
-		"compliance-reqs.json",
-		"compliance-req.json",
-		"taxonomy.json",
-		"config.json",
+	info, err := os.Stat(schemaDir)
+	if err != nil {
+		return nil, fmt.Errorf("error %w", err)
 	}
 
+	if !info.IsDir() {
+		return nil, fmt.Errorf("error schema path not dir: %w", err)
+	}
+	// Load all schema files
+	schemaFiles, err := os.ReadDir(schemaDir)
+	if err != nil {
+		return nil, fmt.Errorf("error %w", err)
+	}
 	// Add all schemas to compiler - must resolve to absolute paths
 	absSchemaDir, err := filepath.Abs(schemaDir)
 	if err != nil {
@@ -40,7 +50,7 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 	}
 
 	for _, file := range schemaFiles {
-		schemaPath := filepath.Join(absSchemaDir, file)
+		schemaPath := filepath.Join(absSchemaDir, file.Name())
 
 		// Read schema file
 		// #nosec G304 -- schemaPath is constructed from trusted schema directory and known schema files
@@ -73,17 +83,28 @@ func NewSchemaValidator(schemaDir string) (*SchemaValidator, error) {
 		}
 	}
 
+	// Register external schemas before compilation (needed for $ref resolution)
+	for _, ext := range externalSchemas {
+		var schemaDoc interface{}
+		if err := json.Unmarshal([]byte(ext.JSON), &schemaDoc); err != nil {
+			return nil, fmt.Errorf("failed to parse external schema %s: %w", ext.ID, err)
+		}
+		if err := compiler.AddResource(ext.ID, schemaDoc); err != nil {
+			return nil, fmt.Errorf("failed to add external schema %s: %w", ext.ID, err)
+		}
+	}
+
 	// Pre-compile schemas for performance
 	// Compile using the base schema directory URL for resolution
 	schemas := make(map[string]*jsonschema.Schema)
-	schemaBaseURL := "https://github.com/kvql/bunsceal/pkg/domain/schemas/"
+
 	for _, file := range schemaFiles {
-		schemaURL := schemaBaseURL + file
+		schemaURL := schemaBaseURL + file.Name()
 		schema, err := compiler.Compile(schemaURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compile schema %s: %w", file, err)
 		}
-		schemas[file] = schema
+		schemas[file.Name()] = schema
 	}
 
 	return &SchemaValidator{

@@ -9,7 +9,7 @@ func ValidateL2Definition(txy *domain.Taxonomy) (bool, int) {
 	valid := true
 	failures := 0
 	// Loop through Segs and validate default risk levels
-	for _, secDomain := range txy.Segs {
+	for _, secDomain := range txy.SegsL2s {
 		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
 		for _, l1ID := range secDomain.L1Parents {
 			// Validate parent L1 exists in taxonomy

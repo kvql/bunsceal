@@ -8,7 +8,7 @@ import (
 	"github.com/kvql/bunsceal/pkg/config/domain"
 )
 
-const testSchemaPath = "../../pkg/domain/schemas"
+const testSchemaPath = "schemas/"
 
 func TestLoadConfig_MissingFile(t *testing.T) {
 	t.Run("Returns defaults when config file missing", func(t *testing.T) {

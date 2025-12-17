@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kvql/bunsceal/pkg/config/schemas/common.json",
+  "title": "Common schema definitions",
+  "$defs": {
+    "termDef": {
+      "type": "object",
+      "description": "terminology Override to utilise terminology that is understandable to your audience",
+      "properties": {
+        "singular": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Singular form of the term"
+        },
+        "plural": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Plural form of the term"
+        }
+      },
+      "required": [
+        "singular",
+        "plural"
+      ],
+      "additionalProperties": false
+    },
+    "filePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[a-zA-Z0-9._/-]+$",
+      "description": "File system path (relative or absolute). Supports forward slashes (/) for Unix/Mac. Example: './schema' or '/usr/local/schema'"
+    }
+  }
+}

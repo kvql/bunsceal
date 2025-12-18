@@ -452,10 +452,8 @@ func TestValidateData_Labels(t *testing.T) {
 			name   string
 			labels []string
 		}{
-			{"Value with parentheses", []string{"note:(important)"}},
 			{"Value with brackets", []string{"list:[item1,item2]"}},
 			{"Value with braces", []string{"obj:{key:val}"}},
-			{"Value with ampersand", []string{"query:foo&bar"}},
 			{"Value with percent", []string{"rate:50%"}},
 			{"Value with asterisk", []string{"glob:*.txt"}},
 			{"Value with hash", []string{"color:#FF0000"}},
@@ -464,6 +462,24 @@ func TestValidateData_Labels(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				assertValidationFails(t, segL1WithLabels(tc.labels), "seg-level.json")
+			})
+		}
+	})
+
+	t.Run("Valid extended punctuation in values", func(t *testing.T) {
+		testCases := []struct {
+			name   string
+			labels []string
+		}{
+			{"Value with parentheses", []string{"note:(important)"}},
+			{"Value with ampersand", []string{"query:foo&bar"}},
+			{"Value with apostrophe", []string{"note:doesn't matter"}},
+			{"Value with comma", []string{"list:one, two, three"}},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				assertValidationPasses(t, segL1WithLabels(tc.labels), "seg-level.json")
 			})
 		}
 	})

@@ -3,6 +3,7 @@ package application
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
@@ -39,7 +40,7 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 	FsRepository := infrastructure.NewFileSegRepository(schemaValidator, cfg.FsRepository)
 	FsService := NewSegService(FsRepository)
 
-	txy.SegsL2s, err = FsService.LoadLevel("1")
+	txy.SegL1s, err = FsService.LoadLevel("1")
 	if err != nil {
 		o11y.Log.Printf("Error loading L1 files. %s", err)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
@@ -52,7 +53,7 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 	}
 
 	// Define compliance scopes
-	txy.CompReqs, err = infrastructure.LoadCompScope(cfg.FsRepository.TaxonomyDir+"compliance_requirements.yaml", schemaValidator)
+	txy.CompReqs, err = infrastructure.LoadCompScope(filepath.Join(cfg.FsRepository.TaxonomyDir, "compliance_requirements.yaml"), schemaValidator)
 	if err != nil {
 		o11y.Log.Println("Error loading compliance scope files:", err)
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")

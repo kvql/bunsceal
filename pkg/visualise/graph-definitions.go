@@ -51,7 +51,7 @@ func GraphL1(txy *domain.Taxonomy, cfg *configdomain.Config) (*gographviz.Graph,
 		envIds := rowsLayout[row]
 		for _, envId := range envIds {
 			label := FormatEnvLabel(txy, cfg.Terminology.L1.Singular+" - ", envId, true)
-			envNodeAtt := FormatNode(label, txy.SegL1s[envId].Sensitivity)
+			envNodeAtt := FormatNode(label, GetClassificationValue(txy.SegL1s[envId], "sensitivity"))
 			envNodeAtt["fontsize"] = "\"16\""
 			envNodeName := fmt.Sprintf("\"env_node_%s\"", strings.ReplaceAll(envId, "-", "_"))
 			err := g.AddNode(rowSubGraphName, envNodeName, envNodeAtt)
@@ -170,7 +170,7 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 
 			for _, sdId := range imageData[envId].SortedSegs {
 				sdEnvDet := imageData[envId].Segs[sdId]
-				crit := sdEnvDet.Criticality
+				crit := GetClassificationFromOverride(sdEnvDet, "criticality")
 				// Setup batch subgraphs and bump when necessary
 				if batch.Count[crit] > batch.Limit || batch.Count[crit] == 0 {
 					batchNodeName, err := batch.BumpBatch(crit, g)
@@ -184,7 +184,7 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 				// -------------------------
 				// Add emphasis to the label (map returns 0 if not found)
 				label := FormatSdLabel(txy, "", envId, sdId, showClass, txy.SegsL2s[sdId].Prominence)
-				sdNodeAtt := FormatNode(label, sdEnvDet.Sensitivity) // attributes to format the node
+				sdNodeAtt := FormatNode(label, GetClassificationFromOverride(sdEnvDet, "sensitivity")) // attributes to format the node
 				sdNodeName := fmt.Sprintf("\"sd_node_%s_%s\"", strings.ReplaceAll(envId, "-", "_"), strings.ReplaceAll(sdId, "-", "_"))
 				// Add security domain node to the batch subgraph
 				err := g.AddNode(batch.CurrentSGName(crit), sdNodeName, sdNodeAtt)
@@ -311,7 +311,7 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *configdomain.Config, compName st
 					// -------------------------
 					// Add emphasis to the label (map returns 0 if not found)
 					label := FormatSdLabel(txy, "", envId, sdId, false, txy.SegsL2s[sdId].Prominence)
-					sdNodeAtt := FormatNode(label, sdEnvDet.Sensitivity) // attributes to format the node
+					sdNodeAtt := FormatNode(label, GetClassificationFromOverride(sdEnvDet, "sensitivity")) // attributes to format the node
 					// Make out of scope nodes less visible in the graph by removing filled style (font needs to be bright if fill removed)
 					if scope == "out" {
 						sdNodeAtt["fontcolor"] = sdNodeAtt["color"]

@@ -90,8 +90,8 @@ func TestSegL1_ParseLabels(t *testing.T) {
 			t.Fatal("Expected error for invalid format, got nil")
 		}
 
-		if !strings.Contains(err.Error(), "format invalid") {
-			t.Errorf("Expected error message to contain 'format invalid', got %s", err.Error())
+		if !strings.Contains(err.Error(), "invalid label format") {
+			t.Errorf("Expected error message to contain 'invalid label format', got %s", err.Error())
 		}
 	})
 
@@ -537,6 +537,149 @@ func TestPostLoad_SetDefaults(t *testing.T) {
 		}
 		if seg.Prominence != 5 {
 			t.Errorf("Expected Prominence=5, got: %d", seg.Prominence)
+		}
+	})
+}
+
+func TestParseLabels_Overrides(t *testing.T) {
+	t.Run("Parses valid override labels into ParsedLabels map", func(t *testing.T) {
+		seg := Seg{
+			ID: "test-seg",
+			L1Overrides: map[string]L1Overrides{
+				"prod": {
+					Labels: []string{
+						"example.plugin/key1:value1",
+						"example.plugin/key2:value2",
+					},
+				},
+			},
+		}
+
+		err := seg.ParseLabels()
+		if err != nil {
+			t.Fatalf("Expected no error, got: %v", err)
+		}
+
+		override := seg.L1Overrides["prod"]
+		if len(override.ParsedLabels) != 2 {
+			t.Errorf("Expected 2 parsed labels, got: %d", len(override.ParsedLabels))
+		}
+		if override.ParsedLabels["example.plugin/key1"] != "value1" {
+			t.Errorf("Expected key1=value1, got: %s", override.ParsedLabels["example.plugin/key1"])
+		}
+		if override.ParsedLabels["example.plugin/key2"] != "value2" {
+			t.Errorf("Expected key2=value2, got: %s", override.ParsedLabels["example.plugin/key2"])
+		}
+	})
+
+	t.Run("Succeeds with empty override labels", func(t *testing.T) {
+		seg := Seg{
+			ID: "test-seg",
+			L1Overrides: map[string]L1Overrides{
+				"prod": {
+					Labels: []string{},
+				},
+			},
+		}
+
+		err := seg.ParseLabels()
+		if err != nil {
+			t.Fatalf("Expected no error for empty labels, got: %v", err)
+		}
+	})
+
+	t.Run("Succeeds with no override labels field", func(t *testing.T) {
+		seg := Seg{
+			ID: "test-seg",
+			L1Overrides: map[string]L1Overrides{
+				"prod": {
+					// Labels field not set
+				},
+			},
+		}
+
+		err := seg.ParseLabels()
+		if err != nil {
+			t.Fatalf("Expected no error when labels field missing, got: %v", err)
+		}
+	})
+
+	t.Run("Fails on invalid override label format", func(t *testing.T) {
+		seg := Seg{
+			ID: "test-seg",
+			L1Overrides: map[string]L1Overrides{
+				"prod": {
+					Labels: []string{
+						"invalid-no-colon",
+					},
+				},
+			},
+		}
+
+		err := seg.ParseLabels()
+		if err == nil {
+			t.Fatal("Expected error for invalid format, got nil")
+		}
+		if !strings.Contains(err.Error(), "invalid label format") {
+			t.Errorf("Expected error about invalid format, got: %v", err)
+		}
+	})
+
+	t.Run("Works with multiple parent overrides", func(t *testing.T) {
+		seg := Seg{
+			ID: "test-seg",
+			L1Overrides: map[string]L1Overrides{
+				"prod": {
+					Labels: []string{
+						"example.plugin/env:production",
+						"example.plugin/tier:high",
+					},
+				},
+				"staging": {
+					Labels: []string{
+						"example.plugin/env:staging",
+						"example.plugin/tier:low",
+					},
+				},
+			},
+		}
+
+		err := seg.ParseLabels()
+		if err != nil {
+			t.Fatalf("Expected no error with multiple parents, got: %v", err)
+		}
+
+		prodOverride := seg.L1Overrides["prod"]
+		stagingOverride := seg.L1Overrides["staging"]
+
+		if prodOverride.ParsedLabels["example.plugin/env"] != "production" {
+			t.Error("Expected prod override to have env=production")
+		}
+		if stagingOverride.ParsedLabels["example.plugin/env"] != "staging" {
+			t.Error("Expected staging override to have env=staging")
+		}
+	})
+
+	t.Run("Handles override values containing colons", func(t *testing.T) {
+		seg := Seg{
+			ID: "test-seg",
+			L1Overrides: map[string]L1Overrides{
+				"prod": {
+					Labels: []string{
+						"example.plugin/url:https://example.com:8080",
+					},
+				},
+			},
+		}
+
+		err := seg.ParseLabels()
+		if err != nil {
+			t.Fatalf("Expected no error, got: %v", err)
+		}
+
+		override := seg.L1Overrides["prod"]
+		if override.ParsedLabels["example.plugin/url"] != "https://example.com:8080" {
+			t.Errorf("Expected url to preserve colons in value, got: %s", override.ParsedLabels["example.plugin/url"])
 		}
 	})
 }

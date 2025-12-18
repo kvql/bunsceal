@@ -29,6 +29,9 @@
       "additionalProperties": {
         "$ref": "./compliance-req.json"
       }
+    },
+    "labels": {
+      "$ref": "./common.json#/$defs/labels"
     }
   },
   "additionalProperties": false,

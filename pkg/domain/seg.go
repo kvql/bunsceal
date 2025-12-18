@@ -26,12 +26,19 @@ type Seg struct {
 }
 
 type L1Overrides struct {
-	Sensitivity          string             `yaml:"sensitivity" json:"sensitivity,omitempty"`
-	SensitivityRationale string             `yaml:"sensitivity_rationale" json:"sensitivity_rationale,omitempty"`
-	Criticality          string             `yaml:"criticality" json:"criticality,omitempty"`
-	CriticalityRationale string             `yaml:"criticality_rationale" json:"criticality_rationale,omitempty"`
-	ComplianceReqs       []string           `yaml:"compliance_reqs" json:"compliance_reqs,omitempty"`
-	CompReqs             map[string]CompReq `yaml:"comp_reqs,omitempty" json:"comp_reqs,omitempty"`
+	Sensitivity          string                       `yaml:"sensitivity" json:"sensitivity,omitempty"`
+	SensitivityRationale string                       `yaml:"sensitivity_rationale" json:"sensitivity_rationale,omitempty"`
+	Criticality          string                       `yaml:"criticality" json:"criticality,omitempty"`
+	CriticalityRationale string                       `yaml:"criticality_rationale" json:"criticality_rationale,omitempty"`
+	ComplianceReqs       []string                     `yaml:"compliance_reqs" json:"compliance_reqs,omitempty"`
+	CompReqs             map[string]CompReq           `yaml:"comp_reqs,omitempty" json:"comp_reqs,omitempty"`
+	Labels               []string                     `yaml:"labels,omitempty" json:"labels,omitempty"`
+	ParsedLabels         map[string]string            `yaml:"-" json:"-"`
+	LabelNamespaces      map[string]map[string]string `yaml:"-" json:"-"`
+}
+
+func (o *L1Overrides) ParseLabels() error {
+	return parseLabelsIntoMaps(o.Labels, &o.ParsedLabels, &o.LabelNamespaces)
 }
 
 // ###################
@@ -92,7 +99,7 @@ func (s *Seg) PostLoad(level string) error {
 	// Apply defaults
 	s.SetDefaults()
 
-	// Parse labels into map
+	// Parse labels (handles both segment and override labels)
 	return s.ParseLabels()
 }
 
@@ -125,35 +132,58 @@ func (s *Seg) ValidateL1Consistency() error {
 	return nil
 }
 
-// ParseLabels converts labels string array into ParsedLabels map.
+// parseLabelsIntoMaps parses label strings into both ParsedLabels and LabelNamespaces maps.
+// Format: "namespace/key:value" -> ParsedLabels["namespace/key"] = "value"
+//
+//	-> LabelNamespaces["namespace"]["key"] = "value"
+func parseLabelsIntoMaps(labels []string, parsed *map[string]string, namespaces *map[string]map[string]string) error {
+	*parsed = make(map[string]string)
+	*namespaces = make(map[string]map[string]string)
+
+	for _, label := range labels {
+		parts := strings.SplitN(label, ":", 2)
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid label format: %s", label)
+		}
+
+		key := parts[0]
+		value := parts[1]
+		(*parsed)[key] = value
+
+		// Group by namespace
+		nsParts := strings.SplitN(key, "/", 2)
+		if len(nsParts) == 2 {
+			ns := nsParts[0]
+			nsKey := nsParts[1]
+			if (*namespaces)[ns] == nil {
+				(*namespaces)[ns] = make(map[string]string)
+			}
+			(*namespaces)[ns][nsKey] = value
+		}
+	}
+
+	return nil
+}
+
+// ParseLabels parses both segment labels AND L1 override labels.
 // Expects format "key:value" where keys follow DNS-like naming (alphanumeric + ./_-)
 // and values support AWS-compliant tag characters (alphanumeric + ./_-+=:@ and spaces).
 // Values may contain colons (e.g., "url:https://example.com:8080").
-// The function also extracts and group namespaced labels.
-// example formot bunsceal.plugin.classification/key
+// The function also extracts and groups namespaced labels.
+// Example format: bunsceal.plugin.classification/key
 func (s *Seg) ParseLabels() error {
-	if s.ParsedLabels == nil {
-		s.ParsedLabels = make(map[string]string)
+	// Parse segment labels
+	if err := parseLabelsIntoMaps(s.Labels, &s.ParsedLabels, &s.LabelNamespaces); err != nil {
+		return fmt.Errorf("segment %s: %w", s.ID, err)
 	}
-	if s.LabelNamespaces == nil {
-		s.LabelNamespaces = make(map[string]map[string]string)
-	}
-	for _, label := range s.Labels {
-		k := strings.SplitN(label, ":", 2)
-		if len(k) == 2 {
-			s.ParsedLabels[k[0]] = k[1]
-		} else {
-			return fmt.Errorf("label format invalid, expected key:value")
+
+	// Parse override labels
+	for parentID, override := range s.L1Overrides {
+		if err := parseLabelsIntoMaps(override.Labels, &override.ParsedLabels, &override.LabelNamespaces); err != nil {
+			return fmt.Errorf("segment %s l1_override[%s]: %w", s.ID, parentID, err)
 		}
-		nsRaw := strings.SplitN(k[0], "/", 2)
-		if len(nsRaw) == 2 {
-			if _, exists := s.LabelNamespaces[nsRaw[0]]; exists {
-				s.LabelNamespaces[nsRaw[0]][nsRaw[1]] = k[1]
-			} else {
-				s.LabelNamespaces[nsRaw[0]] = make(map[string]string)
-				s.LabelNamespaces[nsRaw[0]][nsRaw[1]] = k[1]
-			}
-		}
+		s.L1Overrides[parentID] = override
 	}
+
 	return nil
 }

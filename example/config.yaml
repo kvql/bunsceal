@@ -8,3 +8,30 @@ terminology:
     singular: "Segment"
     plural: "Segments"
 schema_path: "pkg/domain/schemas"
+plugins:
+  classifications:
+    common_settings:
+      label_inheritance: true
+    rationale_length: 10
+    definitions:
+      sensitivity:
+        name: "Data Sensitivity"
+        description: "Classification of data sensitivity levels"
+        enforce_order: true
+        values:
+          A: "High"
+          B: "Medium"
+          C: "Low"
+          D: "N/A"
+        order: ["A", "B", "C", "D"]
+      criticality:
+        name: "Business Criticality"
+        description: "Impact level of service unavailability"
+        enforce_order: true
+        values:
+          "1": "Critical"
+          "2": "High"
+          "3": "Medium"
+          "4": "Low"
+          "5": "N/A"
+        order: ["1", "2", "3", "4", "5"]

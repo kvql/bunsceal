@@ -49,12 +49,16 @@ func ApplyInheritance(txy *domain.Taxonomy, pluginsList *plugins.Plugins) error 
 			// Write back override (creates new entry if didn't exist)
 			seg.L1Overrides[l1ID] = l1Override
 
-			// Apply plugin label inheritance for L2 segments
 			if pluginsList != nil {
-				err := pluginsList.ApplyPluginInheritance(txy.SegL1s[l1ID], &seg)
-				if err != nil {
+				errs := pluginsList.ApplyPluginInheritanceAndValidate(
+					txy.SegL1s[l1ID],
+					&seg,
+				)
+				for _, err := range errs {
 					o11y.Log.Println(err)
-					return err
+				}
+				if len(errs) > 0 {
+					return errs[0]
 				}
 			}
 		}

@@ -76,15 +76,15 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 		}
 	}
 
-	// Apply inheritance (includes plugin label inheritance)
-
-	if err = ApplyInheritance(&txy, pluginsList); err != nil {
+	// Validate plugin labels BEFORE inheritance (L1 completeness, pairing for all)
+	if err = ValidatePluginLabels(&txy, pluginsList); err != nil {
 		o11y.Log.Println("Taxonomy is invalid: plugin label validation failed")
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
-	// Validate plugin labels AFTER inheritance
-	if err := ValidatePluginLabels(&txy, pluginsList); err != nil {
-		o11y.Log.Println("Taxonomy is invalid: plugin label validation failed")
+
+	// Apply inheritance (includes plugin label inheritance and order validation)
+	if err = ApplyInheritance(&txy, pluginsList); err != nil {
+		o11y.Log.Println("Taxonomy is invalid: inheritance failed")
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
@@ -125,7 +125,8 @@ func ValidateCoreLogic(txy *domain.Taxonomy, cfg configdomain.Config) bool {
 }
 
 // ValidatePluginLabels validates all segment labels against loaded plugins.
-// Must be called AFTER ApplyInheritance since children may inherit labels.
+// Must be called BEFORE ApplyInheritance to catch malformed labels (missing rationale pairs).
+// L1 segments must have all classification definitions. L2/overrides only need valid pairs.
 func ValidatePluginLabels(txy *domain.Taxonomy, pluginsList *plugins.Plugins) error {
 	if pluginsList == nil {
 		return nil

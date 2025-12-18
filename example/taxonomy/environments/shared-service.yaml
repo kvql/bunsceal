@@ -12,3 +12,8 @@ criticality_rationale: |
   All environments rely on shared services to operate. An outage of a shared service could have significant impact on all environments.
 compliance_reqs:
   - "pci-dss"
+labels:
+  - "bunsceal.plugin.classifications/sensitivity:A"
+  - "bunsceal.plugin.classifications/sensitivity_rationale:Shared services are the highest risk worklaods from a lateral movement perspective. They could act as the bridge between low security environments and high security environments."
+  - "bunsceal.plugin.classifications/criticality:1"
+  - "bunsceal.plugin.classifications/criticality_rationale:All environments rely on shared services to operate. An outage of a shared service could have significant impact on all environments."

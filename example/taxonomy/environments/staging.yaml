@@ -14,3 +14,8 @@ criticality_rationale: |
    Staging security environment is important for testing changes prior to deployment to production grade workloads,
    therefore any downtime can cost engineering hours through lost development time. However there is no direct impact on customers and hence doesn't
    meet the higher criticality levels.
+labels:
+  - "bunsceal.plugin.classifications/sensitivity:D"
+  - "bunsceal.plugin.classifications/sensitivity_rationale:Staging environment is used for testing and development purposes and hence will not have strict security controls. Regulated data must not be processed or stored in this environment."
+  - "bunsceal.plugin.classifications/criticality:5"
+  - "bunsceal.plugin.classifications/criticality_rationale:Staging security environment is important for testing changes prior to deployment to production grade workloads, therefore any downtime can cost engineering hours through lost development time. However there is no direct impact on customers and hence doesn't meet the higher criticality levels."

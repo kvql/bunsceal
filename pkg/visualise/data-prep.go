@@ -106,7 +106,8 @@ func PrepTaxonomy(txy *domain.Taxonomy) map[string]EnvImageData {
 			envData := data[l1ID]
 			envData.Segs[sd.ID] = det
 			envData.SegNames[sd.ID] = sd.Name
-			envData.Criticalities[det.Criticality] = true
+			crit := GetClassificationFromOverride(det, "criticality")
+			envData.Criticalities[crit] = true
 			envData.SortedSegs = append(data[l1ID].SortedSegs, sd.ID)
 			data[l1ID] = envData
 		}

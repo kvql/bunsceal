@@ -73,6 +73,7 @@ func NewLogicRuleSharedService(config configdomain.GeneralBooleanConfig) *LogicR
 func (r *LogicRuleSharedService) Validate(taxonomy *domain.Taxonomy) []error {
 	var errs []error
 	envName := "shared-service"
+	ns := "bunsceal.plugin.classifications"
 
 	if _, ok := taxonomy.SegL1s[envName]; !ok {
 		err := fmt.Errorf("%s environment not found", envName)
@@ -81,8 +82,27 @@ func (r *LogicRuleSharedService) Validate(taxonomy *domain.Taxonomy) []error {
 		return errs
 	}
 
-	if taxonomy.SegL1s[envName].Sensitivity != domain.SenseOrder[0] ||
-		taxonomy.SegL1s[envName].Criticality != domain.CritOrder[0] {
+	sharedSeg := taxonomy.SegL1s[envName]
+
+	// Helper to read classification with fallback to old fields
+	getSensitivity := func(seg domain.Seg) string {
+		if val, exists := seg.LabelNamespaces[ns]["sensitivity"]; exists {
+			return val
+		}
+		return seg.Sensitivity
+	}
+	getCriticality := func(seg domain.Seg) string {
+		if val, exists := seg.LabelNamespaces[ns]["criticality"]; exists {
+			return val
+		}
+		return seg.Criticality
+	}
+
+	// Get expected highest values (hardcoded for now)
+	expectedSens := "A"
+	expectedCrit := "1"
+
+	if getSensitivity(sharedSeg) != expectedSens || getCriticality(sharedSeg) != expectedCrit {
 		err := fmt.Errorf("%s environment does not have the highest sensitivity or criticality", envName)
 		o11y.Log.Printf("%v", err)
 		errs = append(errs, err)

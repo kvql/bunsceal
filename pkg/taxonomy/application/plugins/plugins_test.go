@@ -40,7 +40,7 @@ func TestLoadPlugins(t *testing.T) {
 	})
 }
 
-func TestApplyPluginInheritance(t *testing.T) {
+func TestApplyInheritanceAndValidate(t *testing.T) {
 	t.Run("Skips inheritance when LabelInheritance=false", func(t *testing.T) {
 		config := newTestConfig(false, 10) // inheritance disabled
 		plugin := NewClassificationPlugin(config, NsPrefix)
@@ -52,10 +52,10 @@ func TestApplyPluginInheritance(t *testing.T) {
 
 		plugs := &Plugins{Plugins: make(map[string]Plugin)}
 		plugs.Plugins["classifications"] = plugin
-		err := plugs.ApplyPluginInheritance(*parent, child)
+		errs := plugs.ApplyPluginInheritanceAndValidate(*parent, child)
 
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
+		if len(errs) > 0 {
+			t.Fatalf("Expected no errors, got %v", errs)
 		}
 		// Child should not have inherited labels
 		if len(child.LabelNamespaces[testNs]) != 0 {
@@ -76,10 +76,10 @@ func TestApplyPluginInheritance(t *testing.T) {
 
 		plugs := &Plugins{Plugins: make(map[string]Plugin)}
 		plugs.Plugins["classifications"] = plugin
-		err := plugs.ApplyPluginInheritance(*parent, child)
+		errs := plugs.ApplyPluginInheritanceAndValidate(*parent, child)
 
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
+		if len(errs) > 0 {
+			t.Fatalf("Expected no errors, got %v", errs)
 		}
 		// Child should have inherited parent's labels
 		if child.LabelNamespaces[testNs]["sensitivity"] != "high" {
@@ -100,10 +100,10 @@ func TestApplyPluginInheritance(t *testing.T) {
 
 		plugs := &Plugins{Plugins: make(map[string]Plugin)}
 		plugs.Plugins["classifications"] = plugin
-		err := plugs.ApplyPluginInheritance(*parent, child)
+		errs := plugs.ApplyPluginInheritanceAndValidate(*parent, child)
 
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
+		if len(errs) > 0 {
+			t.Fatalf("Expected no errors, got %v", errs)
 		}
 		// ParsedLabels should also be updated
 		expectedKey := testNs + "/sensitivity"
@@ -126,10 +126,10 @@ func TestApplyPluginInheritance(t *testing.T) {
 
 		plugs := &Plugins{Plugins: make(map[string]Plugin)}
 		plugs.Plugins["classifications"] = plugin
-		err := plugs.ApplyPluginInheritance(*parent, child)
+		errs := plugs.ApplyPluginInheritanceAndValidate(*parent, child)
 
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
+		if len(errs) > 0 {
+			t.Fatalf("Expected no errors, got %v", errs)
 		}
 		// Child's explicit value should not be overridden
 		if child.LabelNamespaces[testNs]["sensitivity"] != "low" {
@@ -137,7 +137,7 @@ func TestApplyPluginInheritance(t *testing.T) {
 		}
 	})
 
-	t.Run("Returns error when child has namespace labels but parent doesn't", func(t *testing.T) {
+	t.Run("Child retains explicit labels when parent has none", func(t *testing.T) {
 		config := newTestConfig(true, 10)
 		plugin := NewClassificationPlugin(config, NsPrefix)
 		parent := newTestSeg("parent", []string{}) // parent has no labels in namespace
@@ -148,10 +148,14 @@ func TestApplyPluginInheritance(t *testing.T) {
 
 		plugs := &Plugins{Plugins: make(map[string]Plugin)}
 		plugs.Plugins["classifications"] = plugin
-		err := plugs.ApplyPluginInheritance(*parent, child)
+		errs := plugs.ApplyPluginInheritanceAndValidate(*parent, child)
 
-		if err == nil {
-			t.Error("Expected error when child has labels but parent doesn't")
+		if len(errs) > 0 {
+			t.Fatalf("Expected no errors, got %v", errs)
+		}
+		// Child should retain its explicit labels
+		if child.LabelNamespaces[testNs]["sensitivity"] != "high" {
+			t.Errorf("Expected child to keep sensitivity=high, got %q", child.LabelNamespaces[testNs]["sensitivity"])
 		}
 	})
 }

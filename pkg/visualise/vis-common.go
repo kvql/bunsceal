@@ -332,6 +332,46 @@ func FormatNode(label string, colourLookup string) map[string]string {
 	return node
 }
 
+// GetClassificationValue reads classification from plugin labels with fallback to old fields
+func GetClassificationValue(seg domain.Seg, classType string) string {
+	// Try plugin labels first
+	ns := "bunsceal.plugin.classifications"
+	if val, exists := seg.LabelNamespaces[ns][classType]; exists {
+		return val
+	}
+
+	// Fallback to old fields (temporary during migration)
+	switch classType {
+	case "sensitivity":
+		return seg.Sensitivity
+	case "criticality":
+		return seg.Criticality
+	default:
+		return ""
+	}
+}
+
+// GetClassificationFromOverride reads from L1Override labels with fallback
+// Note: L2 segments can have different classifications per parent. This correctly
+// reads from the specific parent's override, so per-parent classifications work correctly.
+func GetClassificationFromOverride(override domain.L1Overrides, classType string) string {
+	// Try plugin labels first
+	ns := "bunsceal.plugin.classifications"
+	if val, exists := override.LabelNamespaces[ns][classType]; exists {
+		return val
+	}
+
+	// Fallback to old fields (temporary during migration)
+	switch classType {
+	case "sensitivity":
+		return override.Sensitivity
+	case "criticality":
+		return override.Criticality
+	default:
+		return ""
+	}
+}
+
 // FormatNode returns a map of attributes for a node in graphviz format
 func FormatGraph(label string, colourLookup string) map[string]string {
 	graph := make(map[string]string)
@@ -381,8 +421,8 @@ func FormatEnvLabel(txy *domain.Taxonomy, prefix string, envID string, showClass
 	if showClass {
 		label = fmt.Sprintf("\"%s\\n%s\\nClassification: %s%s\"",
 			label, strings.Repeat("_", len(label)),
-			strings.ToUpper(txy.SegL1s[envID].Sensitivity),
-			strings.ToUpper(txy.SegL1s[envID].Criticality),
+			strings.ToUpper(GetClassificationValue(txy.SegL1s[envID], "sensitivity")),
+			strings.ToUpper(GetClassificationValue(txy.SegL1s[envID], "criticality")),
 		)
 	} else {
 		label = fmt.Sprintf("\"%s \n%s\n(ID:%s)\"", label,
@@ -402,8 +442,8 @@ func FormatSdLabel(txy *domain.Taxonomy, prefix string, envID string, sdID strin
 		label = fmt.Sprintf("\"%s%s\\n%s\\nClassification: %s%s%s\"",
 			strings.Repeat("\n", emphasis),
 			label, strings.Repeat("_", len(label)),
-			strings.ToUpper(txy.SegsL2s[sdID].L1Overrides[envID].Sensitivity),
-			strings.ToUpper(txy.SegsL2s[sdID].L1Overrides[envID].Criticality),
+			strings.ToUpper(GetClassificationFromOverride(txy.SegsL2s[sdID].L1Overrides[envID], "sensitivity")),
+			strings.ToUpper(GetClassificationFromOverride(txy.SegsL2s[sdID].L1Overrides[envID], "criticality")),
 			strings.Repeat("\n", emphasis),
 		)
 	} else {

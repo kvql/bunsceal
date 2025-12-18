@@ -23,7 +23,10 @@ type Plugin interface {
 	ValidateLabels(*domain.Seg) PluginValidationResult
 	GetEnabled() bool
 	GetNamespace() string
-	//ApplyInheritance(seg *domain.Seg) error
+}
+
+type RelationalValidator interface {
+	ValidateRelationship(parent, child *domain.Seg) []error
 }
 
 type Plugins struct {
@@ -82,24 +85,33 @@ func (p *Plugins) ValidateAllSegments(l1s, l2s map[string]domain.Seg) []error {
 
 var NsPrefix = "bunsceal.plugin."
 
-func (p *Plugins) ApplyPluginInheritance(parent domain.Seg, child *domain.Seg) error {
+func (p *Plugins) ApplyPluginInheritanceAndValidate(parent domain.Seg, child *domain.Seg) []error {
+	var allErrors []error
+
 	for _, plugin := range p.Plugins {
-		if plugin.GetEnabled() {
-			ns := plugin.GetNamespace()
-			// return error if child has labels which the parent doens't have
-			if childLabels, cExists := child.LabelNamespaces[ns]; cExists {
-				if _, pExists := parent.LabelNamespaces[ns]; !pExists {
-					return fmt.Errorf("child %s has labels for %s, but parent %s does not", child.ID, ns, parent.ID)
-				}
-				for pk, pv := range parent.LabelNamespaces[ns] {
-					// set if child doesn't have the label
-					if _, exists := childLabels[pk]; !exists {
-						child.LabelNamespaces[ns][pk] = pv
-						child.ParsedLabels[ns+"/"+pk] = pv
-					}
+		if !plugin.GetEnabled() {
+			continue
+		}
+
+		ns := plugin.GetNamespace()
+
+		if child.LabelNamespaces[ns] == nil {
+			child.LabelNamespaces[ns] = make(map[string]string)
+		}
+
+		// Inherit from parent when child is missing values (overrides are NOT inheritance sources)
+		if parentLabels, pHas := parent.LabelNamespaces[ns]; pHas {
+			for k, v := range parentLabels {
+				if _, childHas := child.LabelNamespaces[ns][k]; !childHas {
+					child.LabelNamespaces[ns][k] = v
+					child.ParsedLabels[ns+"/"+k] = v
 				}
 			}
 		}
+
+		if validator, ok := plugin.(RelationalValidator); ok {
+			allErrors = append(allErrors, validator.ValidateRelationship(&parent, child)...)
+		}
 	}
-	return nil
+	return allErrors
 }

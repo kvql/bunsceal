@@ -95,3 +95,14 @@ Handle everything outside of the core taxonomy fields
 - Plugin Logic
     - Inheritance
     - Business Logic
+
+## L2-L1 Override Model
+
+L2 segments can belong to multiple L1 parents, creating an "inverse tree" structure:
+
+
+**Per-Parent Overrides**: Each L2-L1 relationship can specify different label values via `l1_overrides[parent_id]`. These overrides define the child's **effective value** when validated against that specific parent.
+
+**Precedence**:
+- Validation: override > child base value
+- Inheritance: parent → child (only fills gaps, never touches overrides)

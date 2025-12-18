@@ -25,6 +25,7 @@ const ClassificationsConfigSchema = `{
 				"properties": {
 					"name": { "type": "string", "minLength": 1 },
 					"description": { "type": "string" },
+					"enforce_order": { "type": "boolean", "default": true },
 					"values": {
 						"type": "object",
 						"additionalProperties": { "type": "string" }

@@ -15,54 +15,112 @@ type ClassificationsConfig struct {
 type ClassificationDefinition struct {
 	DescriptiveName string            `yaml:"name"`
 	Description     string            `yaml:"description"`
+	EnforceOrder    bool              `yaml:"enforce_order"`
 	Values          map[string]string `yaml:"values"`
 	Order           []string          `yaml:"order"`
 }
 
 type ClassificationsPlugin struct {
-	Config    *ClassificationsConfig
-	Namespace string
+	Config     *ClassificationsConfig
+	Namespace  string
+	OrderIndex map[string]map[string]int // defKey -> value -> index
 }
 
 func NewClassificationPlugin(config *ClassificationsConfig, prefix string) *ClassificationsPlugin {
+	orderIndex := make(map[string]map[string]int)
+	for defKey, def := range config.Definitions {
+		orderIndex[defKey] = make(map[string]int)
+		for i, v := range def.Order {
+			orderIndex[defKey][v] = i
+		}
+	}
 	return &ClassificationsPlugin{
-		Config:    config,
-		Namespace: prefix + "classifications",
+		Config:     config,
+		Namespace:  prefix + "classifications",
+		OrderIndex: orderIndex,
 	}
 }
 
+func (p ClassificationsPlugin) validateNamespaceLabels(labels map[string]string, ctx string, errs *[]error) int {
+	foundKeys := 0
+	for defKey, def := range p.Config.Definitions {
+		classification, hasClass := labels[defKey]
+		rationale, hasRat := labels[defKey+"_rationale"]
+
+		if hasClass && !hasRat {
+			foundKeys++
+			*errs = append(*errs, fmt.Errorf("%s has %s but missing %s_rationale", ctx, defKey, defKey))
+		}
+		if hasRat && !hasClass {
+			foundKeys++
+			*errs = append(*errs, fmt.Errorf("%s has %s_rationale but missing %s", ctx, defKey, defKey))
+		}
+		if hasClass && hasRat {
+			foundKeys++
+			foundKeys++
+			if _, exists := def.Values[classification]; !exists {
+				*errs = append(*errs, fmt.Errorf("%s invalid value %s for %s", ctx, classification, defKey))
+			}
+			if len(rationale) < p.Config.RationaleLength {
+				*errs = append(*errs, fmt.Errorf("%s %s_rationale too short (min %d chars)", ctx, defKey, p.Config.RationaleLength))
+			}
+		}
+	}
+	return foundKeys
+}
+
 func (p ClassificationsPlugin) ValidateLabels(seg *domain.Seg) PluginValidationResult {
-	result := PluginValidationResult{
-		Valid:  false,
-		Errors: []error{},
+	result := PluginValidationResult{Valid: false, Errors: []error{}}
+
+	segLabels := seg.LabelNamespaces[p.Namespace]
+	foundKeys := p.validateNamespaceLabels(segLabels, "segment "+seg.ID, &result.Errors)
+
+	// L1 segments must have all classification definitions
+	if seg.Level == "1" {
+		numKeysExpected := len(p.Config.Definitions) * 2
+		if foundKeys != numKeysExpected {
+			result.Errors = append(result.Errors, fmt.Errorf("segment %s missing classification labels. Expected %d, found %d", seg.ID, numKeysExpected, foundKeys))
+		}
+		if len(segLabels) != numKeysExpected {
+			result.Errors = append(result.Errors, fmt.Errorf("segment %s has extra labels. Expected %d, got %d", seg.ID, numKeysExpected, len(segLabels)))
+		}
 	}
 
-	numKeysExpected := len(p.Config.Definitions) * 2
-	numKeys := len(seg.LabelNamespaces[p.Namespace])
-	if numKeys != numKeysExpected {
-		result.Errors = append(result.Errors, fmt.Errorf("segment %s, incorrect number of classification labels, missing rationale or classification. Expected %d, got %d", seg.ID, numKeysExpected, numKeys))
-	}
-	for k := range p.Config.Definitions {
-		// Check if required labels are present and rationale is required
-		if _, exists := seg.LabelNamespaces[p.Namespace][k]; !exists {
-			result.Errors = append(result.Errors, fmt.Errorf("segment %s, missing label %s", seg.ID, p.Namespace+"/"+k))
-		}
-		// check values
-		v := seg.LabelNamespaces[p.Namespace][k]
-		if _, exists := p.Config.Definitions[k].Values[v]; !exists {
-			result.Errors = append(result.Errors, fmt.Errorf("segment %s, invalid value %s for label %s", seg.ID, v, p.Namespace+"/"+k))
-		}
-		// check rationale is present
-		if _, exists := seg.LabelNamespaces[p.Namespace][k+"_rationale"]; !exists {
-			result.Errors = append(result.Errors, fmt.Errorf("segment %s, missing label %s", seg.ID, p.Namespace+"/"+k+"_rationale"))
-		}
-		// check rationale length
-		if len(seg.LabelNamespaces[p.Namespace][k+"_rationale"]) < p.Config.RationaleLength {
-			result.Errors = append(result.Errors, fmt.Errorf("segment %s, rationale too short for label %s", seg.ID, p.Namespace+"/"+k))
+	for parentID, override := range seg.L1Overrides {
+		if len(override.LabelNamespaces[p.Namespace]) > 0 {
+			p.validateNamespaceLabels(override.LabelNamespaces[p.Namespace], fmt.Sprintf("segment %s l1_override[%s]", seg.ID, parentID), &result.Errors)
 		}
 	}
+
 	result.Valid = len(result.Errors) == 0
 	return result
+}
+
+// ValidateRelationship checks parent >= child in severity order for all definitions
+func (p ClassificationsPlugin) ValidateRelationship(parent, child *domain.Seg) []error {
+	var errs []error
+	override, hasOverride := child.L1Overrides[parent.ID]
+
+	for defKey, def := range p.Config.Definitions {
+		if !def.EnforceOrder {
+			continue
+		}
+
+		parentValue := parent.LabelNamespaces[p.Namespace][defKey]
+		childValue := child.LabelNamespaces[p.Namespace][defKey]
+		if hasOverride && len(override.LabelNamespaces[p.Namespace]) > 0 {
+			childValue = override.LabelNamespaces[p.Namespace][defKey]
+		}
+
+		parentIdx, pOk := p.OrderIndex[defKey][parentValue]
+		childIdx, cOk := p.OrderIndex[defKey][childValue]
+
+		if pOk && cOk && childIdx < parentIdx {
+			errs = append(errs, fmt.Errorf("child %s has higher %s (%s) than parent %s (%s)",
+				child.ID, defKey, childValue, parent.ID, parentValue))
+		}
+	}
+	return errs
 }
 
 func (p ClassificationsPlugin) GetEnabled() bool {

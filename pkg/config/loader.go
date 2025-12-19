@@ -35,7 +35,7 @@ func LoadConfig(configPath, configSchemaPath string) (configDomain.Config, error
 	pluginSchemas := []schemaValidation.ExternalSchema{
 		{JSON: plugins.ClassificationsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/plugin-classifications.json"},
 		{JSON: plugins.PluginsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/plugins.json"},
-		{JSON: domain.TermsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/terms.json" },
+		{JSON: domain.TermsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/terms.json"},
 	}
 	schemaValidator, err := schemaValidation.NewSchemaValidator(configSchemaPath, configSchemaBaseURL, pluginSchemas...)
 	if err != nil {

@@ -100,7 +100,7 @@ func NewSchemaValidator(schemaDir string, schemaBaseURL string, externalSchemas 
 
 	for _, file := range schemaFiles {
 		schemaURL := schemaBaseURL + file.Name()
- 		schema, err := compiler.Compile(schemaURL)
+		schema, err := compiler.Compile(schemaURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compile schema %s: %w", file, err)
 		}

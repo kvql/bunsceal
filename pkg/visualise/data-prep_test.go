@@ -45,10 +45,10 @@ func TestBuildRowsMap(t *testing.T) {
 
 	t.Run("Adds missing L1s to last row", func(t *testing.T) {
 		vis := configdomain.VisualsDef{
-				L1Layout: map[string][]string{
-					"0": {"prod", "staging"},
-				},
-			}
+			L1Layout: map[string][]string{
+				"0": {"prod", "staging"},
+			},
+		}
 
 		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
@@ -120,8 +120,8 @@ func TestBuildRowsMap(t *testing.T) {
 
 	t.Run("Defaults to single row when L1Layout is nil", func(t *testing.T) {
 		vis := configdomain.VisualsDef{
-				L1Layout: nil,
-			}
+			L1Layout: nil,
+		}
 
 		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
@@ -147,11 +147,11 @@ func TestBuildRowsMap(t *testing.T) {
 
 	t.Run("Config has more l1 than taxonomy", func(t *testing.T) {
 		vis := configdomain.VisualsDef{
-				L1Layout: map[string][]string{
-					"0": {"prod", "staging"},
-					"1": {"dev", "unknown"},
-				},
-			}
+			L1Layout: map[string][]string{
+				"0": {"prod", "staging"},
+				"1": {"dev", "unknown"},
+			},
+		}
 
 		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
@@ -171,11 +171,11 @@ func TestBuildRowsMap(t *testing.T) {
 
 	t.Run("Handles non-sequential row numbers", func(t *testing.T) {
 		vis := configdomain.VisualsDef{
-				L1Layout: map[string][]string{
-					"0": {"prod"},
-					"2": {"staging"},
-				},
-			}
+			L1Layout: map[string][]string{
+				"0": {"prod"},
+				"2": {"staging"},
+			},
+		}
 
 		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{

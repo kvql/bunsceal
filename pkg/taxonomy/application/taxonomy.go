@@ -14,8 +14,6 @@ import (
 	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
 )
 
-
-
 // LoadTaxonomy loads the taxonomy by loading the different files and combining them into one struct.
 // Validates the loaded data is valid and meets requirements.
 // Fills in missing data based on inheritance rules.

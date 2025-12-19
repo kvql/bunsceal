@@ -12,7 +12,7 @@ const DefaultSchemaPath = "./pkg/domain/schemas"
 
 // Config represents the taxonomy configuration.
 type Config struct {
-	Terminology  domain.TermConfig                         `yaml:"terminology"`
+	Terminology  domain.TermConfig                  `yaml:"terminology"`
 	SchemaPath   string                             `yaml:"schema_path,omitempty"`
 	Visuals      VisualsDef                         `yaml:"visuals,omitempty"`
 	Rules        LogicRulesConfig                   `yaml:"rules,omitempty"`
@@ -20,13 +20,10 @@ type Config struct {
 	Plugins      plugins.ConfigPlugins              `yaml:"plugins"`
 }
 
-
 // VisualsDef Config for how taxonomy is visualised
 type VisualsDef struct {
 	L1Layout map[string][]string `yaml:"l1_layout,omitempty"`
 }
-
-
 
 // Merge merges this Config with defaults, using defaults for any blank fields.
 func (c Config) Merge() Config {
@@ -52,8 +49,6 @@ func (c Config) Merge() Config {
 	}
 	return result
 }
-
-
 
 // LogicRulesConfig holds configuration for business logic validation rules.
 type LogicRulesConfig struct {

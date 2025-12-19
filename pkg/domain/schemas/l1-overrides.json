@@ -2,21 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/kvql/bunsceal/pkg/domain/schemas/l1-overrides.json",
   "title": "L1 overridable properties for L2 definitions",
-  "description": "Overrides for sensitivity, criticality and compliance requirements",
+  "description": "Overrides for compliance requirements and labels",
   "type": "object",
   "properties": {
-    "sensitivity": {
-      "$ref": "./common.json#/$defs/sensitivityCode"
-    },
-    "sensitivity_rationale": {
-      "$ref": "./common.json#/$defs/longDescription"
-    },
-    "criticality": {
-      "$ref": "./common.json#/$defs/criticalityCode"
-    },
-    "criticality_rationale": {
-      "$ref": "./common.json#/$defs/longDescription"
-    },
     "compliance_reqs": {
       "type": "array",
       "items": {
@@ -34,51 +22,5 @@
       "$ref": "./common.json#/$defs/labels"
     }
   },
-  "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "sensitivity": { "type": "string" }
-        },
-        "required": ["sensitivity"]
-      },
-      "then": {
-        "required": ["sensitivity_rationale"]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "sensitivity_rationale": { "type": "string" }
-        },
-        "required": ["sensitivity_rationale"]
-      },
-      "then": {
-        "required": ["sensitivity"]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "criticality": { "type": "string" }
-        },
-        "required": ["criticality"]
-      },
-      "then": {
-        "required": ["criticality_rationale"]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "criticality_rationale": { "type": "string" }
-        },
-        "required": ["criticality_rationale"]
-      },
-      "then": {
-        "required": ["criticality"]
-      }
-    }
-  ]
+  "additionalProperties": false
 }

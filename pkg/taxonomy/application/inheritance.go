@@ -24,14 +24,6 @@ func ApplyInheritance(txy *domain.Taxonomy, pluginsList *plugins.Plugins) error 
 				l1Override = domain.L1Overrides{}
 			}
 
-			if l1Override.Sensitivity == "" && l1Override.SensitivityRationale == "" {
-				l1Override.Sensitivity = txy.SegL1s[l1ID].Sensitivity
-				l1Override.SensitivityRationale = "Inherited: " + txy.SegL1s[l1ID].SensitivityRationale
-			}
-			if l1Override.Criticality == "" && l1Override.CriticalityRationale == "" {
-				l1Override.Criticality = txy.SegL1s[l1ID].Criticality
-				l1Override.CriticalityRationale = "Inherited: " + txy.SegL1s[l1ID].CriticalityRationale
-			}
 			// Inherit compliance requirements from environment if not set
 			if l1Override.ComplianceReqs == nil {
 				l1Override.ComplianceReqs = txy.SegL1s[l1ID].ComplianceReqs

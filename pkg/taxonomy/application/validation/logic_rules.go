@@ -84,18 +84,18 @@ func (r *LogicRuleSharedService) Validate(taxonomy *domain.Taxonomy) []error {
 
 	sharedSeg := taxonomy.SegL1s[envName]
 
-	// Helper to read classification with fallback to old fields
+	// Helper to read classification from plugin labels
 	getSensitivity := func(seg domain.Seg) string {
 		if val, exists := seg.LabelNamespaces[ns]["sensitivity"]; exists {
 			return val
 		}
-		return seg.Sensitivity
+		return ""
 	}
 	getCriticality := func(seg domain.Seg) string {
 		if val, exists := seg.LabelNamespaces[ns]["criticality"]; exists {
 			return val
 		}
-		return seg.Criticality
+		return ""
 	}
 
 	// Get expected highest values (hardcoded for now)

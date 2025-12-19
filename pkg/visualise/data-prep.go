@@ -14,6 +14,7 @@ type EnvImageData struct {
 	SegNames      map[string]string
 	SortedSegs    []string
 	Criticalities map[string]bool
+	Sensitivities map[string]bool
 }
 
 // buildRowsMap creates a rowsMap from the config's L1Layout.
@@ -88,27 +89,30 @@ func PrepTaxonomy(txy *domain.Taxonomy) map[string]EnvImageData {
 			Segs:          make(map[string]domain.L1Overrides),
 			SegNames:      make(map[string]string),
 			Criticalities: make(map[string]bool),
+			Sensitivities: make(map[string]bool),
 			SortedSegs:    make([]string, 0),
 		}
 	}
 
-	for _, sd := range txy.SegsL2s {
+	for _, segL2 := range txy.SegsL2s {
 		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
-		for _, l1ID := range sd.L1Parents {
+		for _, l1ID := range segL2.L1Parents {
 			// Lookup override (should exist after inheritance)
-			det, exists := sd.L1Overrides[l1ID]
+			det, exists := segL2.L1Overrides[l1ID]
 			if !exists {
 				// This should not happen if inheritance ran correctly
-				o11y.Log.Printf("WARNING: Seg '%s' has parent '%s' but no override data after inheritance - skipping\n", sd.ID, l1ID)
+				o11y.Log.Printf("WARNING: Seg '%s' has parent '%s' but no override data after inheritance - skipping\n", segL2.ID, l1ID)
 				continue
 			}
 
 			envData := data[l1ID]
-			envData.Segs[sd.ID] = det
-			envData.SegNames[sd.ID] = sd.Name
-			crit := GetClassificationFromOverride(det, "criticality")
+			envData.Segs[segL2.ID] = det
+			envData.SegNames[segL2.ID] = segL2.Name
+			crit := GetClassificationFromOverride(det, segL2, "criticality")
 			envData.Criticalities[crit] = true
-			envData.SortedSegs = append(data[l1ID].SortedSegs, sd.ID)
+			sens := GetClassificationFromOverride(det, segL2, "sensitivity")
+			envData.Sensitivities[sens] = true
+			envData.SortedSegs = append(data[l1ID].SortedSegs, segL2.ID)
 			data[l1ID] = envData
 		}
 	}

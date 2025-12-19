@@ -14,6 +14,8 @@ import (
 	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
 )
 
+
+
 // LoadTaxonomy loads the taxonomy by loading the different files and combining them into one struct.
 // Validates the loaded data is valid and meets requirements.
 // Fills in missing data based on inheritance rules.
@@ -31,10 +33,6 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
 		return domain.Taxonomy{}, errors.New("failed to initialise schema validator")
 	}
-
-	// Load risk levels
-	txy.SensitivityLevels = domain.SenseOrder
-	txy.CriticalityLevels = domain.CritOrder
 
 	// Load L2 segments using configured directory name
 	FsRepository := infrastructure.NewFileSegRepository(schemaValidator, cfg.FsRepository)

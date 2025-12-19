@@ -2,7 +2,6 @@ package testhelpers
 
 import (
 	"sort"
-	"strings"
 
 	"github.com/kvql/bunsceal/pkg/domain"
 )
@@ -18,12 +17,10 @@ const (
 // NewTestTaxonomy creates a minimal valid taxonomy for testing
 func NewTestTaxonomy() *domain.Taxonomy {
 	return &domain.Taxonomy{
-		ApiVersion:        "v1beta1",
-		SegL1s:            make(map[string]domain.Seg),
-		SegsL2s:           make(map[string]domain.Seg),
-		CompReqs:          make(map[string]domain.CompReq),
-		SensitivityLevels: []string{"A", "B", "C", "D"},
-		CriticalityLevels: []string{"1", "2", "3", "4", "5"},
+		ApiVersion: "v1beta1",
+		SegL1s:     make(map[string]domain.Seg),
+		SegsL2s:    make(map[string]domain.Seg),
+		CompReqs:   make(map[string]domain.CompReq),
 	}
 }
 
@@ -77,14 +74,10 @@ func WithStandardCompReqs(txy *domain.Taxonomy) *domain.Taxonomy {
 // NewSegL1 creates a SegL1 with the given parameters
 func NewSegL1(id, name, sensitivity, criticality string, compReqs []string) domain.Seg {
 	seg := domain.Seg{
-		ID:                   id,
-		Name:                 name,
-		Description:          ValidDescription,
-		Sensitivity:          sensitivity,
-		SensitivityRationale: ValidRationale,
-		Criticality:          criticality,
-		CriticalityRationale: ValidRationale,
-		ComplianceReqs:       compReqs,
+		ID:             id,
+		Name:           name,
+		Description:    ValidDescription,
+		ComplianceReqs: compReqs,
 		Labels: []string{
 			"bunsceal.plugin.classifications/sensitivity:" + sensitivity,
 			"bunsceal.plugin.classifications/sensitivity_rationale:" + ValidRationale,
@@ -133,11 +126,7 @@ func NewSegWithParents(id, name string, l1Parents []string, overrides map[string
 // NewL1Override creates a L1Override with the given parameters
 func NewL1Override(sensitivity, criticality string, compReqs []string) domain.L1Overrides {
 	override := domain.L1Overrides{
-		Sensitivity:          sensitivity,
-		SensitivityRationale: ValidRationale,
-		Criticality:          criticality,
-		CriticalityRationale: ValidRationale,
-		ComplianceReqs:       compReqs,
+		ComplianceReqs: compReqs,
 		Labels: []string{
 			"bunsceal.plugin.classifications/sensitivity:" + sensitivity,
 			"bunsceal.plugin.classifications/sensitivity_rationale:" + ValidRationale,
@@ -145,14 +134,8 @@ func NewL1Override(sensitivity, criticality string, compReqs []string) domain.L1
 			"bunsceal.plugin.classifications/criticality_rationale:" + ValidRationale,
 		},
 	}
-	// Parse the labels into ParsedLabels map
-	override.ParsedLabels = make(map[string]string)
-	for _, label := range override.Labels {
-		parts := strings.SplitN(label, ":", 2)
-		if len(parts) == 2 {
-			override.ParsedLabels[parts[0]] = parts[1]
-		}
-	}
+	// Parse the labels into ParsedLabels and LabelNamespaces maps
+	override.ParseLabels()
 	return override
 }
 

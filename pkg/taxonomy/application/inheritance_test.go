@@ -46,10 +46,6 @@ func TestApplyInheritance_PluginLabels(t *testing.T) {
 			label("sensitivity", "high"),
 			label("sensitivity_rationale", "Production contains PII data"),
 		})
-		parentSeg.Sensitivity = "A"
-		parentSeg.SensitivityRationale = "Test"
-		parentSeg.Criticality = "1"
-		parentSeg.CriticalityRationale = "Test"
 
 		childSeg := newTestSegWithLabels("app", []string{
 			label("other_key", "value"), // has labels in namespace but not sensitivity
@@ -86,10 +82,6 @@ func TestApplyInheritance_PluginLabels(t *testing.T) {
 			label("sensitivity", "high"),
 			label("sensitivity_rationale", "Parent rationale"),
 		})
-		parentSeg.Sensitivity = "A"
-		parentSeg.SensitivityRationale = "Test"
-		parentSeg.Criticality = "1"
-		parentSeg.CriticalityRationale = "Test"
 
 		childSeg := newTestSegWithLabels("app", []string{
 			label("sensitivity", "low"), // child overrides
@@ -121,19 +113,11 @@ func TestApplyInheritance_PluginLabels(t *testing.T) {
 			label("sensitivity", "high"),
 			label("sensitivity_rationale", "Prod rationale"),
 		})
-		prodSeg.Sensitivity = "A"
-		prodSeg.SensitivityRationale = "Test"
-		prodSeg.Criticality = "1"
-		prodSeg.CriticalityRationale = "Test"
 
 		stagingSeg := newTestSegWithLabels("staging", []string{
 			label("sensitivity", "low"),
 			label("sensitivity_rationale", "Staging rationale"),
 		})
-		stagingSeg.Sensitivity = "D"
-		stagingSeg.SensitivityRationale = "Test"
-		stagingSeg.Criticality = "5"
-		stagingSeg.CriticalityRationale = "Test"
 
 		childSeg := newTestSegWithLabels("app", []string{
 			label("other_key", "value"),
@@ -163,16 +147,12 @@ func TestApplyInheritance_PluginLabels(t *testing.T) {
 }
 
 func TestApplyInheritance_NilPlugins(t *testing.T) {
-	t.Run("Works without plugin config (backwards compatible)", func(t *testing.T) {
+	t.Run("Works without plugin config", func(t *testing.T) {
 		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
 				"prod": {
-					ID:                   "prod",
-					Name:                 "Production",
-					Sensitivity:          "A",
-					SensitivityRationale: "Production handles customer data.",
-					Criticality:          "1",
-					CriticalityRationale: "Production is critical.",
+					ID:   "prod",
+					Name: "Production",
 				},
 			},
 			SegsL2s: map[string]domain.Seg{
@@ -190,12 +170,9 @@ func TestApplyInheritance_NilPlugins(t *testing.T) {
 		}
 
 		// Should not panic with nil plugins
-		ApplyInheritance(&txy, nil)
-
-		// Regular inheritance should still work
-		if txy.SegsL2s["app"].L1Overrides["prod"].Sensitivity != "A" {
-			t.Errorf("Expected sensitivity to be inherited, got %q",
-				txy.SegsL2s["app"].L1Overrides["prod"].Sensitivity)
+		err := ApplyInheritance(&txy, nil)
+		if err != nil {
+			t.Errorf("Expected no error with nil plugins, got: %v", err)
 		}
 	})
 }

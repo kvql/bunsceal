@@ -8,33 +8,25 @@ import (
 
 // Seg represents a Level 1 segment (Environment).
 type Seg struct {
-	Name                 string                       `yaml:"name" json:"name"`
-	ID                   string                       `yaml:"id" json:"id"`
-	Description          string                       `yaml:"description" json:"description"`
-	Level                string                       `yaml:"level,omitempty" json:"level,omitempty"`
-	Sensitivity          string                       `yaml:"sensitivity,omitempty" json:"sensitivity,omitempty"`                     //Depricated - migrating to label
-	SensitivityRationale string                       `yaml:"sensitivity_rationale,omitempty" json:"sensitivity_rationale,omitempty"` //Depricated - migrating to label
-	Criticality          string                       `yaml:"criticality,omitempty" json:"criticality,omitempty"`                     //Depricated - migrating to label
-	CriticalityRationale string                       `yaml:"criticality_rationale,omitempty" json:"criticality_rationale,omitempty"` //Depricated - migrating to label
-	ComplianceReqs       []string                     `yaml:"compliance_reqs,omitempty" json:"compliance_reqs,omitempty"`             //Depricated - migrating to label
-	L1Parents            []string                     `yaml:"l1_parents,omitempty" json:"l1_parents,omitempty"`
-	L1Overrides          map[string]L1Overrides       `yaml:"l1_overrides,omitempty" json:"l1_overrides,omitempty"`
-	Prominence           int                          `yaml:"prominence,omitempty" json:"prominence,omitempty"`
-	Labels               []string                     `yaml:"labels" json:"labels,omitempty"`
-	ParsedLabels         map[string]string            `yaml:"-" json:"-"`
-	LabelNamespaces      map[string]map[string]string `yaml:"-" json:"-"`
+	Name            string                       `yaml:"name" json:"name"`
+	ID              string                       `yaml:"id" json:"id"`
+	Description     string                       `yaml:"description" json:"description"`
+	Level           string                       `yaml:"level,omitempty" json:"level,omitempty"`
+	ComplianceReqs  []string                     `yaml:"compliance_reqs,omitempty" json:"compliance_reqs,omitempty"`
+	L1Parents       []string                     `yaml:"l1_parents,omitempty" json:"l1_parents,omitempty"`
+	L1Overrides     map[string]L1Overrides       `yaml:"l1_overrides,omitempty" json:"l1_overrides,omitempty"`
+	Prominence      int                          `yaml:"prominence,omitempty" json:"prominence,omitempty"`
+	Labels          []string                     `yaml:"labels" json:"labels,omitempty"`
+	ParsedLabels    map[string]string            `yaml:"-" json:"-"`
+	LabelNamespaces map[string]map[string]string `yaml:"-" json:"-"`
 }
 
 type L1Overrides struct {
-	Sensitivity          string                       `yaml:"sensitivity" json:"sensitivity,omitempty"`
-	SensitivityRationale string                       `yaml:"sensitivity_rationale" json:"sensitivity_rationale,omitempty"`
-	Criticality          string                       `yaml:"criticality" json:"criticality,omitempty"`
-	CriticalityRationale string                       `yaml:"criticality_rationale" json:"criticality_rationale,omitempty"`
-	ComplianceReqs       []string                     `yaml:"compliance_reqs" json:"compliance_reqs,omitempty"`
-	CompReqs             map[string]CompReq           `yaml:"comp_reqs,omitempty" json:"comp_reqs,omitempty"`
-	Labels               []string                     `yaml:"labels,omitempty" json:"labels,omitempty"`
-	ParsedLabels         map[string]string            `yaml:"-" json:"-"`
-	LabelNamespaces      map[string]map[string]string `yaml:"-" json:"-"`
+	ComplianceReqs  []string                     `yaml:"compliance_reqs" json:"compliance_reqs,omitempty"`
+	CompReqs        map[string]CompReq           `yaml:"comp_reqs,omitempty" json:"comp_reqs,omitempty"`
+	Labels          []string                     `yaml:"labels,omitempty" json:"labels,omitempty"`
+	ParsedLabels    map[string]string            `yaml:"-" json:"-"`
+	LabelNamespaces map[string]map[string]string `yaml:"-" json:"-"`
 }
 
 func (o *L1Overrides) ParseLabels() error {
@@ -70,19 +62,7 @@ func (s *Seg) PostLoad(level string) error {
 	// Validate level-specific required fields
 	switch level {
 	case "1":
-		// L1 segments require top-level sensitivity/criticality
-		if s.Criticality == "" {
-			return fmt.Errorf("L1 segment missing required field: Criticality")
-		}
-		if s.CriticalityRationale == "" {
-			return fmt.Errorf("L1 segment missing required field: CriticalityRationale")
-		}
-		if s.Sensitivity == "" {
-			return fmt.Errorf("L1 segment missing required field: Sensitivity")
-		}
-		if s.SensitivityRationale == "" {
-			return fmt.Errorf("L1 segment missing required field: SensitivityRationale")
-		}
+		// L1 segments: classification now handled via plugin labels
 	case "2":
 		// L2 segments require L1Parents
 		if len(s.L1Parents) == 0 {

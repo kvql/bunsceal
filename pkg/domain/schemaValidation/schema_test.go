@@ -119,22 +119,7 @@ func TestValidateData_SegL1(t *testing.T) {
 		assertValidationFails(t, seg, "seg-level.json")
 	})
 
-	t.Run("Invalid sensitivity enum fails validation", func(t *testing.T) {
-		seg := testhelpers.NewSegL1("test", "Test", "Z", "1", nil)
-		assertValidationFails(t, seg, "seg-level.json")
-	})
-
-	t.Run("Invalid criticality enum fails validation", func(t *testing.T) {
-		seg := testhelpers.NewSegL1("test", "Test", "A", "9", nil)
-		assertValidationFails(t, seg, "seg-level.json")
-	})
-
-	t.Run("Short rationale fails validation", func(t *testing.T) {
-		seg := testhelpers.NewSegL1("test", "Test", "A", "1", nil)
-		seg.SensitivityRationale = "Too short"
-		seg.CriticalityRationale = "Also too short"
-		assertValidationFails(t, seg, "seg-level.json")
-	})
+	// Note: Sensitivity/Criticality enum validation removed - now handled via plugin labels
 }
 
 func TestValidateData_Seg(t *testing.T) {
@@ -210,10 +195,10 @@ func TestValidateData_JSON(t *testing.T) {
 			"name": "Test Environment",
 			"id": "test",
 			"description": "This is a test environment description that is long enough to meet the minimum character requirement for validation purposes.",
-			"sensitivity": "A",
-			"sensitivity_rationale": "This is a test sensitivity rationale that is long enough to meet the minimum requirement.",
-			"criticality": "1",
-			"criticality_rationale": "This is a test criticality rationale that is long enough to meet the minimum requirement."
+			"labels": [
+				"bunsceal.plugin.classifications/sensitivity:A",
+				"bunsceal.plugin.classifications/criticality:1"
+			]
 		}`)
 
 		err = validator.ValidateData(jsonData, "seg-level.json")

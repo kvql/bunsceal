@@ -50,6 +50,23 @@ var CritColourMap = map[string]ColorFont{
 	"5": {"\"#A0E1E1\"", "\"#320707\""},
 }
 
+// Classification order and labels (hardcoded for now, to be migrated to plugin config)
+var SenseOrder = []string{"A", "B", "C", "D"}
+var CritOrder = []string{"1", "2", "3", "4", "5"}
+var SensitivityLabels = map[string]string{
+	"A": "High",
+	"B": "Medium",
+	"C": "Low",
+	"D": "N/A",
+}
+var CriticalityLabels = map[string]string{
+	"1": "Critical",
+	"2": "High",
+	"3": "Medium",
+	"4": "Low",
+	"5": "N/A",
+}
+
 var visibility = "\"invis\"" //"\"\"" for visible, "\"invis\"" for invisible
 // Formatting attributes for invisible nodes and edges
 var InvisAtt = map[string]string{
@@ -117,8 +134,8 @@ func AddLegend(g *gographviz.Graph, font int, stack bool) error {
 	LegendGraphAtt["fontsize"] = fmt.Sprintf("\"%d\"", font-2)
 	g.AddSubGraph("top_level_graph", legSGName, LegendGraphAtt)
 	nodes := make([]string, 0)
-	for _, s := range domain.SenseOrder {
-		label := fmt.Sprintf("\"Sensitivity: %s (%s)\"", s, domain.SensitivityLevels[s])
+	for _, s := range SenseOrder {
+		label := fmt.Sprintf("\"Sensitivity: %s (%s)\"", s, SensitivityLabels[s])
 		nodeAtt := FormatNode(label, s)
 		nodeAtt["fontsize"] = fmt.Sprintf("\"%d\"", font-2)
 		nodeAtt["width"] = "\"\""
@@ -332,44 +349,33 @@ func FormatNode(label string, colourLookup string) map[string]string {
 	return node
 }
 
-// GetClassificationValue reads classification from plugin labels with fallback to old fields
+// GetClassificationValue reads classification from plugin labels
 func GetClassificationValue(seg domain.Seg, classType string) string {
-	// Try plugin labels first
 	ns := "bunsceal.plugin.classifications"
 	if val, exists := seg.LabelNamespaces[ns][classType]; exists {
 		return val
 	}
-
-	// Fallback to old fields (temporary during migration)
-	switch classType {
-	case "sensitivity":
-		return seg.Sensitivity
-	case "criticality":
-		return seg.Criticality
-	default:
-		return ""
-	}
+	return ""
 }
 
-// GetClassificationFromOverride reads from L1Override labels with fallback
+// GetClassificationFromOverride reads from L1Override labels with fallback to child segment labels.
 // Note: L2 segments can have different classifications per parent. This correctly
-// reads from the specific parent's override, so per-parent classifications work correctly.
-func GetClassificationFromOverride(override domain.L1Overrides, classType string) string {
-	// Try plugin labels first
+// reads from the specific parent's override first, then falls back to child labels if override is empty.
+// This handles the case where inheritance populates child labels but not overrides.
+func GetClassificationFromOverride(override domain.L1Overrides, child domain.Seg, classType string) string {
 	ns := "bunsceal.plugin.classifications"
-	if val, exists := override.LabelNamespaces[ns][classType]; exists {
+
+	// Check override first
+	if val, exists := override.LabelNamespaces[ns][classType]; exists && val != "" {
 		return val
 	}
 
-	// Fallback to old fields (temporary during migration)
-	switch classType {
-	case "sensitivity":
-		return override.Sensitivity
-	case "criticality":
-		return override.Criticality
-	default:
-		return ""
+	// Fall back to child segment labels
+	if val, exists := child.LabelNamespaces[ns][classType]; exists {
+		return val
 	}
+
+	return ""
 }
 
 // FormatNode returns a map of attributes for a node in graphviz format
@@ -442,8 +448,8 @@ func FormatSdLabel(txy *domain.Taxonomy, prefix string, envID string, sdID strin
 		label = fmt.Sprintf("\"%s%s\\n%s\\nClassification: %s%s%s\"",
 			strings.Repeat("\n", emphasis),
 			label, strings.Repeat("_", len(label)),
-			strings.ToUpper(GetClassificationFromOverride(txy.SegsL2s[sdID].L1Overrides[envID], "sensitivity")),
-			strings.ToUpper(GetClassificationFromOverride(txy.SegsL2s[sdID].L1Overrides[envID], "criticality")),
+			strings.ToUpper(GetClassificationFromOverride(txy.SegsL2s[sdID].L1Overrides[envID], txy.SegsL2s[sdID], "sensitivity")),
+			strings.ToUpper(GetClassificationFromOverride(txy.SegsL2s[sdID].L1Overrides[envID], txy.SegsL2s[sdID], "criticality")),
 			strings.Repeat("\n", emphasis),
 		)
 	} else {

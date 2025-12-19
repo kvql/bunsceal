@@ -4,12 +4,6 @@ name: Development
 id: dev
 description: |
   Development Security environment is where POCs and experiments are run.
-sensitivity: "D"
-sensitivity_rationale: |
-  No customer data to be processed here and therefore the sensitivity is low.
-criticality: "5"
-criticality_rationale: |
-  Not on the release path and therefore should have minimal impact on the business if there are any outages
 labels:
   - "bunsceal.plugin.classifications/sensitivity:D"
   - "bunsceal.plugin.classifications/sensitivity_rationale:No customer data to be processed here and therefore the sensitivity is low."

@@ -1,136 +1,15 @@
 package application
 
 import (
-	"strings"
+	"os"
 	"testing"
 
+	"github.com/kvql/bunsceal/pkg/config"
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 )
 
 func TestApplyInheritance(t *testing.T) {
-	t.Run("Inherits sensitivity from SegL1 when empty", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.Seg{
-				"prod": {
-					ID:                   "prod",
-					Name:                 "Production",
-					Sensitivity:          "A",
-					SensitivityRationale: "Production handles customer data requiring highest classification level.",
-					Criticality:          "1",
-					CriticalityRationale: "Production outages directly impact customers and revenue.",
-				},
-			},
-			SegsL2s: map[string]domain.Seg{
-				"infra": {
-					Name:        "Infrastructure",
-					ID:          "infra",
-					Description: "Infrastructure domain",
-					L1Parents:   []string{"prod"},
-					L1Overrides: map[string]domain.L1Overrides{
-						"prod": {
-							// Empty sensitivity and rationale - should inherit
-							Criticality:          "2",
-							CriticalityRationale: "Custom criticality for infrastructure.",
-						},
-					},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{},
-		}
-
-		ApplyInheritance(&txy, nil)
-
-		L1Overrides := txy.SegsL2s["infra"].L1Overrides["prod"]
-		if L1Overrides.Sensitivity != "A" {
-			t.Errorf("Expected sensitivity 'A', got %s", L1Overrides.Sensitivity)
-		}
-		if !strings.HasPrefix(L1Overrides.SensitivityRationale, "Inherited: ") {
-			t.Errorf("Expected rationale to start with 'Inherited: ', got %s", L1Overrides.SensitivityRationale)
-		}
-		if !strings.Contains(L1Overrides.SensitivityRationale, "Production handles customer data") {
-			t.Error("Expected inherited rationale to contain original text")
-		}
-	})
-
-	t.Run("Inherits criticality from SegL1 when empty", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.Seg{
-				"staging": {
-					ID:                   "staging",
-					Name:                 "Staging",
-					Sensitivity:          "D",
-					SensitivityRationale: "Staging contains no production data.",
-					Criticality:          "5",
-					CriticalityRationale: "Staging downtime impacts development velocity only.",
-				},
-			},
-			SegsL2s: map[string]domain.Seg{
-				"app": {
-					Name:        "Application",
-					ID:          "app",
-					Description: "Application domain",
-					L1Parents:   []string{"staging"},
-					L1Overrides: map[string]domain.L1Overrides{
-						"staging": {
-							Sensitivity:          "C",
-							SensitivityRationale: "Custom sensitivity for application staging.",
-							// Empty criticality - should inherit
-						},
-					},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{},
-		}
-
-		ApplyInheritance(&txy, nil)
-
-		L1Overrides := txy.SegsL2s["app"].L1Overrides["staging"]
-		if L1Overrides.Criticality != "5" {
-			t.Errorf("Expected criticality '5', got %s", L1Overrides.Criticality)
-		}
-		if !strings.HasPrefix(L1Overrides.CriticalityRationale, "Inherited: ") {
-			t.Errorf("Expected rationale to start with 'Inherited: ', got %s", L1Overrides.CriticalityRationale)
-		}
-	})
-
-	t.Run("Does not inherit when sensitivity is set", func(t *testing.T) {
-		txy := domain.Taxonomy{
-			SegL1s: map[string]domain.Seg{
-				"prod": {
-					ID:                   "prod",
-					Sensitivity:          "A",
-					SensitivityRationale: "Environment default rationale.",
-				},
-			},
-			SegsL2s: map[string]domain.Seg{
-				"sec": {
-					Name:        "Security",
-					ID:          "sec",
-					Description: "Security domain",
-					L1Parents:   []string{"prod"},
-					L1Overrides: map[string]domain.L1Overrides{
-						"prod": {
-							Sensitivity:          "B",
-							SensitivityRationale: "Custom sensitivity for security domain.",
-						},
-					},
-				},
-			},
-			CompReqs: map[string]domain.CompReq{},
-		}
-
-		ApplyInheritance(&txy, nil)
-
-		L1Overrides := txy.SegsL2s["sec"].L1Overrides["prod"]
-		if L1Overrides.Sensitivity != "B" {
-			t.Errorf("Expected sensitivity to remain 'B', got %s", L1Overrides.Sensitivity)
-		}
-		if strings.HasPrefix(L1Overrides.SensitivityRationale, "Inherited: ") {
-			t.Error("Expected custom rationale to not be replaced with inherited prefix")
-		}
-	})
-
 	t.Run("Inherits compliance requirements when nil", func(t *testing.T) {
 		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
@@ -148,8 +27,6 @@ func TestApplyInheritance(t *testing.T) {
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
 							// nil ComplianceReqs - should inherit
-							Sensitivity:          "A",
-							SensitivityRationale: "Test rationale.",
 						},
 					},
 				},
@@ -187,9 +64,7 @@ func TestApplyInheritance(t *testing.T) {
 					L1Parents:   []string{"prod"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
-							ComplianceReqs:       []string{"pci-dss"}, // Custom subset
-							Sensitivity:          "A",
-							SensitivityRationale: "Test rationale.",
+							ComplianceReqs: []string{"pci-dss"}, // Custom subset
 						},
 					},
 				},
@@ -227,9 +102,7 @@ func TestApplyInheritance(t *testing.T) {
 					L1Parents:   []string{"prod"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
-							ComplianceReqs:       []string{"pci-dss", "sox"},
-							Sensitivity:          "A",
-							SensitivityRationale: "Test rationale.",
+							ComplianceReqs: []string{"pci-dss", "sox"},
 						},
 					},
 				},
@@ -277,9 +150,7 @@ func TestApplyInheritance(t *testing.T) {
 					L1Parents:   []string{"prod"},
 					L1Overrides: map[string]domain.L1Overrides{
 						"prod": {
-							ComplianceReqs:       []string{"pci-dss", "invalid-scope"},
-							Sensitivity:          "A",
-							SensitivityRationale: "Test rationale.",
+							ComplianceReqs: []string{"pci-dss", "invalid-scope"},
 						},
 					},
 				},
@@ -300,22 +171,16 @@ func TestApplyInheritance(t *testing.T) {
 		}
 	})
 
-	t.Run("Handles multiple environments in one Seg", func(t *testing.T) {
+	t.Run("Handles L2 with multiple L1 parents", func(t *testing.T) {
 		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
 				"prod": {
-					ID:                   "prod",
-					Sensitivity:          "A",
-					SensitivityRationale: "Production sensitivity.",
-					Criticality:          "1",
-					CriticalityRationale: "Production criticality.",
+					ID:             "prod",
+					ComplianceReqs: []string{"pci-dss"},
 				},
 				"staging": {
-					ID:                   "staging",
-					Sensitivity:          "D",
-					SensitivityRationale: "Staging sensitivity.",
-					Criticality:          "5",
-					CriticalityRationale: "Staging criticality.",
+					ID:             "staging",
+					ComplianceReqs: []string{"sox"},
 				},
 			},
 			SegsL2s: map[string]domain.Seg{
@@ -325,28 +190,27 @@ func TestApplyInheritance(t *testing.T) {
 					Description: "Application domain",
 					L1Parents:   []string{"prod", "staging"},
 					L1Overrides: map[string]domain.L1Overrides{
-						"prod": {
-							// Should inherit from prod SegL1
-						},
-						"staging": {
-							// Should inherit from staging SegL1
-						},
+						"prod":    {},
+						"staging": {},
 					},
 				},
 			},
-			CompReqs: map[string]domain.CompReq{},
+			CompReqs: map[string]domain.CompReq{
+				"pci-dss": {Name: "PCI DSS"},
+				"sox":     {Name: "SOX"},
+			},
 		}
 
 		ApplyInheritance(&txy, nil)
 
-		prodDetails := txy.SegsL2s["app"].L1Overrides["prod"]
-		if prodDetails.Sensitivity != "A" {
-			t.Errorf("Expected prod to inherit 'A', got %s", prodDetails.Sensitivity)
+		prodOverride := txy.SegsL2s["app"].L1Overrides["prod"]
+		if len(prodOverride.ComplianceReqs) != 1 || prodOverride.ComplianceReqs[0] != "pci-dss" {
+			t.Errorf("Expected prod to inherit [pci-dss], got %v", prodOverride.ComplianceReqs)
 		}
 
-		stagingDetails := txy.SegsL2s["app"].L1Overrides["staging"]
-		if stagingDetails.Sensitivity != "D" {
-			t.Errorf("Expected staging to inherit 'D', got %s", stagingDetails.Sensitivity)
+		stagingOverride := txy.SegsL2s["app"].L1Overrides["staging"]
+		if len(stagingOverride.ComplianceReqs) != 1 || stagingOverride.ComplianceReqs[0] != "sox" {
+			t.Errorf("Expected staging to inherit [sox], got %v", stagingOverride.ComplianceReqs)
 		}
 	})
 }
@@ -434,6 +298,30 @@ func TestValidatePluginLabels(t *testing.T) {
 
 		if err != nil {
 			t.Errorf("Expected no error for valid labels, got %v", err)
+		}
+	})
+}
+
+func TestLoadExampleTaxonomy(t *testing.T) {
+	t.Run("Example taxonomy files are valid and load successfully", func(t *testing.T) {
+		// Change to project root so relative paths in config work
+		originalWd, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("Failed to get working directory: %v", err)
+		}
+		if err := os.Chdir("../../.."); err != nil {
+			t.Fatalf("Failed to change to project root: %v", err)
+		}
+		defer os.Chdir(originalWd)
+
+		cfg, err := config.LoadConfig("example/config.yaml", "pkg/config/schemas")
+		if err != nil {
+			t.Fatalf("Failed to load example config: %v", err)
+		}
+
+		_, err = LoadTaxonomy(cfg)
+		if err != nil {
+			t.Errorf("Example taxonomy should load without error: %v", err)
 		}
 	})
 }

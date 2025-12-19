@@ -4,12 +4,6 @@ name: Shared Service
 id: shared-service
 description: |
   Security environment where all resources which operate as shared service and have network connectivity or access resources cross account are hosted.
-sensitivity: "A"
-sensitivity_rationale: |
-  Shared services are the highest risk worklaods from a lateral movement perspective. They could act as the bridge between low security environments and high security environments.
-criticality: "1"
-criticality_rationale: |
-  All environments rely on shared services to operate. An outage of a shared service could have significant impact on all environments.
 compliance_reqs:
   - "pci-dss"
 labels:

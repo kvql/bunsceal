@@ -90,13 +90,17 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 		return nil, err
 	}
 
+	// Determine grouping mode: criticality vs sensitivity
+	// When showClass=true and highlightCriticality=false, group by sensitivity
+	highlightSensitivity := showClass && !highlightCriticality
+
 	// Following code will create subgraphs for each row and add security environments as subgraphs to those rows
 	// in graphviz, subgraphs are represented in their name with the prefix "cluster_"
 	// sub graph structure:
 	// - top_level_graph
 	// 	- cluster_row
 	// 		- cluster_env
-	// 			- cluster_criticality
+	// 			- cluster_classification (criticality or sensitivity)
 	// 				- cluster_batch
 
 	// setup row subgraphs
@@ -121,10 +125,7 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 		for _, envId := range envIds {
 			orderNodes[envId] = map[string][]string{}
 			// Generate attributes object for security environment subgraph
-			showEnvClass := showClass
-			if highlightCriticality {
-				showEnvClass = true // if highlighting criticality, we need to show the classification for the environment
-			}
+			showEnvClass := showClass || highlightCriticality
 			label := FormatEnvLabel(txy, term.L1.Singular+" - ", envId, showEnvClass)
 			envGraphAtt := FormatGraph(label, "")
 			err := g.AddSubGraph(rowSubGraphName, envSubGraphName(envId), envGraphAtt)
@@ -132,33 +133,54 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 				return nil, err
 			}
 
-			// Criticality subgraphs
-			// ---------------------
-			// As the colour of the nodes is set by Sensitivity, we need a way to make the criticality of nodes more visible.
-			// This is done by creating a subgraph for each criticality level within the environment
-			// Maps are unordered in go and therefore we need to iterate over the ordered criticality list to get a consistent image
-			critGraphNames := []string{}
-			for _, crit := range domain.CritOrder {
-				critGraphName := focusSGName(envId, crit)
-				critGraphAtt := map[string]string{}
-				if highlightCriticality {
-					critGraphAtt = map[string]string{
-						"label":     fmt.Sprintf("\"Criticality: %s(%s)\"", crit, domain.CriticalityLevels[crit]),
+			// Classification subgraphs (Criticality or Sensitivity)
+			// ------------------------------------------------------
+			// Create subgraphs to group nodes by classification level
+			// Maps are unordered in go and therefore we need to iterate over the ordered list to get a consistent image
+			classGraphNames := []string{}
+
+			if highlightSensitivity {
+				// Group by sensitivity
+				for _, sens := range SenseOrder {
+					sensGraphName := focusSGName(envId, sens)
+					sensGraphAtt := map[string]string{
+						"label":     fmt.Sprintf("\"Sensitivity: %s(%s)\"", sens, SensitivityLabels[sens]),
 						"shape":     "\"box\"",
-						"color":     primaryColours.GetColour("1"),
-						"fontcolor": primaryColours.GetColour("1"),
+						"color":     primaryColours.GetColour(sens),
+						"fontcolor": primaryColours.GetColour(sens),
 						"fontsize":  "\"14\"",
 						"style":     "\"rounded,setlinewidth(1)\"",
 					}
-				} else {
-					// Set style attribute below to \"\" if you want to see criticality subgraphs. Made invisible as it gets confusing with the environment subgraphs
-					critGraphAtt = CopyInvis()
-					critGraphAtt["label"] = fmt.Sprintf("\"Invisible Criticality subgraph: %s\"", crit) // help with debugging graph structure
+					if _, ok := imageData[envId].Sensitivities[sens]; ok && (len(classGraphNames) == 0 ||
+						classGraphNames[len(classGraphNames)-1] != sensGraphName) {
+						classGraphNames = append(classGraphNames, sensGraphName)
+						g.AddSubGraph(envSubGraphName(envId), focusSGName(envId, sens), sensGraphAtt)
+					}
 				}
-				if _, ok := imageData[envId].Criticalities[crit]; ok && (len(critGraphNames) == 0 ||
-					critGraphNames[len(critGraphNames)-1] != critGraphName) {
-					critGraphNames = append(critGraphNames, critGraphName)
-					g.AddSubGraph(envSubGraphName(envId), focusSGName(envId, crit), critGraphAtt)
+			} else {
+				// Group by criticality
+				for _, crit := range CritOrder {
+					critGraphName := focusSGName(envId, crit)
+					critGraphAtt := map[string]string{}
+					if highlightCriticality {
+						critGraphAtt = map[string]string{
+							"label":     fmt.Sprintf("\"Criticality: %s(%s)\"", crit, CriticalityLabels[crit]),
+							"shape":     "\"box\"",
+							"color":     primaryColours.GetColour("1"),
+							"fontcolor": primaryColours.GetColour("1"),
+							"fontsize":  "\"14\"",
+							"style":     "\"rounded,setlinewidth(1)\"",
+						}
+					} else {
+						// Invisible subgraphs when neither highlighting
+						critGraphAtt = CopyInvis()
+						critGraphAtt["label"] = fmt.Sprintf("\"Invisible Criticality subgraph: %s\"", crit)
+					}
+					if _, ok := imageData[envId].Criticalities[crit]; ok && (len(classGraphNames) == 0 ||
+						classGraphNames[len(classGraphNames)-1] != critGraphName) {
+						classGraphNames = append(classGraphNames, critGraphName)
+						g.AddSubGraph(envSubGraphName(envId), focusSGName(envId, crit), critGraphAtt)
+					}
 				}
 			}
 
@@ -170,28 +192,34 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 
 			for _, sdId := range imageData[envId].SortedSegs {
 				sdEnvDet := imageData[envId].Segs[sdId]
-				crit := GetClassificationFromOverride(sdEnvDet, "criticality")
+				// Get grouping key based on mode
+				var groupKey string
+				if highlightSensitivity {
+					groupKey = GetClassificationFromOverride(sdEnvDet, txy.SegsL2s[sdId], "sensitivity")
+				} else {
+					groupKey = GetClassificationFromOverride(sdEnvDet, txy.SegsL2s[sdId], "criticality")
+				}
 				// Setup batch subgraphs and bump when necessary
-				if batch.Count[crit] > batch.Limit || batch.Count[crit] == 0 {
-					batchNodeName, err := batch.BumpBatch(crit, g)
+				if batch.Count[groupKey] > batch.Limit || batch.Count[groupKey] == 0 {
+					batchNodeName, err := batch.BumpBatch(groupKey, g)
 					if err != nil {
 						return nil, err
 					}
-					orderNodes[envId][crit] = append(orderNodes[envId][crit], batchNodeName)
+					orderNodes[envId][groupKey] = append(orderNodes[envId][groupKey], batchNodeName)
 				}
 
 				// Add security domain nodes
 				// -------------------------
 				// Add emphasis to the label (map returns 0 if not found)
 				label := FormatSdLabel(txy, "", envId, sdId, showClass, txy.SegsL2s[sdId].Prominence)
-				sdNodeAtt := FormatNode(label, GetClassificationFromOverride(sdEnvDet, "sensitivity")) // attributes to format the node
+				sdNodeAtt := FormatNode(label, GetClassificationFromOverride(sdEnvDet, txy.SegsL2s[sdId], "sensitivity")) // attributes to format the node
 				sdNodeName := fmt.Sprintf("\"sd_node_%s_%s\"", strings.ReplaceAll(envId, "-", "_"), strings.ReplaceAll(sdId, "-", "_"))
 				// Add security domain node to the batch subgraph
-				err := g.AddNode(batch.CurrentSGName(crit), sdNodeName, sdNodeAtt)
+				err := g.AddNode(batch.CurrentSGName(groupKey), sdNodeName, sdNodeAtt)
 				if err != nil {
 					return nil, err
 				}
-				batch.Count[crit]++
+				batch.Count[groupKey]++
 
 			}
 		}
@@ -199,12 +227,20 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 		// ----------------------------
 		// add all nodes to a single slice before adding edges, this creates a single list of nodes to link in each row
 		fullOrderNodes := []string{}
-		// loop through environments and criticalities to get the order
+		// loop through environments and classifications to get the order
 		// To change the order of the environments update it in the config's visuals.l1_layout
 		for _, env := range envIds {
-			for _, c := range domain.CritOrder {
-				if _, ok := imageData[env].Criticalities[c]; ok {
-					fullOrderNodes = append(fullOrderNodes, orderNodes[env][c]...)
+			if highlightSensitivity {
+				for _, s := range SenseOrder {
+					if _, ok := imageData[env].Sensitivities[s]; ok {
+						fullOrderNodes = append(fullOrderNodes, orderNodes[env][s]...)
+					}
+				}
+			} else {
+				for _, c := range CritOrder {
+					if _, ok := imageData[env].Criticalities[c]; ok {
+						fullOrderNodes = append(fullOrderNodes, orderNodes[env][c]...)
+					}
 				}
 			}
 		}
@@ -311,7 +347,7 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *configdomain.Config, compName st
 					// -------------------------
 					// Add emphasis to the label (map returns 0 if not found)
 					label := FormatSdLabel(txy, "", envId, sdId, false, txy.SegsL2s[sdId].Prominence)
-					sdNodeAtt := FormatNode(label, GetClassificationFromOverride(sdEnvDet, "sensitivity")) // attributes to format the node
+					sdNodeAtt := FormatNode(label, GetClassificationFromOverride(sdEnvDet, txy.SegsL2s[sdId], "sensitivity")) // attributes to format the node
 					// Make out of scope nodes less visible in the graph by removing filled style (font needs to be bright if fill removed)
 					if scope == "out" {
 						sdNodeAtt["fontcolor"] = sdNodeAtt["color"]

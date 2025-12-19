@@ -248,13 +248,13 @@ func TestSeg_ValidateL1Consistency(t *testing.T) {
 func TestPostLoad_L1Segment(t *testing.T) {
 	t.Run("Valid L1 segment passes validation", func(t *testing.T) {
 		seg := Seg{
-			ID:                   "prod",
-			Name:                 "Production",
-			Description:          "Test description",
-			Sensitivity:          "A",
-			SensitivityRationale: "Test rationale with sufficient length",
-			Criticality:          "1",
-			CriticalityRationale: "Test rationale with sufficient length",
+			ID:          "prod",
+			Name:        "Production",
+			Description: "Test description",
+			Labels: []string{
+				"bunsceal.plugin.classifications/sensitivity:A",
+				"bunsceal.plugin.classifications/criticality:1",
+			},
 		}
 
 		err := seg.PostLoad("1")
@@ -269,79 +269,17 @@ func TestPostLoad_L1Segment(t *testing.T) {
 		}
 	})
 
-	t.Run("Missing Criticality fails validation", func(t *testing.T) {
-		seg := Seg{
-			ID:                   "prod",
-			Name:                 "Production",
-			Sensitivity:          "A",
-			SensitivityRationale: "Test rationale",
-			// Missing Criticality
-			CriticalityRationale: "Test rationale",
-		}
-
-		err := seg.PostLoad("1")
-		if err == nil {
-			t.Error("Expected error for missing Criticality")
-		}
-		if !strings.Contains(err.Error(), "Criticality") {
-			t.Errorf("Expected error about Criticality, got: %v", err)
-		}
-	})
-
-	t.Run("Missing CriticalityRationale fails validation", func(t *testing.T) {
-		seg := Seg{
-			ID:                   "prod",
-			Name:                 "Production",
-			Sensitivity:          "A",
-			SensitivityRationale: "Test rationale",
-			Criticality:          "1",
-			// Missing CriticalityRationale
-		}
-
-		err := seg.PostLoad("1")
-		if err == nil {
-			t.Error("Expected error for missing CriticalityRationale")
-		}
-		if !strings.Contains(err.Error(), "CriticalityRationale") {
-			t.Errorf("Expected error about CriticalityRationale, got: %v", err)
-		}
-	})
-
-	t.Run("Missing Sensitivity fails validation", func(t *testing.T) {
-		seg := Seg{
-			ID:   "prod",
-			Name: "Production",
-			// Missing Sensitivity
-			SensitivityRationale: "Test rationale",
-			Criticality:          "1",
-			CriticalityRationale: "Test rationale",
-		}
-
-		err := seg.PostLoad("1")
-		if err == nil {
-			t.Error("Expected error for missing Sensitivity")
-		}
-		if !strings.Contains(err.Error(), "Sensitivity") {
-			t.Errorf("Expected error about Sensitivity, got: %v", err)
-		}
-	})
-
-	t.Run("Missing SensitivityRationale fails validation", func(t *testing.T) {
+	t.Run("L1 segment without classification labels still passes", func(t *testing.T) {
+		// Classification is now handled via plugin validation, not PostLoad
 		seg := Seg{
 			ID:          "prod",
 			Name:        "Production",
-			Sensitivity: "A",
-			// Missing SensitivityRationale
-			Criticality:          "1",
-			CriticalityRationale: "Test rationale",
+			Description: "Test description",
 		}
 
 		err := seg.PostLoad("1")
-		if err == nil {
-			t.Error("Expected error for missing SensitivityRationale")
-		}
-		if !strings.Contains(err.Error(), "SensitivityRationale") {
-			t.Errorf("Expected error about SensitivityRationale, got: %v", err)
+		if err != nil {
+			t.Errorf("Expected no error, got: %v", err)
 		}
 	})
 }
@@ -354,10 +292,7 @@ func TestPostLoad_L2Segment(t *testing.T) {
 			Description: "Test description",
 			L1Parents:   []string{"prod"},
 			L1Overrides: map[string]L1Overrides{
-				"prod": {
-					Sensitivity: "A",
-					Criticality: "1",
-				},
+				"prod": {},
 			},
 		}
 
@@ -425,7 +360,7 @@ func TestPostLoad_L2Segment(t *testing.T) {
 			Description: "Test",
 			L1Parents:   []string{"prod"},
 			L1Overrides: map[string]L1Overrides{
-				"prod": {Sensitivity: "A", Criticality: "1"},
+				"prod": {},
 			},
 			Labels: []string{"env:test", "team:platform"},
 		}
@@ -446,12 +381,8 @@ func TestPostLoad_L2Segment(t *testing.T) {
 func TestPostLoad_LevelAssignment(t *testing.T) {
 	t.Run("Sets Level when empty", func(t *testing.T) {
 		seg := Seg{
-			ID:                   "prod",
-			Name:                 "Production",
-			Sensitivity:          "A",
-			SensitivityRationale: "Test rationale",
-			Criticality:          "1",
-			CriticalityRationale: "Test rationale",
+			ID:   "prod",
+			Name: "Production",
 		}
 
 		err := seg.PostLoad("1")
@@ -465,13 +396,9 @@ func TestPostLoad_LevelAssignment(t *testing.T) {
 
 	t.Run("Preserves existing Level", func(t *testing.T) {
 		seg := Seg{
-			Level:                "1",
-			ID:                   "prod",
-			Name:                 "Production",
-			Sensitivity:          "A",
-			SensitivityRationale: "Test rationale",
-			Criticality:          "1",
-			CriticalityRationale: "Test rationale",
+			Level: "1",
+			ID:    "prod",
+			Name:  "Production",
 		}
 
 		err := seg.PostLoad("1")
@@ -502,12 +429,12 @@ func TestPostLoad_LevelAssignment(t *testing.T) {
 func TestPostLoad_SetDefaults(t *testing.T) {
 	t.Run("Sets default prominence", func(t *testing.T) {
 		seg := Seg{
-			ID:                   "prod",
-			Name:                 "Production",
-			Sensitivity:          "A",
-			SensitivityRationale: "Test",
-			Criticality:          "1",
-			CriticalityRationale: "Test",
+			ID:   "prod",
+			Name: "Production",
+			Labels: []string{
+				"bunsceal.plugin.classifications/sensitivity:A",
+				"bunsceal.plugin.classifications/criticality:1",
+			},
 			// Prominence not set, should default to 1
 		}
 
@@ -522,13 +449,13 @@ func TestPostLoad_SetDefaults(t *testing.T) {
 
 	t.Run("Preserves non-zero prominence", func(t *testing.T) {
 		seg := Seg{
-			ID:                   "prod",
-			Name:                 "Production",
-			Sensitivity:          "A",
-			SensitivityRationale: "Test",
-			Criticality:          "1",
-			CriticalityRationale: "Test",
-			Prominence:           5,
+			ID:   "prod",
+			Name: "Production",
+			Labels: []string{
+				"bunsceal.plugin.classifications/sensitivity:A",
+				"bunsceal.plugin.classifications/criticality:1",
+			},
+			Prominence: 5,
 		}
 
 		err := seg.PostLoad("1")

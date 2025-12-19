@@ -26,18 +26,6 @@
     "description": {
       "$ref": "./common.json#/$defs/longDescription"
     },
-    "sensitivity": {
-      "$ref": "./common.json#/$defs/sensitivityCode"
-    },
-    "sensitivity_rationale": {
-      "$ref": "./common.json#/$defs/longDescription"
-    },
-    "criticality": {
-      "$ref": "./common.json#/$defs/criticalityCode"
-    },
-    "criticality_rationale": {
-      "$ref": "./common.json#/$defs/longDescription"
-    },
     "compliance_reqs": {
       "type": "array",
       "items": {

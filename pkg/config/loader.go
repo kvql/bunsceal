@@ -12,6 +12,7 @@ import (
 	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
 	"github.com/kvql/bunsceal/pkg/o11y"
 	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
+	"github.com/kvql/bunsceal/pkg/visualise"
 	"gopkg.in/yaml.v3"
 )
 
@@ -36,6 +37,7 @@ func LoadConfig(configPath, configSchemaPath string) (configDomain.Config, error
 		{JSON: plugins.ClassificationsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/plugin-classifications.json"},
 		{JSON: plugins.PluginsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/plugins.json"},
 		{JSON: domain.TermsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/terms.json"},
+		{JSON: visualise.VisualiseConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/visualise.json"},
 	}
 	schemaValidator, err := schemaValidation.NewSchemaValidator(configSchemaPath, configSchemaBaseURL, pluginSchemas...)
 	if err != nil {

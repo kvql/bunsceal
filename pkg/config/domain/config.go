@@ -5,6 +5,7 @@ import (
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
+	"github.com/kvql/bunsceal/pkg/visualise"
 )
 
 // DefaultSchemaPath is the default location for JSON schemas
@@ -14,16 +15,13 @@ const DefaultSchemaPath = "./pkg/domain/schemas"
 type Config struct {
 	Terminology  domain.TermConfig                  `yaml:"terminology"`
 	SchemaPath   string                             `yaml:"schema_path,omitempty"`
-	Visuals      VisualsDef                         `yaml:"visuals,omitempty"`
+	Visuals      visualise.VisualsDef               `yaml:"visuals,omitempty"`
 	Rules        LogicRulesConfig                   `yaml:"rules,omitempty"`
 	FsRepository infrastructure.ConfigFsReposistory `yaml:"fs_repository,omitempty"`
 	Plugins      plugins.ConfigPlugins              `yaml:"plugins"`
 }
 
-// VisualsDef Config for how taxonomy is visualised
-type VisualsDef struct {
-	L1Layout map[string][]string `yaml:"l1_layout,omitempty"`
-}
+
 
 // Merge merges this Config with defaults, using defaults for any blank fields.
 func (c Config) Merge() Config {

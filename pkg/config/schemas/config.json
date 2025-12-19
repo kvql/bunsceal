@@ -28,26 +28,7 @@
         }
       }
     },
-    "visuals": {
-      "type": "object",
-      "description": "Configuration options for visualisation functions",
-      "additionalProperties": false,
-      "properties": {
-        "l1_layout": {
-          "type": "object",
-          "description": "Map of row numbers to ordered arrays of L1 identifiers for layout control",
-          "additionalProperties": false,
-          "patternProperties": {
-            "^[0-9]+$": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
+    "visuals": { "$ref": "./visualise.json#/$defs/visuals"},
     "rules": {
       "type": "object",
       "description": "Configuration for business logic validation rules",

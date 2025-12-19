@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/awalterschulze/gographviz"
-	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/o11y"
 )
@@ -81,7 +80,7 @@ func RenderGraph(g *gographviz.Graph, dir string, name string) error {
 }
 
 // RenderDiagrams generates all the diagrams for the taxonomy
-func RenderDiagrams(tax domain.Taxonomy, dir string, terms domain.TermConfig, visCfg configdomain.VisualsDef) error {
+func RenderDiagrams(tax domain.Taxonomy, dir string, terms domain.TermConfig, visCfg VisualsDef) error {
 	// Generate the security domain graph
 	graphConfigs := []ImageConfig{
 		{func() (*gographviz.Graph, error) { return GraphL2(tax, terms, visCfg, false, false) }, "l2_Segments_overview.png"},

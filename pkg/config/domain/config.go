@@ -2,8 +2,7 @@
 package domain
 
 import (
-	"strings"
-
+	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
 )
@@ -13,7 +12,7 @@ const DefaultSchemaPath = "./pkg/domain/schemas"
 
 // Config represents the taxonomy configuration.
 type Config struct {
-	Terminology  TermConfig                         `yaml:"terminology"`
+	Terminology  domain.TermConfig                         `yaml:"terminology"`
 	SchemaPath   string                             `yaml:"schema_path,omitempty"`
 	Visuals      VisualsDef                         `yaml:"visuals,omitempty"`
 	Rules        LogicRulesConfig                   `yaml:"rules,omitempty"`
@@ -21,42 +20,13 @@ type Config struct {
 	Plugins      plugins.ConfigPlugins              `yaml:"plugins"`
 }
 
-// TermConfig holds terminology configuration for L1 and L2 segments.
-type TermConfig struct {
-	L1 TermDef `yaml:"l1,omitempty"`
-	L2 TermDef `yaml:"l2,omitempty"`
-}
-
-// TermDef defines singular and plural forms for a segment level.
-type TermDef struct {
-	Singular string `yaml:"singular"`
-	Plural   string `yaml:"plural"`
-}
 
 // VisualsDef Config for how taxonomy is visualised
 type VisualsDef struct {
 	L1Layout map[string][]string `yaml:"l1_layout,omitempty"`
 }
 
-// Merge merges this TermDef with defaults, using defaults for any blank fields.
-func (td TermDef) Merge(defaults TermDef) TermDef {
-	result := defaults
-	if td.Singular != "" {
-		result.Singular = td.Singular
-	}
-	if td.Plural != "" {
-		result.Plural = td.Plural
-	}
-	return result
-}
 
-// Merge merges this TermConfig with defaults, using defaults for any blank fields.
-func (tc TermConfig) Merge(defaults TermConfig) TermConfig {
-	return TermConfig{
-		L1: tc.L1.Merge(defaults.L1),
-		L2: tc.L2.Merge(defaults.L2),
-	}
-}
 
 // Merge merges this Config with defaults, using defaults for any blank fields.
 func (c Config) Merge() Config {
@@ -83,17 +53,7 @@ func (c Config) Merge() Config {
 	return result
 }
 
-// DirName converts the plural form to a kebab-case directory name
-// Examples:
-//
-//	"Environments" → "environments"
-//	"Security Environments" → "security-environments"
-//	"My Custom Zones" → "my-custom-zones"
-func (td TermDef) DirName() string {
-	lower := strings.ToLower(td.Plural)
-	kebab := strings.ReplaceAll(lower, " ", "-")
-	return kebab
-}
+
 
 // LogicRulesConfig holds configuration for business logic validation rules.
 type LogicRulesConfig struct {
@@ -115,12 +75,12 @@ type UniquenessConfig struct {
 // DefaultConfig returns the default configuration.
 func DefaultConfig() Config {
 	return Config{
-		Terminology: TermConfig{
-			L1: TermDef{
+		Terminology: domain.TermConfig{
+			L1: domain.TermDef{
 				Singular: "Environment",
 				Plural:   "Environments",
 			},
-			L2: TermDef{
+			L2: domain.TermDef{
 				Singular: "Segment",
 				Plural:   "Segments",
 			},

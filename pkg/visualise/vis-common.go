@@ -419,7 +419,7 @@ func FormatLabel(name string, sense string, crit string) string {
 }
 
 // FormatLabel returns a formatted label for a node with full detailsname string, sense string, crit string) string {
-func FormatEnvLabel(txy *domain.Taxonomy, prefix string, envID string, showClass bool) string {
+func FormatEnvLabel(txy domain.Taxonomy, prefix string, envID string, showClass bool) string {
 
 	// graph without Compliance reqs until process around them is finalised
 	label := prefix + txy.SegL1s[envID].Name
@@ -439,7 +439,7 @@ func FormatEnvLabel(txy *domain.Taxonomy, prefix string, envID string, showClass
 }
 
 // FormatLabel returns a formatted label for a node with full detailsname string, sense string, crit string) string {
-func FormatSdLabel(txy *domain.Taxonomy, prefix string, envID string, sdID string, showClass bool, emphasis int) string {
+func FormatSdLabel(txy domain.Taxonomy, prefix string, envID string, sdID string, showClass bool, emphasis int) string {
 
 	// graph without Compliance reqs until process around them is finalised
 	label := fmt.Sprintf("%s%s", prefix, txy.SegsL2s[sdID].Name)

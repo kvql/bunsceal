@@ -23,12 +23,12 @@ type EnvImageData struct {
 // If an L1 ID exists in the taxonomy but is not in the config layout,
 // it will be added to the last row to ensure all L1s are included in visualisations.
 // Returns an error if the config references L1 IDs that don't exist in the taxonomy.
-func buildRowsMap(cfg *configdomain.Config, txy *domain.Taxonomy) (map[int][]string, error) {
+func buildRowsMap(cfg configdomain.VisualsDef, txy domain.Taxonomy) (map[int][]string, error) {
 	result := make(map[int][]string)
 	seenL1s := make(map[string]bool)
 
 	// If no L1Layout is configured, default to all L1s on a single row
-	if len(cfg.Visuals.L1Layout) == 0 {
+	if len(cfg.L1Layout) == 0 {
 		allL1s := []string{}
 		for l1Id := range txy.SegL1s {
 			allL1s = append(allL1s, l1Id)
@@ -39,7 +39,7 @@ func buildRowsMap(cfg *configdomain.Config, txy *domain.Taxonomy) (map[int][]str
 	// Populate result map from config and track max row number
 	maxRowNum := -1
 	invalidL1s := []string{}
-	for rowStr, l1Ids := range cfg.Visuals.L1Layout {
+	for rowStr, l1Ids := range cfg.L1Layout {
 		// Convert string key to int
 		var rowNum int
 		fmt.Sscanf(rowStr, "%d", &rowNum)
@@ -82,7 +82,7 @@ func buildRowsMap(cfg *configdomain.Config, txy *domain.Taxonomy) (map[int][]str
 	return result, nil
 }
 
-func PrepTaxonomy(txy *domain.Taxonomy) map[string]EnvImageData {
+func PrepTaxonomy(txy domain.Taxonomy) map[string]EnvImageData {
 	data := make(map[string]EnvImageData)
 	for envId := range txy.SegL1s {
 		data[envId] = EnvImageData{

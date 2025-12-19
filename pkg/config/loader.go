@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kvql/bunsceal/pkg/config/domain"
+	configDomain "github.com/kvql/bunsceal/pkg/config/domain"
+	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
 	"github.com/kvql/bunsceal/pkg/o11y"
 	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
@@ -22,8 +23,8 @@ const configSchemaBaseURL = "https://github.com/kvql/bunsceal/pkg/config/schemas
 // If configPath is empty, loads from taxDir/config.yaml.
 // If configSchemaPath is empty, uses domain.DefaultSchemaPath.
 // If the config file doesn't exist or has missing fields, uses defaults.
-func LoadConfig(configPath, configSchemaPath string) (domain.Config, error) {
-	defaults := domain.DefaultConfig()
+func LoadConfig(configPath, configSchemaPath string) (configDomain.Config, error) {
+	defaults := configDomain.DefaultConfig()
 
 	// Use default schema path if not provided
 	if configSchemaPath == "" {
@@ -34,11 +35,12 @@ func LoadConfig(configPath, configSchemaPath string) (domain.Config, error) {
 	pluginSchemas := []schemaValidation.ExternalSchema{
 		{JSON: plugins.ClassificationsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/plugin-classifications.json"},
 		{JSON: plugins.PluginsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/plugins.json"},
+		{JSON: domain.TermsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/terms.json" },
 	}
 	schemaValidator, err := schemaValidation.NewSchemaValidator(configSchemaPath, configSchemaBaseURL, pluginSchemas...)
 	if err != nil {
 		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
-		return domain.Config{}, errors.New("failed to initialise schema validator")
+		return configDomain.Config{}, errors.New("failed to initialise schema validator")
 	}
 
 	// Determine config file location
@@ -54,16 +56,16 @@ func LoadConfig(configPath, configSchemaPath string) (domain.Config, error) {
 			o11y.Log.Printf("Config file not found at %s, using defaults\n", configPath)
 			return defaults, nil
 		}
-		return domain.Config{}, err
+		return configDomain.Config{}, err
 	}
 	if err := schemaValidator.ValidateData(data, "config.json"); err != nil {
 		o11y.Log.Printf("Schema validation failed for Config %s", err)
-		return domain.Config{}, fmt.Errorf("schema validation failed for Config. Error: %w", err)
+		return configDomain.Config{}, fmt.Errorf("schema validation failed for Config. Error: %w", err)
 	}
 
-	var loadedConfig domain.Config
+	var loadedConfig configDomain.Config
 	if err := yaml.Unmarshal(data, &loadedConfig); err != nil {
-		return domain.Config{}, err
+		return configDomain.Config{}, err
 	}
 
 	// Merge loaded config with defaults

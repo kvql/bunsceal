@@ -6,19 +6,7 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "terminology": {
-      "type": "object",
-      "description": "Terminology configuration for L1 and L2 segments",
-      "properties": {
-        "l1": {
-          "$ref": "./common.json#/$defs/termDef" 
-        },
-        "l2": {
-          "$ref": "./common.json#/$defs/termDef" 
-        }
-      },
-      "additionalProperties": false
-    },
+    "terminology": {"$ref": "./terms.json#/$defs/terms"},
     "schema_path": {
       "$ref": "./common.json#/$defs/filePath",
       "description": "Directory path containing JSON schema files for validation. Defaults to './schema' if not specified."

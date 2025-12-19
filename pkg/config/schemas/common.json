@@ -3,27 +3,6 @@
   "$id": "https://github.com/kvql/bunsceal/pkg/config/schemas/common.json",
   "title": "Common schema definitions",
   "$defs": {
-    "termDef": {
-      "type": "object",
-      "description": "terminology Override to utilise terminology that is understandable to your audience",
-      "properties": {
-        "singular": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Singular form of the term"
-        },
-        "plural": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Plural form of the term"
-        }
-      },
-      "required": [
-        "singular",
-        "plural"
-      ],
-      "additionalProperties": false
-    },
     "filePath": {
       "type": "string",
       "minLength": 1,

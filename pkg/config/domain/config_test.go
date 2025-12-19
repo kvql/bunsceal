@@ -2,6 +2,8 @@ package domain
 
 import (
 	"testing"
+
+	"github.com/kvql/bunsceal/pkg/domain"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -25,32 +27,32 @@ func TestDefaultConfig(t *testing.T) {
 func TestTermDef_DirName(t *testing.T) {
 	tests := []struct {
 		name     string
-		termDef  TermDef
+		termDef  domain.TermDef
 		expected string
 	}{
 		{
 			name:     "Simple lowercase",
-			termDef:  TermDef{Plural: "environments"},
+			termDef:  domain.TermDef{Plural: "environments"},
 			expected: "environments",
 		},
 		{
 			name:     "Capitalised word",
-			termDef:  TermDef{Plural: "Environments"},
+			termDef:  domain.TermDef{Plural: "Environments"},
 			expected: "environments",
 		},
 		{
 			name:     "Multi-word with space",
-			termDef:  TermDef{Plural: "Security Environments"},
+			termDef:  domain.TermDef{Plural: "Security Environments"},
 			expected: "security-environments",
 		},
 		{
 			name:     "Already kebab-case",
-			termDef:  TermDef{Plural: "security-domains"},
+			termDef:  domain.TermDef{Plural: "security-domains"},
 			expected: "security-domains",
 		},
 		{
 			name:     "Multiple spaces",
-			termDef:  TermDef{Plural: "My Custom Zones"},
+			termDef:  domain.TermDef{Plural: "My Custom Zones"},
 			expected: "my-custom-zones",
 		},
 	}

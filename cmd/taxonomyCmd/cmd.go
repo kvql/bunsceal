@@ -58,7 +58,7 @@ func Execute() {
 
 	// Generate taxonomy visualisations
 	if *graph {
-		err := vis.RenderDiagrams(&tax, *graphDir, &cfg)
+		err := vis.RenderDiagrams(tax, *graphDir, cfg.Terminology, cfg.Visuals)
 		if err != nil {
 			o11y.Log.Print(err)
 			os.Exit(1)

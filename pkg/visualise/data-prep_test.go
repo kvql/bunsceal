@@ -9,16 +9,14 @@ import (
 
 func TestBuildRowsMap(t *testing.T) {
 	t.Run("Uses config L1Layout when provided", func(t *testing.T) {
-		cfg := &configdomain.Config{
-			Visuals: configdomain.VisualsDef{
-				L1Layout: map[string][]string{
-					"0": {"prod", "staging"},
-					"1": {"dev", "test"},
-				},
+		vis := configdomain.VisualsDef{
+			L1Layout: map[string][]string{
+				"0": {"prod", "staging"},
+				"1": {"dev", "test"},
 			},
 		}
 
-		txy := &domain.Taxonomy{
+		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
 				"prod":    {},
 				"staging": {},
@@ -27,7 +25,7 @@ func TestBuildRowsMap(t *testing.T) {
 			},
 		}
 
-		result, err := buildRowsMap(cfg, txy)
+		result, err := buildRowsMap(vis, txy)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
@@ -46,15 +44,13 @@ func TestBuildRowsMap(t *testing.T) {
 	})
 
 	t.Run("Adds missing L1s to last row", func(t *testing.T) {
-		cfg := &configdomain.Config{
-			Visuals: configdomain.VisualsDef{
+		vis := configdomain.VisualsDef{
 				L1Layout: map[string][]string{
 					"0": {"prod", "staging"},
 				},
-			},
-		}
+			}
 
-		txy := &domain.Taxonomy{
+		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
 				"prod":           {},
 				"staging":        {},
@@ -64,7 +60,7 @@ func TestBuildRowsMap(t *testing.T) {
 			},
 		}
 
-		result, err := buildRowsMap(cfg, txy)
+		result, err := buildRowsMap(vis, txy)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
@@ -98,18 +94,16 @@ func TestBuildRowsMap(t *testing.T) {
 	})
 
 	t.Run("Defaults to single row when no L1Layout configured", func(t *testing.T) {
-		cfg := &configdomain.Config{
-			Visuals: configdomain.VisualsDef{},
-		}
+		vis := configdomain.VisualsDef{}
 
-		txy := &domain.Taxonomy{
+		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
 				"production": {},
 				"dev":        {},
 			},
 		}
 
-		result, err := buildRowsMap(cfg, txy)
+		result, err := buildRowsMap(vis, txy)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
@@ -125,20 +119,18 @@ func TestBuildRowsMap(t *testing.T) {
 	})
 
 	t.Run("Defaults to single row when L1Layout is nil", func(t *testing.T) {
-		cfg := &configdomain.Config{
-			Visuals: configdomain.VisualsDef{
+		vis := configdomain.VisualsDef{
 				L1Layout: nil,
-			},
-		}
+			}
 
-		txy := &domain.Taxonomy{
+		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
 				"production": {},
 				"staging":    {},
 			},
 		}
 
-		result, err := buildRowsMap(cfg, txy)
+		result, err := buildRowsMap(vis, txy)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
@@ -154,16 +146,14 @@ func TestBuildRowsMap(t *testing.T) {
 	})
 
 	t.Run("Config has more l1 than taxonomy", func(t *testing.T) {
-		cfg := &configdomain.Config{
-			Visuals: configdomain.VisualsDef{
+		vis := configdomain.VisualsDef{
 				L1Layout: map[string][]string{
 					"0": {"prod", "staging"},
 					"1": {"dev", "unknown"},
 				},
-			},
-		}
+			}
 
-		txy := &domain.Taxonomy{
+		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
 				"prod":    {},
 				"staging": {},
@@ -171,7 +161,7 @@ func TestBuildRowsMap(t *testing.T) {
 			},
 		}
 
-		_, err := buildRowsMap(cfg, txy)
+		_, err := buildRowsMap(vis, txy)
 
 		// Taxonomy must be source of truth, error out if config includes l1 ids which don't exist
 		if err == nil {
@@ -180,16 +170,14 @@ func TestBuildRowsMap(t *testing.T) {
 	})
 
 	t.Run("Handles non-sequential row numbers", func(t *testing.T) {
-		cfg := &configdomain.Config{
-			Visuals: configdomain.VisualsDef{
+		vis := configdomain.VisualsDef{
 				L1Layout: map[string][]string{
 					"0": {"prod"},
 					"2": {"staging"},
 				},
-			},
-		}
+			}
 
-		txy := &domain.Taxonomy{
+		txy := domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
 				"prod":    {},
 				"staging": {},
@@ -197,7 +185,7 @@ func TestBuildRowsMap(t *testing.T) {
 			},
 		}
 
-		result, err := buildRowsMap(cfg, txy)
+		result, err := buildRowsMap(vis, txy)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}

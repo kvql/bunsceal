@@ -15,9 +15,9 @@ import (
 
 // See the GraphSDs function for more comments explaining how the graph is generated. That is the more complex function and therefore has more comments than GraphEnvs
 
-func GraphL1(txy *domain.Taxonomy, cfg *configdomain.Config) (*gographviz.Graph, error) {
+func GraphL1(txy domain.Taxonomy, terms domain.TermConfig, visCfg configdomain.VisualsDef) (*gographviz.Graph, error) {
 	// Setup the top level graph object
-	title := cfg.Terminology.L1.Plural + " Overview"
+	title := terms.L1.Plural + " Overview"
 	g := BaselineGraph(title, "")
 
 	// // Add legend to the graph
@@ -28,7 +28,7 @@ func GraphL1(txy *domain.Taxonomy, cfg *configdomain.Config) (*gographviz.Graph,
 	}
 
 	// Build rowsMap from config
-	rowsLayout, err := buildRowsMap(cfg, txy)
+	rowsLayout, err := buildRowsMap(visCfg, txy)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func GraphL1(txy *domain.Taxonomy, cfg *configdomain.Config) (*gographviz.Graph,
 		// Environment subgraphs
 		envIds := rowsLayout[row]
 		for _, envId := range envIds {
-			label := FormatEnvLabel(txy, cfg.Terminology.L1.Singular+" - ", envId, true)
+			label := FormatEnvLabel(txy, terms.L1.Singular+" - ", envId, true)
 			envNodeAtt := FormatNode(label, GetClassificationValue(txy.SegL1s[envId], "sensitivity"))
 			envNodeAtt["fontsize"] = "\"16\""
 			envNodeName := fmt.Sprintf("\"env_node_%s\"", strings.ReplaceAll(envId, "-", "_"))
@@ -76,16 +76,15 @@ func GraphL1(txy *domain.Taxonomy, cfg *configdomain.Config) (*gographviz.Graph,
 // Function to Segment Level 2 Graphs
 // ################################
 
-func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
+func GraphL2(txy domain.Taxonomy, terms domain.TermConfig, visCfg configdomain.VisualsDef, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
-	term := cfg.Terminology
-	title := term.L1.Plural + " & " + term.L2.Plural + " Layout"
-	subHeading := "Overview of " + term.L2.Plural + " grouped by their respective " + term.L1.Plural
+	title := terms.L1.Plural + " & " + terms.L2.Plural + " Layout"
+	subHeading := "Overview of " + terms.L2.Plural + " grouped by their respective " + terms.L1.Plural
 	g := BaselineGraph(title, subHeading)
 
 	// Build rowsMap from config
-	rowsLayout, err := buildRowsMap(cfg, txy)
+	rowsLayout, err := buildRowsMap(visCfg, txy)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +125,7 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 			orderNodes[envId] = map[string][]string{}
 			// Generate attributes object for security environment subgraph
 			showEnvClass := showClass || highlightCriticality
-			label := FormatEnvLabel(txy, term.L1.Singular+" - ", envId, showEnvClass)
+			label := FormatEnvLabel(txy, terms.L1.Singular+" - ", envId, showEnvClass)
 			envGraphAtt := FormatGraph(label, "")
 			err := g.AddSubGraph(rowSubGraphName, envSubGraphName(envId), envGraphAtt)
 			if err != nil {
@@ -265,20 +264,19 @@ func GraphL2(txy *domain.Taxonomy, cfg *configdomain.Config, highlightCriticalit
 // Function to Segment Level 2 Graphs
 // ################################
 // GraphCompliance  showOut is used control if out of scope domains are added to the graph
-func GraphCompliance(txy *domain.Taxonomy, cfg *configdomain.Config, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
+func GraphCompliance(txy domain.Taxonomy, terms domain.TermConfig, visCfg configdomain.VisualsDef, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
 	if _, ok := txy.CompReqs[compName]; !ok {
 		return nil, fmt.Errorf("compliance standard %s not found in taxonomy", compName)
 	}
 
 	imageData := PrepTaxonomy(txy)
 	// Setup the top level graph object
-	term := cfg.Terminology
-	title := term.L1.Plural + " & " + term.L2.Plural + " Layout"
+	title := terms.L1.Plural + " & " + terms.L2.Plural + " Layout"
 	subHeading := fmt.Sprintf("Compliance Standard: %s", txy.CompReqs[compName].Name)
 	g := BaselineGraph(title, subHeading)
 
 	// Build rowsMap from config
-	rowsLayout, err := buildRowsMap(cfg, txy)
+	rowsLayout, err := buildRowsMap(visCfg, txy)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +297,7 @@ func GraphCompliance(txy *domain.Taxonomy, cfg *configdomain.Config, compName st
 		envIds := rowsLayout[row]
 		for _, envId := range envIds {
 			orderNodes[envId] = map[string][]string{}
-			label := FormatEnvLabel(txy, term.L1.Singular+" - ", envId, false)
+			label := FormatEnvLabel(txy, terms.L1.Singular+" - ", envId, false)
 			envGraphAtt := FormatGraph(label, "")
 			err := g.AddSubGraph(rowSubGraphName, envSubGraphName(envId), envGraphAtt)
 			if err != nil {

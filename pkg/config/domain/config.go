@@ -21,8 +21,6 @@ type Config struct {
 	Plugins      plugins.ConfigPlugins              `yaml:"plugins"`
 }
 
-
-
 // Merge merges this Config with defaults, using defaults for any blank fields.
 func (c Config) Merge() Config {
 	defaults := DefaultConfig()

@@ -6,6 +6,7 @@ import (
 
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/o11y"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 )
 
 type EnvImageData struct {
@@ -79,6 +80,40 @@ func buildRowsMap(cfg VisualsDef, txy domain.Taxonomy) (map[int][]string, error)
 	}
 
 	return result, nil
+}
+
+type L2GroupingData struct {
+	SortedSegs         []string
+	PresentGroupValues map[string]bool
+}
+
+func VisL2GroupingPrep(txy domain.Taxonomy, groupData *plugins.ImageGroupingData) map[string]L2GroupingData {
+
+	data := make(map[string]L2GroupingData)
+	for envId := range txy.SegL1s {
+		data[envId] = L2GroupingData{
+			PresentGroupValues: make(map[string]bool),
+			SortedSegs:         make([]string, 0),
+		}
+	}
+
+	for _, segL2 := range txy.SegsL2s {
+		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
+		for _, l1ID := range segL2.L1Parents {
+			envData := data[l1ID]
+			crit, err := segL2.GetNamespacedValue(l1ID, groupData.Namespace, groupData.Key)
+			if err != nil {
+				return make(map[string]L2GroupingData)
+			}
+			envData.PresentGroupValues[crit] = true
+			envData.SortedSegs = append(data[l1ID].SortedSegs, segL2.ID)
+			data[l1ID] = envData
+		}
+	}
+	for _, envData := range data {
+		sort.Strings(envData.SortedSegs)
+	}
+	return data
 }
 
 func PrepTaxonomy(txy domain.Taxonomy) map[string]EnvImageData {

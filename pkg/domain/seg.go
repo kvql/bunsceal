@@ -51,6 +51,22 @@ func (s Seg) GetKeyString(key string) (string, error) {
 	return val, nil
 }
 
+func (s Seg) GetNamespacedValue(parent string, ns string, key string) (string, error) {
+	if _, hasOverride := s.L1Overrides[parent]; hasOverride {
+		if _, hasNs := s.L1Overrides[parent].LabelNamespaces[ns]; hasNs {
+			if _, haskey := s.L1Overrides[parent].LabelNamespaces[ns][key]; haskey {
+				return s.L1Overrides[parent].LabelNamespaces[ns][key], nil
+			}
+		}
+	}
+	if _, hasNs := s.LabelNamespaces[ns]; hasNs {
+		if _, haskey := s.LabelNamespaces[ns][key]; haskey {
+			return s.LabelNamespaces[ns][key], nil
+		}
+	}
+	return "", fmt.Errorf("no value found for ns(%s), key(%s) on seg(%s)", ns, key, s.ID)
+}
+
 func (s *Seg) PostLoad(level string) error {
 	// Set level if not already set
 	if s.Level == "" {

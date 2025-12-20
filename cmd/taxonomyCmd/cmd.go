@@ -7,6 +7,7 @@ import (
 	"github.com/kvql/bunsceal/pkg/config"
 	"github.com/kvql/bunsceal/pkg/o11y"
 	"github.com/kvql/bunsceal/pkg/taxonomy/application"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 	"github.com/kvql/bunsceal/pkg/taxonomy/infrastructure"
 	vis "github.com/kvql/bunsceal/pkg/visualise"
 )
@@ -58,7 +59,11 @@ func Execute() {
 
 	// Generate taxonomy visualisations
 	if *graph {
-		err := vis.RenderDiagrams(tax, *graphDir, cfg.Terminology, cfg.Visuals)
+		var classPlug plugins.Plugin
+		if cfg.Plugins.Classifications != nil {
+			classPlug = plugins.NewClassificationPlugin(cfg.Plugins.Classifications, plugins.NsPrefix)
+		}
+		err := vis.RenderDiagrams(tax, *graphDir, cfg.Terminology, cfg.Visuals, classPlug)
 		if err != nil {
 			o11y.Log.Print(err)
 			os.Exit(1)

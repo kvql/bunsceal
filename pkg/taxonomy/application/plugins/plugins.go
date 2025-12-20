@@ -6,6 +6,8 @@ import (
 	"github.com/kvql/bunsceal/pkg/domain"
 )
 
+var NsPrefix = "bunsceal.plugin."
+
 type PluginsCommonSettings struct {
 	LabelInheritance bool `yaml:"label_inheritance"`
 }
@@ -18,11 +20,20 @@ type PluginValidationResult struct {
 	Valid  bool
 	Errors []error
 }
+type ImageGroupingData struct {
+	DisplayName   string
+	Namespace     string
+	Key           string
+	ValuesMap     map[string]string
+	OrderedValues []string
+	OrderMap      map[string]int
+}
 
 type Plugin interface {
 	ValidateLabels(*domain.Seg) PluginValidationResult
 	GetEnabled() bool
 	GetNamespace() string
+	GetImageData() []ImageGroupingData
 }
 
 type RelationalValidator interface {
@@ -82,8 +93,6 @@ func (p *Plugins) ValidateAllSegments(l1s, l2s map[string]domain.Seg) []error {
 
 	return allErrors
 }
-
-var NsPrefix = "bunsceal.plugin."
 
 func (p *Plugins) ApplyPluginInheritanceAndValidate(parent domain.Seg, child *domain.Seg) []error {
 	var allErrors []error

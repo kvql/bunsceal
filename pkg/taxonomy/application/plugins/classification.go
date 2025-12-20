@@ -130,3 +130,19 @@ func (p ClassificationsPlugin) GetEnabled() bool {
 func (p ClassificationsPlugin) GetNamespace() string {
 	return p.Namespace
 }
+
+func (p ClassificationsPlugin) GetImageData() []ImageGroupingData {
+	dataList := []ImageGroupingData{}
+	for key, def := range p.Config.Definitions {
+		data := ImageGroupingData{
+			Namespace:     p.Namespace,
+			DisplayName:   def.DescriptiveName,
+			OrderedValues: def.Order,
+			OrderMap:      p.OrderIndex[key],
+			Key:           key,
+			ValuesMap:     def.Values,
+		}
+		dataList = append(dataList, data)
+	}
+	return dataList
+}

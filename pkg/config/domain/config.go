@@ -22,27 +22,30 @@ type Config struct {
 }
 
 // Merge merges this Config with defaults, using defaults for any blank fields.
+// Starts with loaded config to preserve all fields, then applies defaults where empty.
 func (c Config) Merge() Config {
 	defaults := DefaultConfig()
-	result := Config{
-		Terminology:  c.Terminology.Merge(defaults.Terminology),
-		SchemaPath:   defaults.SchemaPath,
-		FsRepository: defaults.FsRepository,
-		Visuals:      c.Visuals,
+
+	// Start with loaded config - preserves all fields including future additions
+	result := c
+
+	// Apply special merge logic for nested structs with their own Merge method
+	result.Terminology = c.Terminology.Merge(defaults.Terminology)
+
+	// Apply defaults for fields that should fall back when empty
+	if c.SchemaPath == "" {
+		result.SchemaPath = defaults.SchemaPath
 	}
-	if c.SchemaPath != "" {
-		result.SchemaPath = c.SchemaPath
+	if c.FsRepository.L1Dir == "" {
+		result.FsRepository.L1Dir = defaults.FsRepository.L1Dir
+	}
+	if c.FsRepository.L2Dir == "" {
+		result.FsRepository.L2Dir = defaults.FsRepository.L2Dir
+	}
+	if c.FsRepository.TaxonomyDir == "" {
+		result.FsRepository.TaxonomyDir = defaults.FsRepository.TaxonomyDir
 	}
 
-	if c.FsRepository.L1Dir != "" {
-		result.FsRepository.L1Dir = c.FsRepository.L1Dir
-	}
-	if c.FsRepository.L2Dir != "" {
-		result.FsRepository.L2Dir = c.FsRepository.L2Dir
-	}
-	if c.FsRepository.TaxonomyDir != "" {
-		result.FsRepository.TaxonomyDir = c.FsRepository.TaxonomyDir
-	}
 	return result
 }
 

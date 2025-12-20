@@ -10,21 +10,21 @@ import (
 )
 
 type ColorFont struct {
-	Color string
-	Font  string
+	Colour string
+	Font   string
 }
 
 // #######################
 // Global Variables for configuring the graph
 // #######################
 
-type PrimaryColours map[string]string
+type PrimaryColours map[int]ColorFont
 
 var primaryColours = PrimaryColours{
-	"1": "#58CDCA",
-	"2": "#8F58CD",
-	"3": "#CD585B",
-	"4": "#96CD58",
+	1: {Colour: "#CD585B", Font: "#58CDCA"},
+	2: {Colour: "#8F58CD", Font: "#96CD58"},
+	3: {Colour: "#58CDCA", Font: "#CD585B"},
+	4: {Colour: "#96CD58", Font: "#8F58CD"},
 }
 
 var BgColour = "\"#1E6566\""
@@ -32,21 +32,32 @@ var FontColour = "\"#BFECEC\""
 var DebugColour = "\"#FF1A00\""
 var TsnColour = "\"#1E6580\""
 
-func (pc PrimaryColours) GetColour(k string) string {
-	return "\"" + pc[k] + "\""
+func (pc PrimaryColours) GetColour(k int, font ...bool) string {
+	var colour ColorFont
+	if _, hasColour := primaryColours[k]; hasColour {
+		colour = pc[k]
+	} else {
+		colour = pc[len(primaryColours)-1]
+	}
+	if len(font) > 0 {
+		if font[0] {
+			return "\"" + colour.Font + "\""
+		}
+	}
+	return "\"" + colour.Colour + "\""
 }
 
 var SenseColourMap = map[string]ColorFont{
-	"A": {primaryColours.GetColour("4"), primaryColours.GetColour("2")},
-	"B": {primaryColours.GetColour("3"), primaryColours.GetColour("1")},
-	"C": {primaryColours.GetColour("2"), primaryColours.GetColour("4")},
-	"D": {primaryColours.GetColour("1"), primaryColours.GetColour("3")},
+	"A": {primaryColours.GetColour(1), primaryColours.GetColour(1, true)},
+	"B": {primaryColours.GetColour(2), primaryColours.GetColour(2, true)},
+	"C": {primaryColours.GetColour(3), primaryColours.GetColour(3, true)},
+	"D": {primaryColours.GetColour(4), primaryColours.GetColour(4, true)},
 }
 var CritColourMap = map[string]ColorFont{
-	"1": {primaryColours.GetColour("4"), primaryColours.GetColour("2")},
-	"2": {primaryColours.GetColour("3"), primaryColours.GetColour("1")},
-	"3": {primaryColours.GetColour("2"), primaryColours.GetColour("4")},
-	"4": {primaryColours.GetColour("1"), primaryColours.GetColour("3")},
+	"1": {primaryColours.GetColour(1), primaryColours.GetColour(1, true)},
+	"2": {primaryColours.GetColour(2), primaryColours.GetColour(2, true)},
+	"3": {primaryColours.GetColour(3), primaryColours.GetColour(3, true)},
+	"4": {primaryColours.GetColour(4), primaryColours.GetColour(4, true)},
 	"5": {"\"#A0E1E1\"", "\"#320707\""},
 }
 
@@ -83,8 +94,8 @@ var InvisAtt = map[string]string{
 // default formatting for graph nodes
 var NodeFormat = map[string]string{
 	"shape":     "\"box\"",
-	"color":     primaryColours.GetColour("1"),
-	"fontcolor": primaryColours.GetColour("2"),
+	"color":     primaryColours.GetColour(1),
+	"fontcolor": primaryColours.GetColour(2),
 	"fontname":  "\"Arial Bold\"",
 	"fontsize":  "\"14\"",
 	"width":     "\"2.5\"",
@@ -93,8 +104,8 @@ var NodeFormat = map[string]string{
 
 // default formatting for graph nodes
 var GraphFormat = map[string]string{
-	"color":     primaryColours.GetColour("4"),
-	"fontcolor": primaryColours.GetColour("3"),
+	"color":     primaryColours.GetColour(4),
+	"fontcolor": primaryColours.GetColour(3),
 	"fontname":  "\"Arial Bold\"",
 	"fontsize":  "\"18\"",
 	"width":     "\"2.5\"",
@@ -118,8 +129,8 @@ var BatchSize = 10
 
 var LegendGraphAtt = map[string]string{
 	"shape":     "\"box\"",
-	"color":     primaryColours.GetColour("2"),
-	"fontcolor": primaryColours.GetColour("4"),
+	"color":     primaryColours.GetColour(2),
+	"fontcolor": primaryColours.GetColour(4),
 	"fontname":  "\"Arial Bold\"",
 	"fontsize":  "\"12\"",
 	"width":     "\"\"",
@@ -332,6 +343,19 @@ func AddSpacers(g *gographviz.Graph, rowNodes map[int][]string) error {
 // #################################
 
 // FormatNode returns a map of attributes for a node in graphviz format
+func FormatGroupedNode(label string, orderIndex int) map[string]string {
+	node := make(map[string]string)
+	// make a copy of the default node format
+	for k, v := range NodeFormat {
+		node[k] = v
+	}
+	node["label"] = label
+	node["color"] = primaryColours.GetColour(orderIndex)
+	node["fontcolor"] = primaryColours.GetColour(orderIndex, true)
+	return node
+}
+
+// FormatNode returns a map of attributes for a node in graphviz format
 func FormatNode(label string, colourLookup string) map[string]string {
 	node := make(map[string]string)
 	// make a copy of the default node format
@@ -340,10 +364,10 @@ func FormatNode(label string, colourLookup string) map[string]string {
 	}
 	node["label"] = label
 	if _, ok := SenseColourMap[colourLookup]; ok {
-		node["color"] = SenseColourMap[colourLookup].Color
+		node["color"] = SenseColourMap[colourLookup].Colour
 		node["fontcolor"] = SenseColourMap[colourLookup].Font
 	} else if _, ok := CritColourMap[colourLookup]; ok {
-		node["color"] = CritColourMap[colourLookup].Color
+		node["color"] = CritColourMap[colourLookup].Colour
 		node["fontcolor"] = CritColourMap[colourLookup].Font
 	}
 	return node
@@ -386,10 +410,10 @@ func FormatGraph(label string, colourLookup string) map[string]string {
 	}
 	graph["label"] = label
 	if _, ok := SenseColourMap[colourLookup]; ok {
-		graph["color"] = SenseColourMap[colourLookup].Color
+		graph["color"] = SenseColourMap[colourLookup].Colour
 		graph["fontcolor"] = SenseColourMap[colourLookup].Font
 	} else if _, ok := CritColourMap[colourLookup]; ok {
-		graph["color"] = CritColourMap[colourLookup].Color
+		graph["color"] = CritColourMap[colourLookup].Colour
 		graph["fontcolor"] = CritColourMap[colourLookup].Font
 	} else {
 		graph["color"] = "\"#A0E1E1\""

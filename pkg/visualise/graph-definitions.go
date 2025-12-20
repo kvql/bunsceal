@@ -6,6 +6,7 @@ import (
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 )
 
 // ################################
@@ -75,22 +76,19 @@ func GraphL1(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef) (*
 // Function to Segment Level 2 Graphs
 // ################################
 
-func GraphL2(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, highlightCriticality bool, showClass bool) (*gographviz.Graph, error) {
-	imageData := PrepTaxonomy(txy)
+func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, groupData *plugins.ImageGroupingData) (*gographviz.Graph, error) {
+	imageData := VisL2GroupingPrep(txy, groupData)
 	// Setup the top level graph object
 	title := terms.L1.Plural + " & " + terms.L2.Plural + " Layout"
 	subHeading := "Overview of " + terms.L2.Plural + " grouped by their respective " + terms.L1.Plural
 	g := BaselineGraph(title, subHeading)
+	groupingEnabled := groupData != nil
 
 	// Build rowsMap from config
 	rowsLayout, err := buildRowsMap(visCfg, txy)
 	if err != nil {
 		return nil, err
 	}
-
-	// Determine grouping mode: criticality vs sensitivity
-	// When showClass=true and highlightCriticality=false, group by sensitivity
-	highlightSensitivity := showClass && !highlightCriticality
 
 	// Following code will create subgraphs for each row and add security environments as subgraphs to those rows
 	// in graphviz, subgraphs are represented in their name with the prefix "cluster_"
@@ -120,11 +118,11 @@ func GraphL2(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, hi
 		// The rowsLayout[] are slices which are ordered and therefore we can iterate over them in order,
 		// tx.SegL1s is a map and therefore iterating over that would give a different order each time
 		envIds := rowsLayout[row]
+		unknownGroupKey := "noGroup"
 		for _, envId := range envIds {
 			orderNodes[envId] = map[string][]string{}
 			// Generate attributes object for security environment subgraph
-			showEnvClass := showClass || highlightCriticality
-			label := FormatEnvLabel(txy, terms.L1.Singular+" - ", envId, showEnvClass)
+			label := FormatEnvLabel(txy, terms.L1.Singular+" - ", envId, true)
 			envGraphAtt := FormatGraph(label, "")
 			err := g.AddSubGraph(rowSubGraphName, envSubGraphName(envId), envGraphAtt)
 			if err != nil {
@@ -135,49 +133,24 @@ func GraphL2(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, hi
 			// ------------------------------------------------------
 			// Create subgraphs to group nodes by classification level
 			// Maps are unordered in go and therefore we need to iterate over the ordered list to get a consistent image
-			classGraphNames := []string{}
+			groupGraphNames := []string{}
 
-			if highlightSensitivity {
+			if groupingEnabled {
 				// Group by sensitivity
-				for _, sens := range SenseOrder {
-					sensGraphName := focusSGName(envId, sens)
-					sensGraphAtt := map[string]string{
-						"label":     fmt.Sprintf("\"Sensitivity: %s(%s)\"", sens, SensitivityLabels[sens]),
+				for groupVal, i := range groupData.OrderMap {
+					groupGraphName := focusSGName(envId, groupVal)
+					groupGraphAtt := map[string]string{
+						"label":     fmt.Sprintf("\"%s: %s(%s)\"", groupData.DisplayName, groupVal, groupData.ValuesMap[groupVal]),
 						"shape":     "\"box\"",
-						"color":     primaryColours.GetColour(sens),
-						"fontcolor": primaryColours.GetColour(sens),
+						"color":     primaryColours.GetColour(i),
+						"fontcolor": primaryColours.GetColour(i, true),
 						"fontsize":  "\"14\"",
 						"style":     "\"rounded,setlinewidth(1)\"",
 					}
-					if _, ok := imageData[envId].Sensitivities[sens]; ok && (len(classGraphNames) == 0 ||
-						classGraphNames[len(classGraphNames)-1] != sensGraphName) {
-						classGraphNames = append(classGraphNames, sensGraphName)
-						g.AddSubGraph(envSubGraphName(envId), focusSGName(envId, sens), sensGraphAtt)
-					}
-				}
-			} else {
-				// Group by criticality
-				for _, crit := range CritOrder {
-					critGraphName := focusSGName(envId, crit)
-					critGraphAtt := map[string]string{}
-					if highlightCriticality {
-						critGraphAtt = map[string]string{
-							"label":     fmt.Sprintf("\"Criticality: %s(%s)\"", crit, CriticalityLabels[crit]),
-							"shape":     "\"box\"",
-							"color":     primaryColours.GetColour("1"),
-							"fontcolor": primaryColours.GetColour("1"),
-							"fontsize":  "\"14\"",
-							"style":     "\"rounded,setlinewidth(1)\"",
-						}
-					} else {
-						// Invisible subgraphs when neither highlighting
-						critGraphAtt = CopyInvis()
-						critGraphAtt["label"] = fmt.Sprintf("\"Invisible Criticality subgraph: %s\"", crit)
-					}
-					if _, ok := imageData[envId].Criticalities[crit]; ok && (len(classGraphNames) == 0 ||
-						classGraphNames[len(classGraphNames)-1] != critGraphName) {
-						classGraphNames = append(classGraphNames, critGraphName)
-						g.AddSubGraph(envSubGraphName(envId), focusSGName(envId, crit), critGraphAtt)
+					if _, ok := imageData[envId].PresentGroupValues[groupVal]; ok && (len(groupGraphNames) == 0 ||
+						groupGraphNames[len(groupGraphNames)-1] != groupGraphName) {
+						groupGraphNames = append(groupGraphNames, groupGraphName)
+						g.AddSubGraph(envSubGraphName(envId), focusSGName(envId, groupVal), groupGraphAtt)
 					}
 				}
 			}
@@ -188,14 +161,16 @@ func GraphL2(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, hi
 			// Loop through security domains in the current environment
 			batch := NewBatchVars(envId)
 
-			for _, sdId := range imageData[envId].SortedSegs {
-				sdEnvDet := imageData[envId].Segs[sdId]
+			for _, segL2Id := range imageData[envId].SortedSegs {
+
+				seg := txy.SegsL2s[segL2Id]
+				groupKey := unknownGroupKey
 				// Get grouping key based on mode
-				var groupKey string
-				if highlightSensitivity {
-					groupKey = GetClassificationFromOverride(sdEnvDet, txy.SegsL2s[sdId], "sensitivity")
-				} else {
-					groupKey = GetClassificationFromOverride(sdEnvDet, txy.SegsL2s[sdId], "criticality")
+				if groupingEnabled {
+					groupKey, err = seg.GetNamespacedValue(envId, groupData.Namespace, groupData.Key)
+					if err != nil {
+						return nil, err
+					}
 				}
 				// Setup batch subgraphs and bump when necessary
 				if batch.Count[groupKey] > batch.Limit || batch.Count[groupKey] == 0 {
@@ -206,14 +181,20 @@ func GraphL2(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, hi
 					orderNodes[envId][groupKey] = append(orderNodes[envId][groupKey], batchNodeName)
 				}
 
-				// Add security domain nodes
+				groupValue, err := seg.GetNamespacedValue(envId, groupData.Namespace, groupData.Key)
+				if err != nil {
+					return nil, err
+				}
+				// Add L2 Seg nodes
 				// -------------------------
 				// Add emphasis to the label (map returns 0 if not found)
-				label := FormatSdLabel(txy, "", envId, sdId, showClass, txy.SegsL2s[sdId].Prominence)
-				sdNodeAtt := FormatNode(label, GetClassificationFromOverride(sdEnvDet, txy.SegsL2s[sdId], "sensitivity")) // attributes to format the node
-				sdNodeName := fmt.Sprintf("\"sd_node_%s_%s\"", strings.ReplaceAll(envId, "-", "_"), strings.ReplaceAll(sdId, "-", "_"))
+				label := FormatSdLabel(txy, "", envId, segL2Id, groupingEnabled, txy.SegsL2s[segL2Id].Prominence)
+				l2SegNodeAtt := FormatGroupedNode(label, groupData.OrderMap[groupValue])
+				l2SegNodeName := fmt.Sprintf("\"l2_seg_node_%s_%s\"",
+					strings.ReplaceAll(envId, "-", "_"),
+					strings.ReplaceAll(segL2Id, "-", "_"))
 				// Add security domain node to the batch subgraph
-				err := g.AddNode(batch.CurrentSGName(groupKey), sdNodeName, sdNodeAtt)
+				err = g.AddNode(batch.CurrentSGName(groupKey), l2SegNodeName, l2SegNodeAtt)
 				if err != nil {
 					return nil, err
 				}
@@ -228,18 +209,14 @@ func GraphL2(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, hi
 		// loop through environments and classifications to get the order
 		// To change the order of the environments update it in the config's visuals.l1_layout
 		for _, env := range envIds {
-			if highlightSensitivity {
-				for _, s := range SenseOrder {
-					if _, ok := imageData[env].Sensitivities[s]; ok {
-						fullOrderNodes = append(fullOrderNodes, orderNodes[env][s]...)
+			if groupingEnabled {
+				for _, groupValue := range groupData.OrderedValues {
+					if _, ok := imageData[env].PresentGroupValues[groupValue]; ok {
+						fullOrderNodes = append(fullOrderNodes, orderNodes[env][groupValue]...)
 					}
 				}
 			} else {
-				for _, c := range CritOrder {
-					if _, ok := imageData[env].Criticalities[c]; ok {
-						fullOrderNodes = append(fullOrderNodes, orderNodes[env][c]...)
-					}
-				}
+				fullOrderNodes = append(fullOrderNodes, orderNodes[env][unknownGroupKey]...)
 			}
 		}
 		rowNodes[row] = fullOrderNodes

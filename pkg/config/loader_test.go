@@ -251,6 +251,76 @@ func TestLoadConfig_missingLevel(t *testing.T) {
 	})
 }
 
+func TestLoadConfig_WithPlugins(t *testing.T) {
+	t.Run("Preserves classifications plugin after merge", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configPath := filepath.Join(tmpDir, "config.yaml")
+
+		configYAML := `plugins:
+  classifications:
+    common_settings:
+      label_inheritance: true
+    rationale_length: 10
+    definitions:
+      sensitivity:
+        name: "Sensitivity"
+        values:
+          A: "High"
+        order: ["A"]
+`
+		if err := os.WriteFile(configPath, []byte(configYAML), 0644); err != nil {
+			t.Fatalf("Failed to write config: %v", err)
+		}
+		cfg, err := LoadConfig(configPath, testSchemaPath)
+		if err != nil {
+			t.Fatalf("Load failed: %v", err)
+		}
+		if cfg.Plugins.Classifications == nil {
+			t.Fatal("Expected Plugins.Classifications to survive merge, got nil")
+		}
+	})
+
+	t.Run("Applies defaults for empty fields while preserving set values", func(t *testing.T) {
+		defaults := domain.DefaultConfig()
+		tmpDir := t.TempDir()
+		configPath := filepath.Join(tmpDir, "config.yaml")
+
+		// Config with plugins but no schema_path - should get default
+		configYAML := `plugins:
+  classifications:
+    common_settings:
+      label_inheritance: true
+    rationale_length: 5
+    definitions:
+      test:
+        name: "Test"
+        values:
+          X: "Val"
+        order: ["X"]
+`
+		if err := os.WriteFile(configPath, []byte(configYAML), 0644); err != nil {
+			t.Fatalf("Failed to write config: %v", err)
+		}
+		cfg, err := LoadConfig(configPath, testSchemaPath)
+		if err != nil {
+			t.Fatalf("Load failed: %v", err)
+		}
+
+		// Defaults should be applied
+		if cfg.SchemaPath != defaults.SchemaPath {
+			t.Errorf("Expected default SchemaPath %q, got %q", defaults.SchemaPath, cfg.SchemaPath)
+		}
+
+		// Loaded values should be preserved
+		if cfg.Plugins.Classifications == nil {
+			t.Fatal("Plugins.Classifications should be preserved")
+		}
+		if cfg.Plugins.Classifications.RationaleLength != 5 {
+			t.Errorf("Expected RationaleLength 5, got %d", cfg.Plugins.Classifications.RationaleLength)
+		}
+	})
+}
+
 func TestLoadConfig_WithVisuals(t *testing.T) {
 	t.Run("Loads config with visuals l1_layout", func(t *testing.T) {
 		tmpDir := t.TempDir()

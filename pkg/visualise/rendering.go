@@ -10,6 +10,7 @@ import (
 	"github.com/awalterschulze/gographviz"
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/o11y"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 )
 
 type ImageConfig struct {
@@ -17,8 +18,8 @@ type ImageConfig struct {
 	filename  string
 }
 
-// RenderGraph generates a graph image from a gographviz.Graph object
-func RenderGraph(g *gographviz.Graph, dir string, name string) error {
+// renderGraph generates a graph image from a gographviz.Graph object
+func renderGraph(g *gographviz.Graph, dir string, name string) error {
 	output := g.String()
 	// function argument dir is only for where to save the image
 	tmpDir := ".tmp/"
@@ -80,14 +81,23 @@ func RenderGraph(g *gographviz.Graph, dir string, name string) error {
 }
 
 // RenderDiagrams generates all the diagrams for the taxonomy
-func RenderDiagrams(tax domain.Taxonomy, dir string, terms domain.TermConfig, visCfg VisualsDef) error {
+func RenderDiagrams(tax domain.Taxonomy, dir string, terms domain.TermConfig, visCfg VisualsDef, plugin plugins.Plugin) error {
 	// Generate the security domain graph
+	var groupData []plugins.ImageGroupingData
+	if plugin != nil {
+		groupData = plugin.GetImageData()
+	}
+
 	graphConfigs := []ImageConfig{
-		{func() (*gographviz.Graph, error) { return GraphL2(tax, terms, visCfg, false, false) }, "l2_Segments_overview.png"},
+		{func() (*gographviz.Graph, error) {
+			return GraphL2Grouped(tax, terms, visCfg, &plugins.ImageGroupingData{})
+		}, "l2_Segments_overview.png"},
 		{func() (*gographviz.Graph, error) { return GraphL1(tax, terms, visCfg) }, "l1_segments_overview.png"},
-		{func() (*gographviz.Graph, error) { return GraphL2(tax, terms, visCfg, true, false) }, "criticality_overview_all.png"},
-		{func() (*gographviz.Graph, error) { return GraphL2(tax, terms, visCfg, false, true) }, "sensitivity_overview_all.png"},
 		{func() (*gographviz.Graph, error) { return GraphCompliance(tax, terms, visCfg, "pci-dss", true) }, "compliance_overview_pci.png"},
+	}
+
+	for _, group := range groupData {
+		graphConfigs = append(graphConfigs, ImageConfig{func() (*gographviz.Graph, error) { return GraphL2Grouped(tax, terms, visCfg, &group) }, group.Key + "_overview.png"})
 	}
 
 	for _, config := range graphConfigs {
@@ -95,7 +105,7 @@ func RenderDiagrams(tax domain.Taxonomy, dir string, terms domain.TermConfig, vi
 		if err != nil {
 			return err
 		}
-		err = RenderGraph(g, dir, config.filename)
+		err = renderGraph(g, dir, config.filename)
 		if err != nil {
 			return err
 		}

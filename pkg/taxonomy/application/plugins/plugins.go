@@ -4,16 +4,39 @@ import (
 	"fmt"
 
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/domain/schemaValidation"
 )
 
 var NsPrefix = "bunsceal.plugin."
 
+// GetAllPluginSchemas returns all plugin-related schemas for validation.
+// Centralises schema registration to avoid coupling in config loader.
+func GetAllPluginSchemas() []schemaValidation.ExternalSchema {
+	schemas := []schemaValidation.ExternalSchema{
+		{
+			JSON: ClassificationsConfigSchema,
+			ID:   "https://github.com/kvql/bunsceal/pkg/config/schemas/plugin-classifications.json",
+		},
+		{
+			JSON: ComplianceConfigSchema,
+			ID:   "https://github.com/kvql/bunsceal/pkg/config/schemas/plugin-compliance.json",
+		},
+		{
+			JSON: PluginsConfigSchema,
+			ID:   "https://github.com/kvql/bunsceal/pkg/config/schemas/plugins.json",
+		},
+	}
+	return schemas
+}
+
 type PluginsCommonSettings struct {
-	LabelInheritance bool `yaml:"label_inheritance"`
+	LabelInheritance  bool `yaml:"label_inheritance"`
+	RequireCompleteL1 bool `yaml:"require_complete_l1"`
 }
 
 type ConfigPlugins struct {
 	Classifications *ClassificationsConfig `yaml:"classifications"`
+	Compliance      *ComplianceConfig      `yaml:"compliance"`
 }
 
 type PluginValidationResult struct {
@@ -47,6 +70,9 @@ type Plugins struct {
 func (p *Plugins) LoadPlugins(cfg ConfigPlugins) error {
 	if cfg.Classifications != nil {
 		p.Plugins["classifications"] = NewClassificationPlugin(cfg.Classifications, NsPrefix)
+	}
+	if cfg.Compliance != nil {
+		p.Plugins["compliance"] = NewCompliancePlugin(cfg.Compliance, NsPrefix)
 	}
 	return nil
 }

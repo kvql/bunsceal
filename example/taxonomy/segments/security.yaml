@@ -15,10 +15,10 @@ l1_overrides:
       - "bunsceal.plugin.classifications/criticality:5"
       - "bunsceal.plugin.classifications/criticality_rationale:Staging security environment is important for testing changes prior to deployment to production grade workloads, therefore any downtime can cost engineering hours through lost development time. However there is no direct impact on customers and hence doesn't meet the higher criticality levels."
   shared-service:
-    compliance_reqs:
-      - pci-dss
     labels:
       - "bunsceal.plugin.classifications/sensitivity:A"
       - "bunsceal.plugin.classifications/sensitivity_rationale:Shared services are the highest risk worklaods from a lateral movement/data leak perspective. They could act as the bridge between low security environments and high security environments."
       - "bunsceal.plugin.classifications/criticality:2"
       - "bunsceal.plugin.classifications/criticality_rationale:Loss of availability for security monitoring can result in missed alerts or compliance issues with process that depend on the security monitoring stack. No impact on the ability of customers to use the product."
+      - "bunsceal.plugin.compliance/pci-dss:in-scope"
+      - "bunsceal.plugin.compliance/pci-dss_rationale:Security segment inherits PCI DSS scope from shared-service environment."

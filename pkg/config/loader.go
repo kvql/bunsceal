@@ -32,14 +32,13 @@ func LoadConfig(configPath, configSchemaPath string) (configDomain.Config, error
 		configSchemaPath = defaultConfigSchemaPath
 	}
 
-	// Plugin schemas must be registered before compilation (config.json refs plugins.json)
-	pluginSchemas := []schemaValidation.ExternalSchema{
-		{JSON: plugins.ClassificationsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/plugin-classifications.json"},
-		{JSON: plugins.PluginsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/plugins.json"},
-		{JSON: domain.TermsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/terms.json"},
-		{JSON: visualise.VisualiseConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/visualise.json"},
-	}
-	schemaValidator, err := schemaValidation.NewSchemaValidator(configSchemaPath, configSchemaBaseURL, pluginSchemas...)
+	// External schemas must be registered before compilation (config.json refs other schemas)
+	externalSchemas := plugins.GetAllPluginSchemas()
+	externalSchemas = append(externalSchemas,
+		schemaValidation.ExternalSchema{JSON: domain.TermsConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/terms.json"},
+		schemaValidation.ExternalSchema{JSON: visualise.VisualiseConfigSchema, ID: "https://github.com/kvql/bunsceal/pkg/config/schemas/visualise.json"},
+	)
+	schemaValidator, err := schemaValidation.NewSchemaValidator(configSchemaPath, configSchemaBaseURL, externalSchemas...)
 	if err != nil {
 		o11y.Log.Printf("Error initialising schema validator: %v\n", err)
 		return configDomain.Config{}, errors.New("failed to initialise schema validator")

@@ -59,11 +59,14 @@ func Execute() {
 
 	// Generate taxonomy visualisations
 	if *graph {
-		var classPlug plugins.Plugin
-		if cfg.Plugins.Classifications != nil {
-			classPlug = plugins.NewClassificationPlugin(cfg.Plugins.Classifications, plugins.NsPrefix)
+		// Load plugins for visualisation
+		pluginsList := &plugins.Plugins{Plugins: make(map[string]plugins.Plugin)}
+		err := pluginsList.LoadPlugins(cfg.Plugins)
+		if err != nil {
+			o11y.Log.Printf("error loading plugins: %s", err)
+			os.Exit(1)
 		}
-		err := vis.RenderDiagrams(tax, *graphDir, cfg.Terminology, cfg.Visuals, classPlug)
+		err = vis.RenderDiagrams(tax, *graphDir, cfg.Terminology, cfg.Visuals, pluginsList.Plugins)
 		if err != nil {
 			o11y.Log.Print(err)
 			os.Exit(1)

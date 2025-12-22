@@ -81,11 +81,13 @@ func renderGraph(g *gographviz.Graph, dir string, name string) error {
 }
 
 // RenderDiagrams generates all the diagrams for the taxonomy
-func RenderDiagrams(tax domain.Taxonomy, dir string, terms domain.TermConfig, visCfg VisualsDef, plugin plugins.Plugin) error {
-	// Generate the security domain graph
+func RenderDiagrams(tax domain.Taxonomy, dir string, terms domain.TermConfig, visCfg VisualsDef, pluginMap map[string]plugins.Plugin) error {
+	// Collect image data from all plugins
 	var groupData []plugins.ImageGroupingData
-	if plugin != nil {
-		groupData = plugin.GetImageData()
+	for _, plugin := range pluginMap {
+		if plugin != nil {
+			groupData = append(groupData, plugin.GetImageData()...)
+		}
 	}
 
 	graphConfigs := []ImageConfig{
@@ -93,7 +95,8 @@ func RenderDiagrams(tax domain.Taxonomy, dir string, terms domain.TermConfig, vi
 			return GraphL2Grouped(tax, terms, visCfg, &plugins.ImageGroupingData{})
 		}, "l2_Segments_overview.png"},
 		{func() (*gographviz.Graph, error) { return GraphL1(tax, terms, visCfg) }, "l1_segments_overview.png"},
-		{func() (*gographviz.Graph, error) { return GraphCompliance(tax, terms, visCfg, "pci-dss", true) }, "compliance_overview_pci.png"},
+		// DEPRECATED: Hardcoded compliance graph - now handled via compliance plugin
+		// {func() (*gographviz.Graph, error) { return GraphCompliance(tax, terms, visCfg, "pci-dss", true) }, "compliance_overview_pci.png"},
 	}
 
 	for _, group := range groupData {

@@ -4,10 +4,10 @@ name: Shared Service
 id: shared-service
 description: |
   Security environment where all resources which operate as shared service and have network connectivity or access resources cross account are hosted.
-compliance_reqs:
-  - "pci-dss"
 labels:
   - "bunsceal.plugin.classifications/sensitivity:A"
   - "bunsceal.plugin.classifications/sensitivity_rationale:Shared services are the highest risk worklaods from a lateral movement perspective. They could act as the bridge between low security environments and high security environments."
   - "bunsceal.plugin.classifications/criticality:1"
   - "bunsceal.plugin.classifications/criticality_rationale:All environments rely on shared services to operate. An outage of a shared service could have significant impact on all environments."
+  - "bunsceal.plugin.compliance/pci-dss:in-scope"
+  - "bunsceal.plugin.compliance/pci-dss_rationale:Shared services process payment card data and must comply with PCI DSS requirements."

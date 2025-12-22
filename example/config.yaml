@@ -12,6 +12,7 @@ plugins:
   classifications:
     common_settings:
       label_inheritance: true
+      require_complete_l1: true
     rationale_length: 10
     definitions:
       sensitivity:
@@ -35,3 +36,17 @@ plugins:
           "4": "Low"
           "5": "N/A"
         order: ["1", "2", "3", "4", "5"]
+  compliance:
+    common_settings:
+      label_inheritance: true
+      require_complete_l1: false
+    rationale_length: 10
+    enforce_scope_hierarchy: true
+    definitions:
+      pci-dss:
+        name: "PCI DSS"
+        description: "Payment Card Industry Data Security Standard"
+        requirements_link: "https://www.pcisecuritystandards.org/"
+      soc2:
+        name: "SOC 2"
+        description: "Service Organization Control 2"

@@ -75,8 +75,8 @@ func (p ClassificationsPlugin) ValidateLabels(seg *domain.Seg) PluginValidationR
 	segLabels := seg.LabelNamespaces[p.Namespace]
 	foundKeys := p.validateNamespaceLabels(segLabels, "segment "+seg.ID, &result.Errors)
 
-	// L1 segments must have all classification definitions
-	if seg.Level == "1" {
+	// L1 segments must have all classification definitions (if RequireCompleteL1 is enabled)
+	if seg.Level == "1" && p.Config.Common.RequireCompleteL1 {
 		numKeysExpected := len(p.Config.Definitions) * 2
 		if foundKeys != numKeysExpected {
 			result.Errors = append(result.Errors, fmt.Errorf("segment %s missing classification labels. Expected %d, found %d", seg.ID, numKeysExpected, foundKeys))

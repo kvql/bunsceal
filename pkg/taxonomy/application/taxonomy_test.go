@@ -240,8 +240,8 @@ func TestValidatePluginLabels(t *testing.T) {
 				},
 			},
 		}
-		pluginsList := &plugins.Plugins{Plugins: make(map[string]plugins.Plugin)}
-		pluginsList.Plugins["classifications"] = plugins.NewClassificationPlugin(config, plugins.NsPrefix)
+		pluginsList := make(plugins.Plugins)
+		pluginsList["classifications"] = plugins.NewClassificationPlugin(config, plugins.NsPrefix)
 
 		seg := domain.Seg{
 			ID:   "prod",
@@ -276,8 +276,8 @@ func TestValidatePluginLabels(t *testing.T) {
 				},
 			},
 		}
-		pluginsList := &plugins.Plugins{Plugins: make(map[string]plugins.Plugin)}
-		pluginsList.Plugins["classifications"] = plugins.NewClassificationPlugin(config, plugins.NsPrefix)
+		pluginsList := make(plugins.Plugins)
+		pluginsList["classifications"] = plugins.NewClassificationPlugin(config, plugins.NsPrefix)
 
 		seg := domain.Seg{
 			ID:   "prod",

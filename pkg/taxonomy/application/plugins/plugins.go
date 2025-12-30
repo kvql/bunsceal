@@ -63,16 +63,14 @@ type RelationalValidator interface {
 	ValidateRelationship(parent, child *domain.Seg) []error
 }
 
-type Plugins struct {
-	Plugins map[string]Plugin
-}
+type Plugins map[string]Plugin
 
-func (p *Plugins) LoadPlugins(cfg ConfigPlugins) error {
+func (p Plugins) LoadPlugins(cfg ConfigPlugins) error {
 	if cfg.Classifications != nil {
-		p.Plugins["classifications"] = NewClassificationPlugin(cfg.Classifications, NsPrefix)
+		p["classifications"] = NewClassificationPlugin(cfg.Classifications, NsPrefix)
 	}
 	if cfg.Compliance != nil {
-		p.Plugins["compliance"] = NewCompliancePlugin(cfg.Compliance, NsPrefix)
+		p["compliance"] = NewCompliancePlugin(cfg.Compliance, NsPrefix)
 	}
 	return nil
 }
@@ -80,7 +78,7 @@ func (p *Plugins) LoadPlugins(cfg ConfigPlugins) error {
 // ValidateAllSegments validates all L1 and L2 segments against all loaded plugins.
 // Skips segments with no labels for efficiency.
 // Returns a flat list of all validation errors across all segments and plugins.
-func (p *Plugins) ValidateAllSegments(l1s, l2s map[string]domain.Seg) []error {
+func (p Plugins) ValidateAllSegments(l1s, l2s map[string]domain.Seg) []error {
 	var allErrors []error
 
 	// Validate L1 segments
@@ -90,7 +88,7 @@ func (p *Plugins) ValidateAllSegments(l1s, l2s map[string]domain.Seg) []error {
 			continue
 		}
 
-		for pluginName, plugin := range p.Plugins {
+		for pluginName, plugin := range p {
 			result := plugin.ValidateLabels(&seg)
 			if !result.Valid {
 				for _, err := range result.Errors {
@@ -107,7 +105,7 @@ func (p *Plugins) ValidateAllSegments(l1s, l2s map[string]domain.Seg) []error {
 			continue
 		}
 
-		for pluginName, plugin := range p.Plugins {
+		for pluginName, plugin := range p {
 			result := plugin.ValidateLabels(&seg)
 			if !result.Valid {
 				for _, err := range result.Errors {
@@ -120,10 +118,10 @@ func (p *Plugins) ValidateAllSegments(l1s, l2s map[string]domain.Seg) []error {
 	return allErrors
 }
 
-func (p *Plugins) ApplyPluginInheritanceAndValidate(parent domain.Seg, child *domain.Seg) []error {
+func (p Plugins) ApplyPluginInheritanceAndValidate(parent domain.Seg, child *domain.Seg) []error {
 	var allErrors []error
 
-	for _, plugin := range p.Plugins {
+	for _, plugin := range p {
 		if !plugin.GetEnabled() {
 			continue
 		}

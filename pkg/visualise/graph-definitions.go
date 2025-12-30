@@ -76,13 +76,13 @@ func GraphL1(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef) (*
 // Function to Segment Level 2 Graphs
 // ################################
 
-func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, groupData *plugins.ImageGroupingData) (*gographviz.Graph, error) {
+func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, groupData plugins.ImageGroupingData) (*gographviz.Graph, error) {
 	imageData := VisL2GroupingPrep(txy, groupData)
 	// Setup the top level graph object
 	title := terms.L1.Plural + " & " + terms.L2.Plural + " Layout"
 	subHeading := "Overview of " + terms.L2.Plural + " grouped by their respective " + terms.L1.Plural
 	g := BaselineGraph(title, subHeading)
-	groupingEnabled := groupData != nil
+	groupingEnabled := groupData.Namespace != "" && groupData.Key != ""
 
 	// Build rowsMap from config
 	rowsLayout, err := buildRowsMap(visCfg, txy)
@@ -118,7 +118,6 @@ func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg Visuals
 		// The rowsLayout[] are slices which are ordered and therefore we can iterate over them in order,
 		// tx.SegL1s is a map and therefore iterating over that would give a different order each time
 		envIds := rowsLayout[row]
-		unknownGroupKey := "noGroup"
 		for _, envId := range envIds {
 			orderNodes[envId] = map[string][]string{}
 			// Generate attributes object for security environment subgraph
@@ -133,10 +132,9 @@ func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg Visuals
 			// ------------------------------------------------------
 			// Create subgraphs to group nodes by classification level
 			// Maps are unordered in go and therefore we need to iterate over the ordered list to get a consistent image
-			groupGraphNames := []string{}
-
 			if groupingEnabled {
 				// Group by sensitivity
+				groupGraphNames := []string{}
 				for groupVal, i := range groupData.OrderMap {
 					groupGraphName := focusSGName(envId, groupVal)
 					groupGraphAtt := map[string]string{
@@ -153,6 +151,8 @@ func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg Visuals
 						g.AddSubGraph(envSubGraphName(envId), focusSGName(envId, groupVal), groupGraphAtt)
 					}
 				}
+			} else {
+				g.AddSubGraph(envSubGraphName(envId), focusSGName(envId, unknownGroupKey), InvisAtt)
 			}
 
 			// Add batch subgraphs & Segment Level 2 nodes
@@ -164,13 +164,17 @@ func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg Visuals
 			for _, segL2Id := range imageData[envId].SortedSegs {
 
 				seg := txy.SegsL2s[segL2Id]
-				groupKey := unknownGroupKey
+				var groupKey string
 				// Get grouping key based on mode
+				var colorIndex int
 				if groupingEnabled {
 					groupKey, err = seg.GetNamespacedValue(envId, groupData.Namespace, groupData.Key)
 					if err != nil {
 						return nil, err
 					}
+					colorIndex = groupData.OrderMap[groupKey]
+				} else {
+					groupKey = unknownGroupKey
 				}
 				// Setup batch subgraphs and bump when necessary
 				if batch.Count[groupKey] > batch.Limit || batch.Count[groupKey] == 0 {
@@ -181,15 +185,12 @@ func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg Visuals
 					orderNodes[envId][groupKey] = append(orderNodes[envId][groupKey], batchNodeName)
 				}
 
-				groupValue, err := seg.GetNamespacedValue(envId, groupData.Namespace, groupData.Key)
-				if err != nil {
-					return nil, err
-				}
 				// Add L2 Seg nodes
 				// -------------------------
 				// Add emphasis to the label (map returns 0 if not found)
-				label := FormatSdLabel(txy, "", envId, segL2Id, groupingEnabled, txy.SegsL2s[segL2Id].Prominence)
-				l2SegNodeAtt := FormatGroupedNode(label, groupData.OrderMap[groupValue])
+				label := FormatSdLabel(txy, "", envId, segL2Id,
+					groupingEnabled, txy.SegsL2s[segL2Id].Prominence)
+				l2SegNodeAtt := FormatGroupedNode(label, colorIndex)
 				l2SegNodeName := fmt.Sprintf("\"l2_seg_node_%s_%s\"",
 					strings.ReplaceAll(envId, "-", "_"),
 					strings.ReplaceAll(segL2Id, "-", "_"))
@@ -217,136 +218,6 @@ func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg Visuals
 				}
 			} else {
 				fullOrderNodes = append(fullOrderNodes, orderNodes[env][unknownGroupKey]...)
-			}
-		}
-		rowNodes[row] = fullOrderNodes
-	}
-	err = AddSpacers(g, rowNodes)
-	if err != nil {
-		return nil, err
-	}
-
-	// Add legend to the graph
-	// ------------------------
-	err = AddLegend(g, 12, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return g, nil
-}
-
-// ################################
-// Function to Segment Level 2 Graphs
-// ################################
-// GraphCompliance  showOut is used control if out of scope domains are added to the graph
-func GraphCompliance(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, compName string, showOutOfScope bool) (*gographviz.Graph, error) {
-	if _, ok := txy.CompReqs[compName]; !ok {
-		return nil, fmt.Errorf("compliance standard %s not found in taxonomy", compName)
-	}
-
-	imageData := PrepTaxonomy(txy)
-	// Setup the top level graph object
-	title := terms.L1.Plural + " & " + terms.L2.Plural + " Layout"
-	subHeading := fmt.Sprintf("Compliance Standard: %s", txy.CompReqs[compName].Name)
-	g := BaselineGraph(title, subHeading)
-
-	// Build rowsMap from config
-	rowsLayout, err := buildRowsMap(visCfg, txy)
-	if err != nil {
-		return nil, err
-	}
-
-	// setup row subgraphs
-	// -------------------
-	rowNodes := map[int][]string{}
-	for row := 0; row < len(rowsLayout); row++ {
-
-		orderNodes := map[string]map[string][]string{}
-		rowSubGraphName := fmt.Sprintf("\"cluster_row_%d\"", row)
-		rowAtt := CopyInvis()
-		rowAtt["label"] = fmt.Sprintf("\"Invisible Row subgraph: %d\"", row) // help with debugging graph structure
-		g.AddSubGraph("top_level_graph", rowSubGraphName, rowAtt)
-
-		// Environment subgraphs
-		// --------------------
-		envIds := rowsLayout[row]
-		for _, envId := range envIds {
-			orderNodes[envId] = map[string][]string{}
-			label := FormatEnvLabel(txy, terms.L1.Singular+" - ", envId, false)
-			envGraphAtt := FormatGraph(label, "")
-			err := g.AddSubGraph(rowSubGraphName, envSubGraphName(envId), envGraphAtt)
-			if err != nil {
-				return nil, err
-			}
-
-			// Scope subgraphs
-			// ---------------------
-			compGraphAtt := map[string]string{
-				"label":     fmt.Sprintf("\"%s - In Scope\"", compName),
-				"shape":     "\"box\"",
-				"color":     FontColour,
-				"fontcolor": FontColour,
-				"fontsize":  "\"16\"",
-				"style":     "\"rounded,setlinewidth(1)\"",
-			}
-			name := focusSGName(envId, "in")
-			g.AddSubGraph(envSubGraphName(envId), name, compGraphAtt)
-			compGraphAtt["label"] = fmt.Sprintf("\"%s - Out of Scope\"", compName)
-			name = focusSGName(envId, "out")
-			g.AddSubGraph(envSubGraphName(envId), name, compGraphAtt)
-
-			// Add batch subgraphs & Segment Level 2 nodes
-			// ------------------------------------------
-			batch := NewBatchVars(envId)
-
-			for _, sdId := range imageData[envId].SortedSegs {
-				scope := "out"
-				if _, ok := imageData[envId].Segs[sdId].CompReqs[compName]; ok {
-					scope = "in"
-				}
-				if showOutOfScope || scope == "in" {
-					sdEnvDet := imageData[envId].Segs[sdId]
-					//crit := sdEnvDet.Criticality
-					// Setup batch subgraphs and bump when necessary
-					if batch.Count[scope] > batch.Limit || batch.Count[scope] == 0 {
-						batchNodeName, err := batch.BumpBatch(scope, g)
-						if err != nil {
-							return nil, err
-						}
-						orderNodes[envId][scope] = append(orderNodes[envId][scope], batchNodeName)
-					}
-
-					// Add security domain nodes
-					// -------------------------
-					// Add emphasis to the label (map returns 0 if not found)
-					label := FormatSdLabel(txy, "", envId, sdId, false, txy.SegsL2s[sdId].Prominence)
-					sdNodeAtt := FormatNode(label, GetClassificationFromOverride(sdEnvDet, txy.SegsL2s[sdId], "sensitivity")) // attributes to format the node
-					// Make out of scope nodes less visible in the graph by removing filled style (font needs to be bright if fill removed)
-					if scope == "out" {
-						sdNodeAtt["fontcolor"] = sdNodeAtt["color"]
-						sdNodeAtt["style"] = "\"rounded,setlinewidth(2)\""
-					}
-					sdNodeName := fmt.Sprintf("\"sd_node_%s_%s\"", strings.ReplaceAll(envId, "-", "_"), strings.ReplaceAll(sdId, "-", "_"))
-					// Add security domain node to the batch subgraph
-
-					err := g.AddNode(batch.CurrentSGName(scope), sdNodeName, sdNodeAtt)
-					if err != nil {
-						return nil, err
-					}
-					batch.Count[scope]++
-				}
-			}
-		}
-		// Add edges to order the graph
-		// ----------------------------
-		// add all nodes to a single slice before adding edges, this creates a single list of nodes to link in each row
-		fullOrderNodes := []string{}
-		// To change the order of the environments update it in the config's visuals.l1_layout
-		for _, env := range envIds {
-			fullOrderNodes = append(fullOrderNodes, orderNodes[env]["in"]...)
-			if showOutOfScope {
-				fullOrderNodes = append(fullOrderNodes, orderNodes[env]["out"]...)
 			}
 		}
 		rowNodes[row] = fullOrderNodes

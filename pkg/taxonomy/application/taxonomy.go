@@ -63,9 +63,8 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 	}
 
 	// Load plugins from config
-	var pluginsList *plugins.Plugins
+	pluginsList := make(plugins.Plugins)
 	if cfg.Plugins.Classifications != nil {
-		pluginsList = &plugins.Plugins{Plugins: make(map[string]plugins.Plugin)}
 		err = pluginsList.LoadPlugins(cfg.Plugins)
 		if err != nil {
 			o11y.Log.Printf("error loading plugins: %s", err)
@@ -124,7 +123,7 @@ func ValidateCoreLogic(txy *domain.Taxonomy, cfg configdomain.Config) bool {
 // ValidatePluginLabels validates all segment labels against loaded plugins.
 // Must be called BEFORE ApplyInheritance to catch malformed labels (missing rationale pairs).
 // L1 segments must have all classification definitions. L2/overrides only need valid pairs.
-func ValidatePluginLabels(txy *domain.Taxonomy, pluginsList *plugins.Plugins) error {
+func ValidatePluginLabels(txy *domain.Taxonomy, pluginsList plugins.Plugins) error {
 	if pluginsList == nil {
 		return nil
 	}

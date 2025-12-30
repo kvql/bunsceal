@@ -9,7 +9,7 @@ import (
 
 const testNs = "bunsceal.plugin.classifications"
 
-func newTestPlugins(inheritance bool) *plugins.Plugins {
+func newTestPlugins(inheritance bool) plugins.Plugins {
 	config := &plugins.ClassificationsConfig{
 		Common:          plugins.PluginsCommonSettings{LabelInheritance: inheritance},
 		RationaleLength: 10,
@@ -21,8 +21,8 @@ func newTestPlugins(inheritance bool) *plugins.Plugins {
 			},
 		},
 	}
-	p := &plugins.Plugins{Plugins: make(map[string]plugins.Plugin)}
-	p.Plugins["classifications"] = plugins.NewClassificationPlugin(config, plugins.NsPrefix)
+	p := make(plugins.Plugins)
+	p["classifications"] = plugins.NewClassificationPlugin(config, plugins.NsPrefix)
 	return p
 }
 

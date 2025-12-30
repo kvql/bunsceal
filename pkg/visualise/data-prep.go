@@ -17,6 +17,8 @@ type EnvImageData struct {
 	Sensitivities map[string]bool
 }
 
+const unknownGroupKey = "noGroup"
+
 // buildRowsMap creates a rowsMap from the config's L1Layout.
 // Returns map[int][]string to maintain ordering when iterating sequentially.
 // If no L1Layout is configured, defaults to all L1s on row 0.
@@ -87,7 +89,7 @@ type L2GroupingData struct {
 	PresentGroupValues map[string]bool
 }
 
-func VisL2GroupingPrep(txy domain.Taxonomy, groupData *plugins.ImageGroupingData) map[string]L2GroupingData {
+func VisL2GroupingPrep(txy domain.Taxonomy, groupData plugins.ImageGroupingData) map[string]L2GroupingData {
 
 	data := make(map[string]L2GroupingData)
 	for envId := range txy.SegL1s {
@@ -101,11 +103,22 @@ func VisL2GroupingPrep(txy domain.Taxonomy, groupData *plugins.ImageGroupingData
 		// REFACTORED: Iterate over L1Parents instead of L1Overrides keys
 		for _, l1ID := range segL2.L1Parents {
 			envData := data[l1ID]
-			crit, err := segL2.GetNamespacedValue(l1ID, groupData.Namespace, groupData.Key)
-			if err != nil {
-				return make(map[string]L2GroupingData)
+
+			// Handle empty groupData (no namespace/key specified)
+			var groupValue string
+			if groupData.Namespace == "" || groupData.Key == "" {
+				// No grouping - use consistent value with unknownGroupKey
+				groupValue = unknownGroupKey
+			} else {
+				// Grouping enabled - lookup namespaced value
+				var err error
+				groupValue, err = segL2.GetNamespacedValue(l1ID, groupData.Namespace, groupData.Key)
+				if err != nil {
+					return make(map[string]L2GroupingData)
+				}
 			}
-			envData.PresentGroupValues[crit] = true
+
+			envData.PresentGroupValues[groupValue] = true
 			envData.SortedSegs = append(data[l1ID].SortedSegs, segL2.ID)
 			data[l1ID] = envData
 		}

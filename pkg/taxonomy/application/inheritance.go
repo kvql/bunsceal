@@ -8,7 +8,7 @@ import (
 
 // ApplyInheritance applies inheritance rules for taxonomy segments and validates cross-entity references.
 // Pass nil for pluginsList to skip plugin label inheritance (backwards compatible).
-func ApplyInheritance(txy *domain.Taxonomy, pluginsList *plugins.Plugins) error {
+func ApplyInheritance(txy *domain.Taxonomy, pluginsList plugins.Plugins) error {
 	// Loop through env details for each security domain and update risk compliance if not set based on env default
 	for _, seg := range txy.SegsL2s {
 		// Initialize L1Overrides map if nil (enables parent-without-override pattern)

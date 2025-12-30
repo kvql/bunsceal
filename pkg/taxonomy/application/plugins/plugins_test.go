@@ -8,7 +8,7 @@ import (
 
 func TestLoadPlugins(t *testing.T) {
 	t.Run("Loads classifications plugin when config present", func(t *testing.T) {
-		p := &Plugins{Plugins: make(map[string]Plugin)}
+		p := make(Plugins)
 		cfg := ConfigPlugins{
 			Classifications: newTestConfig(true, 10),
 		}
@@ -18,13 +18,13 @@ func TestLoadPlugins(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
-		if _, exists := p.Plugins["classifications"]; !exists {
+		if _, exists := p["classifications"]; !exists {
 			t.Error("Expected classifications plugin to be loaded")
 		}
 	})
 
 	t.Run("Returns nil error for nil config", func(t *testing.T) {
-		p := &Plugins{Plugins: make(map[string]Plugin)}
+		p := make(Plugins)
 		cfg := ConfigPlugins{
 			Classifications: nil,
 		}
@@ -34,7 +34,7 @@ func TestLoadPlugins(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
-		if len(p.Plugins) != 0 {
+		if len(p) != 0 {
 			t.Error("Expected no plugins to be loaded when config is nil")
 		}
 	})
@@ -50,8 +50,8 @@ func TestApplyInheritanceAndValidate(t *testing.T) {
 		})
 		child := newTestSeg("child", []string{})
 
-		plugs := &Plugins{Plugins: make(map[string]Plugin)}
-		plugs.Plugins["classifications"] = plugin
+		plugs := make(Plugins)
+		plugs["classifications"] = plugin
 		errs := plugs.ApplyPluginInheritanceAndValidate(*parent, child)
 
 		if len(errs) > 0 {
@@ -74,8 +74,8 @@ func TestApplyInheritanceAndValidate(t *testing.T) {
 			label("other_key", "child_value"), // child has some labels in namespace
 		})
 
-		plugs := &Plugins{Plugins: make(map[string]Plugin)}
-		plugs.Plugins["classifications"] = plugin
+		plugs := make(Plugins)
+		plugs["classifications"] = plugin
 		errs := plugs.ApplyPluginInheritanceAndValidate(*parent, child)
 
 		if len(errs) > 0 {
@@ -98,8 +98,8 @@ func TestApplyInheritanceAndValidate(t *testing.T) {
 			label("other_key", "child_value"),
 		})
 
-		plugs := &Plugins{Plugins: make(map[string]Plugin)}
-		plugs.Plugins["classifications"] = plugin
+		plugs := make(Plugins)
+		plugs["classifications"] = plugin
 		errs := plugs.ApplyPluginInheritanceAndValidate(*parent, child)
 
 		if len(errs) > 0 {
@@ -124,8 +124,8 @@ func TestApplyInheritanceAndValidate(t *testing.T) {
 			label("sensitivity_rationale", "Child rationale here"),
 		})
 
-		plugs := &Plugins{Plugins: make(map[string]Plugin)}
-		plugs.Plugins["classifications"] = plugin
+		plugs := make(Plugins)
+		plugs["classifications"] = plugin
 		errs := plugs.ApplyPluginInheritanceAndValidate(*parent, child)
 
 		if len(errs) > 0 {
@@ -146,8 +146,8 @@ func TestApplyInheritanceAndValidate(t *testing.T) {
 			label("sensitivity_rationale", "Child rationale"),
 		})
 
-		plugs := &Plugins{Plugins: make(map[string]Plugin)}
-		plugs.Plugins["classifications"] = plugin
+		plugs := make(Plugins)
+		plugs["classifications"] = plugin
 		errs := plugs.ApplyPluginInheritanceAndValidate(*parent, child)
 
 		if len(errs) > 0 {
@@ -171,7 +171,7 @@ func TestNsPrefix(t *testing.T) {
 
 func TestValidateAllSegments(t *testing.T) {
 	t.Run("Returns no errors for empty plugins list", func(t *testing.T) {
-		p := &Plugins{Plugins: make(map[string]Plugin)}
+		p := make(Plugins)
 		l1s := map[string]domain.Seg{
 			"seg1": *newTestSeg("seg1", []string{label("sensitivity", "high")}),
 		}
@@ -186,8 +186,8 @@ func TestValidateAllSegments(t *testing.T) {
 
 	t.Run("Skips segments with no labels", func(t *testing.T) {
 		config := newTestConfig(true, 10)
-		p := &Plugins{Plugins: make(map[string]Plugin)}
-		p.Plugins["classifications"] = NewClassificationPlugin(config, NsPrefix)
+		p := make(Plugins)
+		p["classifications"] = NewClassificationPlugin(config, NsPrefix)
 
 		l1s := map[string]domain.Seg{
 			"seg1": *newTestSeg("seg1", []string{}), // no labels
@@ -204,8 +204,8 @@ func TestValidateAllSegments(t *testing.T) {
 
 	t.Run("Collects errors from multiple segments", func(t *testing.T) {
 		config := newTestConfig(true, 10)
-		p := &Plugins{Plugins: make(map[string]Plugin)}
-		p.Plugins["classifications"] = NewClassificationPlugin(config, NsPrefix)
+		p := make(Plugins)
+		p["classifications"] = NewClassificationPlugin(config, NsPrefix)
 
 		// Both segments have invalid labels (missing rationale)
 		l1s := map[string]domain.Seg{
@@ -242,8 +242,8 @@ func TestValidateAllSegments(t *testing.T) {
 
 	t.Run("Returns no errors for valid segments", func(t *testing.T) {
 		config := newTestConfig(true, 10)
-		p := &Plugins{Plugins: make(map[string]Plugin)}
-		p.Plugins["classifications"] = NewClassificationPlugin(config, NsPrefix)
+		p := make(Plugins)
+		p["classifications"] = NewClassificationPlugin(config, NsPrefix)
 
 		l1s := map[string]domain.Seg{
 			"seg1": *newTestSeg("seg1", []string{

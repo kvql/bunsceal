@@ -40,33 +40,34 @@ func Execute() {
 		os.Exit(1)
 	}
 	o11y.Log.Println("Taxonomy is valid")
-	// Validate the taxonomy
-	if *verify {
-		if !vis.ValidateImageVersions() {
-			o11y.Log.Println("Taxonomy images created before last update of the taxonomy, regenerate the images")
-			os.Exit(1)
-		}
-		o11y.Log.Println("Images are up to date with the taxonomy")
-	}
+
 	// Generate local JSON file of the taxonomy
 	if *localExport != "" {
-		err := infrastructure.GenLocalTaxonomy(tax, *localExport)
+		err = infrastructure.GenLocalTaxonomy(tax, *localExport)
 		if err != nil {
 			o11y.Log.Println("Failed to export taxonomy to local JSON file")
 			os.Exit(1)
 		}
 	}
+	// Load plugins for visualisation
+	pluginsList := make(plugins.Plugins)
+	err = pluginsList.LoadPlugins(cfg.Plugins)
+	if err != nil {
+		o11y.Log.Printf("error loading plugins: %s", err)
+		os.Exit(1)
+	}
+	// Validate the taxonomy
+	if *verify {
+		if !vis.ValidateImageVersions(pluginsList) {
+			o11y.Log.Println("Taxonomy images created before last update of the taxonomy, regenerate the images")
+			os.Exit(1)
+		}
+		o11y.Log.Println("Images are up to date with the taxonomy")
+	}
 
 	// Generate taxonomy visualisations
 	if *graph {
-		// Load plugins for visualisation
-		pluginsList := &plugins.Plugins{Plugins: make(map[string]plugins.Plugin)}
-		err := pluginsList.LoadPlugins(cfg.Plugins)
-		if err != nil {
-			o11y.Log.Printf("error loading plugins: %s", err)
-			os.Exit(1)
-		}
-		err = vis.RenderDiagrams(tax, *graphDir, cfg.Terminology, cfg.Visuals, pluginsList.Plugins)
+		err = vis.RenderDiagrams(tax, *graphDir, cfg.Terminology, cfg.Visuals, pluginsList)
 		if err != nil {
 			o11y.Log.Print(err)
 			os.Exit(1)

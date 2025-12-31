@@ -229,9 +229,12 @@ func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg Visuals
 
 	// Add legend to the graph
 	// ------------------------
-	err = AddLegend(g, allGroups, 12, true)
-	if err != nil {
-		return nil, err
+	// Only show legend when grouping is enabled, and only for the active group
+	if groupingEnabled {
+		err = AddLegend(g, []plugins.ImageGroupingData{groupData}, 12, true)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return g, nil

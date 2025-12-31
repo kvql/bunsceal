@@ -63,17 +63,17 @@ func (rs *LogicRuleSet) ValidateAll(taxonomy *domain.Taxonomy) []ValidationResul
 // LogicRuleSharedService validates the shared-services environment.
 // This rule ensures the shared-services environment meets the strictest requirements.
 type LogicRuleSharedService struct {
-	config            configdomain.GeneralBooleanConfig
+	config               configdomain.GeneralBooleanConfig
 	classificationPlugin plugins.Plugin
-	compliancePlugin  plugins.Plugin
+	compliancePlugin     plugins.Plugin
 }
 
 // NewLogicRuleSharedService creates a new SharedService validation rule.
 func NewLogicRuleSharedService(config configdomain.GeneralBooleanConfig, classificationPlugin plugins.Plugin, compliancePlugin plugins.Plugin) *LogicRuleSharedService {
 	return &LogicRuleSharedService{
-		config:            config,
+		config:               config,
 		classificationPlugin: classificationPlugin,
-		compliancePlugin:  compliancePlugin,
+		compliancePlugin:     compliancePlugin,
 	}
 }
 

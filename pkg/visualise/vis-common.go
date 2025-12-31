@@ -62,7 +62,6 @@ var CritColourMap = map[string]ColorFont{
 	"5": {"\"#A0E1E1\"", "\"#320707\""},
 }
 
-
 var visibility = "\"invis\"" //"\"\"" for visible, "\"invis\"" for invisible
 // Formatting attributes for invisible nodes and edges
 var InvisAtt = map[string]string{
@@ -225,7 +224,7 @@ func envSubGraphName(envID string) string {
 	return fmt.Sprintf("\"cluster_%s\"", strings.ReplaceAll(envID, "-", "_"))
 }
 
-// FocusSGName returns the name of the subgraph for grouping Segment Level 2s within an environment by a particular focus. 
+// FocusSGName returns the name of the subgraph for grouping Segment Level 2s within an environment by a particular focus.
 // cluster name doesn't include what the focus is as it just needs to be predicable and unique not human readable. graphviz displays the label not the graph name
 func focusSGName(envID string, focusValue string) string {
 	return fmt.Sprintf("\"cluster_focus_%s_%s\"", strings.ReplaceAll(envID, "-", "_"), focusValue)

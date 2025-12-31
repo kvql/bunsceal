@@ -15,14 +15,14 @@ import (
 
 // See the GraphSDs function for more comments explaining how the graph is generated. That is the more complex function and therefore has more comments than GraphEnvs
 
-func GraphL1(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef) (*gographviz.Graph, error) {
+func GraphL1(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, allGroups []plugins.ImageGroupingData) (*gographviz.Graph, error) {
 	// Setup the top level graph object
 	title := terms.L1.Plural + " Overview"
 	g := BaselineGraph(title, "")
 
 	// // Add legend to the graph
 	// // ------------------------
-	err := AddLegend(g, 12, true)
+	err := AddLegend(g, allGroups, 12, true)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func GraphL1(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef) (*
 // Function to Segment Level 2 Graphs
 // ################################
 
-func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, groupData plugins.ImageGroupingData) (*gographviz.Graph, error) {
+func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg VisualsDef, allGroups []plugins.ImageGroupingData, groupData plugins.ImageGroupingData) (*gographviz.Graph, error) {
 	imageData := VisL2GroupingPrep(txy, groupData)
 	// Setup the top level graph object
 	title := terms.L1.Plural + " & " + terms.L2.Plural + " Layout"
@@ -229,7 +229,7 @@ func GraphL2Grouped(txy domain.Taxonomy, terms domain.TermConfig, visCfg Visuals
 
 	// Add legend to the graph
 	// ------------------------
-	err = AddLegend(g, 12, true)
+	err = AddLegend(g, allGroups, 12, true)
 	if err != nil {
 		return nil, err
 	}

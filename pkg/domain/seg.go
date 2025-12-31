@@ -12,7 +12,6 @@ type Seg struct {
 	ID              string                       `yaml:"id" json:"id"`
 	Description     string                       `yaml:"description" json:"description"`
 	Level           string                       `yaml:"level,omitempty" json:"level,omitempty"`
-	ComplianceReqs  []string                     `yaml:"compliance_reqs,omitempty" json:"compliance_reqs,omitempty"`
 	L1Parents       []string                     `yaml:"l1_parents,omitempty" json:"l1_parents,omitempty"`
 	L1Overrides     map[string]L1Overrides       `yaml:"l1_overrides,omitempty" json:"l1_overrides,omitempty"`
 	Prominence      int                          `yaml:"prominence,omitempty" json:"prominence,omitempty"`
@@ -22,8 +21,6 @@ type Seg struct {
 }
 
 type L1Overrides struct {
-	ComplianceReqs  []string                     `yaml:"compliance_reqs" json:"compliance_reqs,omitempty"`
-	CompReqs        map[string]CompReq           `yaml:"comp_reqs,omitempty" json:"comp_reqs,omitempty"`
 	Labels          []string                     `yaml:"labels,omitempty" json:"labels,omitempty"`
 	ParsedLabels    map[string]string            `yaml:"-" json:"-"`
 	LabelNamespaces map[string]map[string]string `yaml:"-" json:"-"`

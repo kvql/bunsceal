@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/kvql/bunsceal/pkg/domain/schemas/taxonomy.json",
   "title": "Taxonomy aggregate",
-  "description": "Aggregated taxonomy structure combining security environments, security domains and compliance requirements",
+  "description": "Aggregated taxonomy structure combining all segment data",
   "type": "object",
   "properties": {
     "apiVersion": {
@@ -30,41 +30,12 @@
       },
       "additionalProperties": false,
       "minProperties": 1
-    },
-    "sensitivityLevels": {
-      "const": [
-        "A",
-        "B",
-        "C",
-        "D"
-      ]
-    },
-    "criticalityLevels": {
-      "const": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5"
-      ]
-    },
-    "compReqs": {
-      "type": "object",
-      "patternProperties": {
-        "^[A-Za-z0-9._-]+$": {
-          "$ref": "./compliance-req.json"
-        }
-      },
-      "additionalProperties": false
     }
   },
   "required": [
     "apiVersion",
     "segL1s",
-    "Segs",
-    "sensitivityLevels",
-    "criticalityLevels",
-    "compReqs"
+    "Segs"
   ],
   "additionalProperties": false
 }

@@ -5,21 +5,93 @@ import (
 
 	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 )
 
 const testNs = "bunsceal.plugin.classifications"
 
-// newSegWithClassification creates a Seg with classification labels
-func newSegWithClassification(id, name, sensitivity, criticality string, compReqs []string) domain.Seg {
+// createMockClassificationPlugin creates a mock classification plugin for testing
+func createMockClassificationPlugin() plugins.Plugin {
+	config := &plugins.ClassificationsConfig{
+		Definitions: map[string]plugins.ClassificationDefinition{
+			"sensitivity": {
+				DescriptiveName: "Sensitivity",
+				Order:           []string{"A", "B", "C", "D"},
+				Values: map[string]string{
+					"A": "High",
+					"B": "Medium",
+					"C": "Low",
+					"D": "N/A",
+				},
+			},
+			"criticality": {
+				DescriptiveName: "Criticality",
+				Order:           []string{"1", "2", "3", "4", "5"},
+				Values: map[string]string{
+					"1": "Critical",
+					"2": "High",
+					"3": "Medium",
+					"4": "Low",
+					"5": "N/A",
+				},
+			},
+		},
+	}
+	return plugins.NewClassificationPlugin(config, "bunsceal.plugin.")
+}
+
+// createMockCompliancePluginForLogicRules creates a mock compliance plugin for testing
+func createMockCompliancePluginForLogicRules() plugins.Plugin {
+	config := &plugins.ComplianceConfig{
+		Definitions: map[string]plugins.ComplianceDefinition{
+			"req1": {
+				DescriptiveName:  "Requirement 1",
+				Description:      "Test requirement 1",
+				RequirementsLink: "https://example.com/req1",
+			},
+			"req2": {
+				DescriptiveName:  "Requirement 2",
+				Description:      "Test requirement 2",
+				RequirementsLink: "https://example.com/req2",
+			},
+		},
+	}
+	return plugins.NewCompliancePlugin(config, "bunsceal.plugin.")
+}
+
+// createMockPluginMap creates a plugin map with mock classification and compliance plugins
+func createMockPluginMap() plugins.Plugins {
+	pluginMap := make(plugins.Plugins)
+	pluginMap["classifications"] = createMockClassificationPlugin()
+	pluginMap["compliance"] = createMockCompliancePluginForLogicRules()
+	return pluginMap
+}
+
+// complianceLabel creates compliance labels for a requirement ID
+func complianceLabel(reqID string) []string {
+	compNs := "bunsceal.plugin.compliance"
+	return []string{
+		compNs + "/" + reqID + ":" + plugins.ScopeInScope,
+		compNs + "/" + reqID + "_rationale:Test rationale for " + reqID,
+	}
+}
+
+// newSegWithClassification creates a Seg with classification and compliance labels
+func newSegWithClassification(id, name, sensitivity, criticality string, compReqIDs []string) domain.Seg {
 	labels := []string{
 		testNs + "/sensitivity:" + sensitivity,
 		testNs + "/criticality:" + criticality,
 	}
+
+	// Add compliance labels for each requirement ID
+	for _, reqID := range compReqIDs {
+		labels = append(labels, complianceLabel(reqID)...)
+	}
+
 	seg := domain.Seg{
-		ID:             id,
-		Name:           name,
-		Labels:         labels,
-		ComplianceReqs: compReqs,
+		ID:     id,
+		Name:   name,
+		Labels: labels,
 	}
 	seg.ParseLabels()
 	return seg
@@ -34,7 +106,8 @@ func TestNewLogicRuleSet(t *testing.T) {
 			},
 		}
 
-		ruleSet := NewLogicRuleSet(config)
+		pluginMap := createMockPluginMap()
+		ruleSet := NewLogicRuleSet(config, pluginMap)
 
 		if len(ruleSet.LogicRules) != 0 {
 			t.Errorf("Expected 0 rules, got %d", len(ruleSet.LogicRules))
@@ -49,7 +122,8 @@ func TestNewLogicRuleSet(t *testing.T) {
 			},
 		}
 
-		ruleSet := NewLogicRuleSet(config)
+		pluginMap := createMockPluginMap()
+		ruleSet := NewLogicRuleSet(config, pluginMap)
 
 		if len(ruleSet.LogicRules) != 1 {
 			t.Errorf("Expected 1 rule, got %d", len(ruleSet.LogicRules))
@@ -63,7 +137,8 @@ func TestNewLogicRuleSet(t *testing.T) {
 	t.Run("Uses default configuration", func(t *testing.T) {
 		config := configdomain.DefaultConfig()
 
-		ruleSet := NewLogicRuleSet(config)
+		pluginMap := createMockPluginMap()
+		ruleSet := NewLogicRuleSet(config, pluginMap)
 
 		if len(ruleSet.LogicRules) != 2 {
 			t.Errorf("Expected 2 rules by default, got %d", len(ruleSet.LogicRules))
@@ -84,7 +159,7 @@ func TestLogicRuleSet_ValidateAll(t *testing.T) {
 		config := configdomain.DefaultConfig()
 		txy := &domain.Taxonomy{
 			SegL1s: map[string]domain.Seg{
-				"shared-service": newSegWithClassification("shared-service", "Shared Service", "A", "1", []string{"req1"}),
+				"shared-service": newSegWithClassification("shared-service", "Shared Service", "A", "1", []string{"req1", "req2"}),
 				"prod":           newSegWithClassification("prod", "Production", "B", "2", []string{"req1"}),
 			},
 			SegsL2s: map[string]domain.Seg{
@@ -93,12 +168,10 @@ func TestLogicRuleSet_ValidateAll(t *testing.T) {
 					Name: "Application",
 				},
 			},
-			CompReqs: map[string]domain.CompReq{
-				"req1": {Name: "Requirement 1"},
-			},
 		}
 
-		ruleSet := NewLogicRuleSet(config)
+		pluginMap := createMockPluginMap()
+		ruleSet := NewLogicRuleSet(config, pluginMap)
 		results := ruleSet.ValidateAll(txy)
 
 		if len(results) != 0 {
@@ -123,12 +196,10 @@ func TestLogicRuleSet_ValidateAll(t *testing.T) {
 				},
 			},
 			SegsL2s: map[string]domain.Seg{},
-			CompReqs: map[string]domain.CompReq{
-				"req1": {Name: "Requirement 1"},
-			},
 		}
 
-		ruleSet := NewLogicRuleSet(config)
+		pluginMap := createMockPluginMap()
+		ruleSet := NewLogicRuleSet(config, pluginMap)
 		results := ruleSet.ValidateAll(txy)
 
 		if len(results) == 0 {
@@ -157,10 +228,10 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			SegL1s: map[string]domain.Seg{
 				"prod": {ID: "prod", Name: "Production"},
 			},
-			CompReqs: map[string]domain.CompReq{},
 		}
 
-		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
+		mockPluginMap := createMockPluginMap()
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true}, mockPluginMap["classifications"], mockPluginMap["compliance"])
 		errs := rule.Validate(txy)
 
 		if len(errs) == 0 {
@@ -173,12 +244,10 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			SegL1s: map[string]domain.Seg{
 				"shared-service": newSegWithClassification("shared-service", "Shared Service", "B", "1", []string{"req1"}),
 			},
-			CompReqs: map[string]domain.CompReq{
-				"req1": {Name: "Requirement 1"},
-			},
 		}
 
-		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
+		mockPluginMap := createMockPluginMap()
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true}, mockPluginMap["classifications"], mockPluginMap["compliance"])
 		errs := rule.Validate(txy)
 
 		if len(errs) == 0 {
@@ -191,12 +260,10 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			SegL1s: map[string]domain.Seg{
 				"shared-service": newSegWithClassification("shared-service", "Shared Service", "A", "2", []string{"req1"}),
 			},
-			CompReqs: map[string]domain.CompReq{
-				"req1": {Name: "Requirement 1"},
-			},
 		}
 
-		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
+		mockPluginMap := createMockPluginMap()
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true}, mockPluginMap["classifications"], mockPluginMap["compliance"])
 		errs := rule.Validate(txy)
 
 		if len(errs) == 0 {
@@ -209,13 +276,10 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			SegL1s: map[string]domain.Seg{
 				"shared-service": newSegWithClassification("shared-service", "Shared Service", "A", "1", []string{"req1"}),
 			},
-			CompReqs: map[string]domain.CompReq{
-				"req1": {Name: "Requirement 1"},
-				"req2": {Name: "Requirement 2"},
-			},
 		}
 
-		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
+		mockPluginMap := createMockPluginMap()
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true}, mockPluginMap["classifications"], mockPluginMap["compliance"])
 		errs := rule.Validate(txy)
 
 		if len(errs) == 0 {
@@ -228,13 +292,10 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			SegL1s: map[string]domain.Seg{
 				"shared-service": newSegWithClassification("shared-service", "Shared Service", "A", "1", []string{"req1", "req2"}),
 			},
-			CompReqs: map[string]domain.CompReq{
-				"req1": {Name: "Requirement 1"},
-				"req2": {Name: "Requirement 2"},
-			},
 		}
 
-		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
+		mockPluginMap := createMockPluginMap()
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true}, mockPluginMap["classifications"], mockPluginMap["compliance"])
 		errs := rule.Validate(txy)
 
 		if len(errs) != 0 {
@@ -247,13 +308,10 @@ func TestLogicRuleSharedService_Validate(t *testing.T) {
 			SegL1s: map[string]domain.Seg{
 				"shared-service": newSegWithClassification("shared-service", "Shared Service", "B", "2", []string{"req1"}),
 			},
-			CompReqs: map[string]domain.CompReq{
-				"req1": {Name: "Requirement 1"},
-				"req2": {Name: "Requirement 2"},
-			},
 		}
 
-		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true})
+		mockPluginMap := createMockPluginMap()
+		rule := NewLogicRuleSharedService(configdomain.GeneralBooleanConfig{Enabled: true}, mockPluginMap["classifications"], mockPluginMap["compliance"])
 		errs := rule.Validate(txy)
 
 		if len(errs) != 2 {
@@ -269,8 +327,7 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 				"prod":    {ID: "prod", Name: "Production"},
 				"staging": {ID: "staging", Name: "Production"}, // Duplicate name
 			},
-			SegsL2s:  map[string]domain.Seg{},
-			CompReqs: map[string]domain.CompReq{},
+			SegsL2s: map[string]domain.Seg{},
 		}
 
 		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{Enabled: true, CheckKeys: []string{"name"}})
@@ -288,7 +345,6 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 				"app1": {ID: "app1", Name: "Application"},
 				"app2": {ID: "app2", Name: "Application"}, // Duplicate name
 			},
-			CompReqs: map[string]domain.CompReq{},
 		}
 
 		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{Enabled: true, CheckKeys: []string{"name"}})
@@ -309,7 +365,6 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 				"app1": {ID: "app1", Name: "Application"},
 				"app2": {ID: "app2", Name: "Database"},
 			},
-			CompReqs: map[string]domain.CompReq{},
 		}
 
 		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{Enabled: true, CheckKeys: []string{"name"}})
@@ -328,7 +383,6 @@ func TestLogicRuleUniqueness_Validate(t *testing.T) {
 			SegsL2s: map[string]domain.Seg{
 				"app": {ID: "app", Name: "Production"}, // Same name as L1 is OK
 			},
-			CompReqs: map[string]domain.CompReq{},
 		}
 
 		rule := NewLogicRuleUniqueness(configdomain.UniquenessConfig{Enabled: true, CheckKeys: []string{"name"}})

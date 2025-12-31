@@ -20,7 +20,6 @@ func NewTestTaxonomy() *domain.Taxonomy {
 		ApiVersion: "v1beta1",
 		SegL1s:     make(map[string]domain.Seg),
 		SegsL2s:    make(map[string]domain.Seg),
-		CompReqs:   make(map[string]domain.CompReq),
 	}
 }
 
@@ -29,7 +28,6 @@ func NewCompleteTaxonomy() *domain.Taxonomy {
 	txy := NewTestTaxonomy()
 	txy.SegL1s["shared-service"] = NewSegL1("shared-service", "Shared Service", "A", "1", []string{"pci-dss", "sox"})
 	txy.SegL1s["prod"] = NewSegL1("prod", "Production", "A", "1", []string{"pci-dss", "sox"})
-	txy.CompReqs = NewStandardCompReqs()
 	return txy
 }
 
@@ -51,39 +49,24 @@ func WithSeg(txy *domain.Taxonomy, id string, seg domain.Seg) *domain.Taxonomy {
 	return txy
 }
 
-// WithCompReq adds a compliance requirement to the taxonomy
-func WithCompReq(txy *domain.Taxonomy, id string, req domain.CompReq) *domain.Taxonomy {
-	if txy.CompReqs == nil {
-		txy.CompReqs = make(map[string]domain.CompReq)
-	}
-	txy.CompReqs[id] = req
-	return txy
-}
-
-// WithStandardCompReqs adds standard compliance requirements (pci-dss, sox)
-func WithStandardCompReqs(txy *domain.Taxonomy) *domain.Taxonomy {
-	for id, req := range NewStandardCompReqs() {
-		txy = WithCompReq(txy, id, req)
-	}
-	return txy
-}
-
 // SegL1 Builders
 // --------------
 
 // NewSegL1 creates a SegL1 with the given parameters
-func NewSegL1(id, name, sensitivity, criticality string, compReqs []string) domain.Seg {
+func NewSegL1(id, name, sensitivity, criticality string, compLabels []string) domain.Seg {
+	labels := []string{
+		"bunsceal.plugin.classifications/sensitivity:" + sensitivity,
+		"bunsceal.plugin.classifications/sensitivity_rationale:" + ValidRationale,
+		"bunsceal.plugin.classifications/criticality:" + criticality,
+		"bunsceal.plugin.classifications/criticality_rationale:" + ValidRationale,
+	}
+	labels = append(labels, compLabels...)
+
 	seg := domain.Seg{
-		ID:             id,
-		Name:           name,
-		Description:    ValidDescription,
-		ComplianceReqs: compReqs,
-		Labels: []string{
-			"bunsceal.plugin.classifications/sensitivity:" + sensitivity,
-			"bunsceal.plugin.classifications/sensitivity_rationale:" + ValidRationale,
-			"bunsceal.plugin.classifications/criticality:" + criticality,
-			"bunsceal.plugin.classifications/criticality_rationale:" + ValidRationale,
-		},
+		ID:          id,
+		Name:        name,
+		Description: ValidDescription,
+		Labels:      labels,
 	}
 	seg.ParseLabels()
 	return seg
@@ -124,45 +107,19 @@ func NewSegWithParents(id, name string, l1Parents []string, overrides map[string
 }
 
 // NewL1Override creates a L1Override with the given parameters
-func NewL1Override(sensitivity, criticality string, compReqs []string) domain.L1Overrides {
+func NewL1Override(sensitivity, criticality string, compLabels []string) domain.L1Overrides {
+	labels := []string{
+		"bunsceal.plugin.classifications/sensitivity:" + sensitivity,
+		"bunsceal.plugin.classifications/sensitivity_rationale:" + ValidRationale,
+		"bunsceal.plugin.classifications/criticality:" + criticality,
+		"bunsceal.plugin.classifications/criticality_rationale:" + ValidRationale,
+	}
+	labels = append(labels, compLabels...)
+
 	override := domain.L1Overrides{
-		ComplianceReqs: compReqs,
-		Labels: []string{
-			"bunsceal.plugin.classifications/sensitivity:" + sensitivity,
-			"bunsceal.plugin.classifications/sensitivity_rationale:" + ValidRationale,
-			"bunsceal.plugin.classifications/criticality:" + criticality,
-			"bunsceal.plugin.classifications/criticality_rationale:" + ValidRationale,
-		},
+		Labels: labels,
 	}
 	// Parse the labels into ParsedLabels and LabelNamespaces maps
 	override.ParseLabels()
 	return override
-}
-
-// CompReq Builders
-// ----------------
-
-// NewStandardCompReqs returns the standard compliance requirements (pci-dss, sox)
-func NewStandardCompReqs() map[string]domain.CompReq {
-	return map[string]domain.CompReq{
-		"pci-dss": {
-			Name:        "PCI DSS",
-			Description: "Payment Card Industry Data Security Standard",
-			ReqsLink:    "https://www.pcisecuritystandards.org/",
-		},
-		"sox": {
-			Name:        "SOX",
-			Description: "Sarbanes-Oxley Act",
-			ReqsLink:    "https://www.sox-online.com/",
-		},
-	}
-}
-
-// NewCompReq creates a compliance requirement
-func NewCompReq(name, description, link string) domain.CompReq {
-	return domain.CompReq{
-		Name:        name,
-		Description: description,
-		ReqsLink:    link,
-	}
 }

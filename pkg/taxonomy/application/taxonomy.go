@@ -3,7 +3,6 @@ package application
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 
 	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
@@ -48,23 +47,9 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
-	// Define compliance scopes
-	txy.CompReqs, err = infrastructure.LoadCompScope(filepath.Join(cfg.FsRepository.TaxonomyDir, "compliance_requirements.yaml"), schemaValidator)
-	if err != nil {
-		o11y.Log.Println("Error loading compliance scope files:", err)
-		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
-	}
-
-	// Validate L1 definitions reference valid compliance requirements
-	valid := validation.ValidateL1Comp(&txy)
-	if !valid {
-		o11y.Log.Println("Taxonomy is invalid: L1 definitions reference valid compliance requirements")
-		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
-	}
-
 	// Load plugins from config
 	pluginsList := make(plugins.Plugins)
-	if cfg.Plugins.Classifications != nil {
+	if cfg.Plugins.Classifications != nil || cfg.Plugins.Compliance != nil {
 		err = pluginsList.LoadPlugins(cfg.Plugins)
 		if err != nil {
 			o11y.Log.Printf("error loading plugins: %s", err)
@@ -85,15 +70,15 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 	}
 
 	// Validate L2 definitions after inheritance
-	valid, _ = validation.ValidateL2Definition(&txy)
+	var valid bool
+	valid, _ = validation.ValidateL2Definition(&txy, pluginsList)
 	if !valid {
 		o11y.Log.Println("Taxonomy is invalid: Validate L2 definitions after inheritance")
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
 	}
 
 	// Validate business logic rules
-	valid = ValidateCoreLogic(&txy, cfg)
-	// TODO validate against compliance scopes acceptable risk levels
+	valid = ValidateCoreLogic(&txy, cfg, pluginsList)
 	if !valid {
 		o11y.Log.Println("Taxonomy is invalid: business logic validation failed")
 		return domain.Taxonomy{}, errors.New("invalid Taxonomy")
@@ -105,8 +90,8 @@ func LoadTaxonomy(cfg configdomain.Config) (domain.Taxonomy, error) {
 
 // ValidateCoreLogic validates business logic rules based on configuration.
 // Returns true if all enabled rules pass, false if any rule fails.
-func ValidateCoreLogic(txy *domain.Taxonomy, cfg configdomain.Config) bool {
-	ruleSet := validation.NewLogicRuleSet(cfg)
+func ValidateCoreLogic(txy *domain.Taxonomy, cfg configdomain.Config, pluginMap plugins.Plugins) bool {
+	ruleSet := validation.NewLogicRuleSet(cfg, pluginMap)
 	results := ruleSet.ValidateAll(txy)
 
 	if len(results) > 0 {

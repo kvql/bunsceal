@@ -96,7 +96,7 @@ func TestFileSegRepository_LoadLevel(t *testing.T) {
 
 func TestFileSegRepository_parseSegFile(t *testing.T) {
 	t.Run("Successfully parses valid L1 file", func(t *testing.T) {
-		seg := testhelpers.NewSegL1("test", "Test Environment", "A", "1", []string{"pci-dss"})
+		seg := testhelpers.NewSegL1("test", "Test Environment", "A", "1", nil)
 
 		files := NewTestFiles(t)
 		tmpDir := files.CreateSegFiles([]domain.Seg{seg})
@@ -122,7 +122,7 @@ func TestFileSegRepository_parseSegFile(t *testing.T) {
 
 	t.Run("Successfully parses valid L2 file", func(t *testing.T) {
 		seg := testhelpers.NewSeg("test", "Test Domain", map[string]domain.L1Overrides{
-			"production": testhelpers.NewL1Override("A", "1", []string{"pci-dss"}),
+			"production": testhelpers.NewL1Override("A", "1", nil),
 		})
 
 		files := NewTestFiles(t)

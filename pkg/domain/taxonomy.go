@@ -5,11 +5,4 @@ type Taxonomy struct {
 	ApiVersion string
 	SegL1s     map[string]Seg
 	SegsL2s    map[string]Seg
-	CompReqs   map[string]CompReq
-}
-
-type CompReq struct {
-	Name        string `yaml:"name"`
-	Description string `yaml:"description"`
-	ReqsLink    string `yaml:"requirements_link"`
 }

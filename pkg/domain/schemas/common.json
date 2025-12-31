@@ -8,20 +8,10 @@
       "minLength": 70,
       "description": "Long descriptive text; code requires at least ~70 characters"
     },
-    "envId": {
+    "segId": {
       "type": "string",
       "pattern": "^[a-z-]{1,15}$",
-      "description": "Environment identifier pattern (lowercase letters and dashes, 1-15 chars)"
-    },
-    "sdId": {
-      "type": "string",
-      "pattern": "^[a-z0-9-]{1,15}$",
-      "description": "Security domain id pattern (lowercase letters, digits and dashes, 1-15 chars)"
-    },
-    "compReqKey": {
-      "type": "string",
-      "pattern": "^[A-Za-z0-9._-]+$",
-      "description": "Key for compliance requirement entries"
+      "description": "Segment identifier pattern (lowercase letters and dashes, 1-15 chars)"
     },
     "termDef": {
       "type": "object",

@@ -9,7 +9,6 @@ import (
 // ApplyInheritance applies inheritance rules for taxonomy segments and validates cross-entity references.
 // Pass nil for pluginsList to skip plugin label inheritance (backwards compatible).
 func ApplyInheritance(txy *domain.Taxonomy, pluginsList plugins.Plugins) error {
-	// Loop through env details for each security domain and update risk compliance if not set based on env default
 	for _, seg := range txy.SegsL2s {
 		// Initialize L1Overrides map if nil (enables parent-without-override pattern)
 		if seg.L1Overrides == nil {
@@ -24,23 +23,10 @@ func ApplyInheritance(txy *domain.Taxonomy, pluginsList plugins.Plugins) error {
 				l1Override = domain.L1Overrides{}
 			}
 
-			// Inherit compliance requirements from environment if not set
-			if l1Override.ComplianceReqs == nil {
-				l1Override.ComplianceReqs = txy.SegL1s[l1ID].ComplianceReqs
-			}
-			// add compliance details to compReqs var for each compliance standard listed
-			for _, compReq := range l1Override.ComplianceReqs {
-				// only add details if listed standard is valid. If not, it will be caught in validation
-				if _, ok := txy.CompReqs[compReq]; ok {
-					if l1Override.CompReqs == nil {
-						l1Override.CompReqs = make(map[string]domain.CompReq)
-					}
-					l1Override.CompReqs[compReq] = txy.CompReqs[compReq]
-				}
-			}
 			// Write back override (creates new entry if didn't exist)
 			seg.L1Overrides[l1ID] = l1Override
 
+			// Plugin labels are inherited via plugin system
 			if pluginsList != nil {
 				errs := pluginsList.ApplyPluginInheritanceAndValidate(
 					txy.SegL1s[l1ID],

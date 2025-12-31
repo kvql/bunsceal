@@ -21,17 +21,10 @@
       "minLength": 1
     },
     "id": {
-      "$ref": "./common.json#/$defs/envId"
+      "$ref": "./common.json#/$defs/segId"
     },
     "description": {
       "$ref": "./common.json#/$defs/longDescription"
-    },
-    "compliance_reqs": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "uniqueItems": true
     },
     "l1_parents": {
       "type": "array",

@@ -71,7 +71,6 @@ See [Getting Started Guide](docs/getting-started.md) for detailed explanations o
 
 ## Roadmap
 
-- Plugin model and metadata object for additional data and business logic
 - colour config in yaml (with default values)
 - refactor rendering code to not hard code the diagram list
 - web api to allow for querying the taxonomy

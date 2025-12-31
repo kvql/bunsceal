@@ -146,44 +146,6 @@ func TestValidateData_Seg(t *testing.T) {
 	})
 }
 
-func TestValidateData_CompReqs(t *testing.T) {
-	validator, err := NewSchemaValidator(TestSchemaPath, SchemaBaseURL)
-	if err != nil {
-		t.Fatalf("Failed to create validator: %v", err)
-	}
-
-	t.Run("Valid compliance requirements pass validation", func(t *testing.T) {
-		data, err := yaml.Marshal(testhelpers.NewStandardCompReqs())
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "compliance-reqs.json")
-		if err != nil {
-			t.Errorf("Expected valid data to pass, got error: %v", err)
-		}
-	})
-
-	t.Run("Missing required fields fails validation", func(t *testing.T) {
-		invalid := map[string]domain.CompReq{
-			"test": {
-				Name: "Test",
-				// Missing Description - required field
-				ReqsLink: "https://example.com",
-			},
-		}
-		data, err := yaml.Marshal(invalid)
-		if err != nil {
-			t.Fatalf("Failed to marshal fixture: %v", err)
-		}
-
-		err = validator.ValidateData(data, "compliance-reqs.json")
-		if err == nil {
-			t.Error("Expected validation to fail for missing required field")
-		}
-	})
-}
-
 func TestValidateData_JSON(t *testing.T) {
 	validator, err := NewSchemaValidator(TestSchemaPath, SchemaBaseURL)
 	if err != nil {

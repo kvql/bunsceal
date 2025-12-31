@@ -7,6 +7,7 @@ import (
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/kvql/bunsceal/pkg/domain"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 )
 
 type ColorFont struct {
@@ -61,22 +62,6 @@ var CritColourMap = map[string]ColorFont{
 	"5": {"\"#A0E1E1\"", "\"#320707\""},
 }
 
-// Classification order and labels (hardcoded for now, to be migrated to plugin config)
-var SenseOrder = []string{"A", "B", "C", "D"}
-var CritOrder = []string{"1", "2", "3", "4", "5"}
-var SensitivityLabels = map[string]string{
-	"A": "High",
-	"B": "Medium",
-	"C": "Low",
-	"D": "N/A",
-}
-var CriticalityLabels = map[string]string{
-	"1": "Critical",
-	"2": "High",
-	"3": "Medium",
-	"4": "Low",
-	"5": "N/A",
-}
 
 var visibility = "\"invis\"" //"\"\"" for visible, "\"invis\"" for invisible
 // Formatting attributes for invisible nodes and edges
@@ -140,21 +125,23 @@ var LegendGraphAtt = map[string]string{
 }
 
 // AddLegend adds a legend to the graph. Set stack to true to stack the legend nodes vertically
-func AddLegend(g *gographviz.Graph, font int, stack bool) error {
+func AddLegend(g *gographviz.Graph, pluginData []plugins.ImageGroupingData, font int, stack bool) error {
 	legSGName := "\"cluster_a_legend\""
 	LegendGraphAtt["fontsize"] = fmt.Sprintf("\"%d\"", font-2)
 	g.AddSubGraph("top_level_graph", legSGName, LegendGraphAtt)
 	nodes := make([]string, 0)
-	for _, s := range SenseOrder {
-		label := fmt.Sprintf("\"Sensitivity: %s (%s)\"", s, SensitivityLabels[s])
-		nodeAtt := FormatNode(label, s)
-		nodeAtt["fontsize"] = fmt.Sprintf("\"%d\"", font-2)
-		nodeAtt["width"] = "\"\""
-		nodeName := fmt.Sprintf("\"legend_%s\"", s)
-		nodes = append(nodes, nodeName)
-		err := g.AddNode(legSGName, nodeName, nodeAtt)
-		if err != nil {
-			return err
+	for _, imgData := range pluginData {
+		for _, value := range imgData.OrderedValues {
+			label := fmt.Sprintf("\"%s: %s (%s)\"", imgData.DisplayName, value, imgData.ValuesMap[value])
+			nodeAtt := FormatNode(label, value)
+			nodeAtt["fontsize"] = fmt.Sprintf("\"%d\"", font-2)
+			nodeAtt["width"] = "\"\""
+			nodeName := fmt.Sprintf("\"legend_%s\"", value)
+			nodes = append(nodes, nodeName)
+			err := g.AddNode(legSGName, nodeName, nodeAtt)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	if !stack {
@@ -238,7 +225,7 @@ func envSubGraphName(envID string) string {
 	return fmt.Sprintf("\"cluster_%s\"", strings.ReplaceAll(envID, "-", "_"))
 }
 
-// FocusSGName returns the name of the subgraph for grouping Segment Level 2s within an environment by a particular focus. e.g criticality, compliance scope.
+// FocusSGName returns the name of the subgraph for grouping Segment Level 2s within an environment by a particular focus. 
 // cluster name doesn't include what the focus is as it just needs to be predicable and unique not human readable. graphviz displays the label not the graph name
 func focusSGName(envID string, focusValue string) string {
 	return fmt.Sprintf("\"cluster_focus_%s_%s\"", strings.ReplaceAll(envID, "-", "_"), focusValue)
@@ -425,14 +412,6 @@ func FormatGraph(label string, colourLookup string) map[string]string {
 
 // FormatLabel returns a formatted label for a node with full details
 func FormatLabel(name string, sense string, crit string) string {
-
-	// label := fmt.Sprintf("\"%s\\n%s\\nSensitivity: %s\\nCriticality: %s\\nCompliance Reqs: \\n%s\"",
-	// 	name, strings.Repeat("_", len(name)),
-	// 	strings.ToUpper(sense),
-	// 	strings.ToUpper(crit),
-	// 	strings.Join(compReqs, ", ")
-	// )
-
 	// graph without Compliance reqs until process around them is finalised
 	label := fmt.Sprintf("\"%s\\n%s\\nClassification: %s%s\"",
 		name, strings.Repeat("_", len(name)),

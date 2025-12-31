@@ -56,9 +56,8 @@ func TestApplyInheritance_PluginLabels(t *testing.T) {
 		}
 
 		txy := domain.Taxonomy{
-			SegL1s:   map[string]domain.Seg{"prod": parentSeg},
-			SegsL2s:  map[string]domain.Seg{"app": childSeg},
-			CompReqs: map[string]domain.CompReq{},
+			SegL1s:  map[string]domain.Seg{"prod": parentSeg},
+			SegsL2s: map[string]domain.Seg{"app": childSeg},
 		}
 
 		p := newTestPlugins(true)
@@ -93,9 +92,8 @@ func TestApplyInheritance_PluginLabels(t *testing.T) {
 		}
 
 		txy := domain.Taxonomy{
-			SegL1s:   map[string]domain.Seg{"prod": parentSeg},
-			SegsL2s:  map[string]domain.Seg{"app": childSeg},
-			CompReqs: map[string]domain.CompReq{},
+			SegL1s:  map[string]domain.Seg{"prod": parentSeg},
+			SegsL2s: map[string]domain.Seg{"app": childSeg},
 		}
 
 		p := newTestPlugins(true)
@@ -129,9 +127,8 @@ func TestApplyInheritance_PluginLabels(t *testing.T) {
 		}
 
 		txy := domain.Taxonomy{
-			SegL1s:   map[string]domain.Seg{"prod": prodSeg, "staging": stagingSeg},
-			SegsL2s:  map[string]domain.Seg{"app": childSeg},
-			CompReqs: map[string]domain.CompReq{},
+			SegL1s:  map[string]domain.Seg{"prod": prodSeg, "staging": stagingSeg},
+			SegsL2s: map[string]domain.Seg{"app": childSeg},
 		}
 
 		p := newTestPlugins(true)
@@ -166,7 +163,6 @@ func TestApplyInheritance_NilPlugins(t *testing.T) {
 					},
 				},
 			},
-			CompReqs: map[string]domain.CompReq{},
 		}
 
 		// Should not panic with nil plugins

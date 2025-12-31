@@ -92,13 +92,13 @@ func RenderDiagrams(tax domain.Taxonomy, dir string, terms domain.TermConfig, vi
 
 	graphConfigs := []ImageConfig{
 		{func() (*gographviz.Graph, error) {
-			return GraphL2Grouped(tax, terms, visCfg, plugins.ImageGroupingData{})
+			return GraphL2Grouped(tax, terms, visCfg, groupData, plugins.ImageGroupingData{})
 		}, "l2_Segments_overview.png"},
-		{func() (*gographviz.Graph, error) { return GraphL1(tax, terms, visCfg) }, "l1_segments_overview.png"},
+		{func() (*gographviz.Graph, error) { return GraphL1(tax, terms, visCfg, groupData) }, "l1_segments_overview.png"},
 	}
 
 	for _, group := range groupData {
-		graphConfigs = append(graphConfigs, ImageConfig{func() (*gographviz.Graph, error) { return GraphL2Grouped(tax, terms, visCfg, group) }, group.Key + "_overview.png"})
+		graphConfigs = append(graphConfigs, ImageConfig{func() (*gographviz.Graph, error) { return GraphL2Grouped(tax, terms, visCfg, groupData, group) }, group.Key + "_overview.png"})
 	}
 
 	for _, config := range graphConfigs {

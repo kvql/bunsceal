@@ -6,6 +6,7 @@ import (
 	configdomain "github.com/kvql/bunsceal/pkg/config/domain"
 	"github.com/kvql/bunsceal/pkg/domain"
 	"github.com/kvql/bunsceal/pkg/o11y"
+	"github.com/kvql/bunsceal/pkg/taxonomy/application/plugins"
 )
 
 // LogicRule defines the interface for business logic validation rules.
@@ -26,11 +27,13 @@ type LogicRuleSet struct {
 
 // NewLogicRuleSet creates a new LogicRuleSet based on the provided configuration.
 // Only enabled rules are instantiated and added to the set.
-func NewLogicRuleSet(config configdomain.Config) *LogicRuleSet {
+func NewLogicRuleSet(config configdomain.Config, pluginMap plugins.Plugins) *LogicRuleSet {
 	rs := &LogicRuleSet{LogicRules: make(map[string]LogicRule)}
 
 	if config.Rules.SharedService.Enabled {
-		rs.LogicRules["SharedService"] = NewLogicRuleSharedService(config.Rules.SharedService)
+		classificationPlugin := pluginMap["classifications"]
+		compliancePlugin := pluginMap["compliance"]
+		rs.LogicRules["SharedService"] = NewLogicRuleSharedService(config.Rules.SharedService, classificationPlugin, compliancePlugin)
 	}
 
 	if config.Rules.Uniqueness.Enabled {
@@ -60,12 +63,18 @@ func (rs *LogicRuleSet) ValidateAll(taxonomy *domain.Taxonomy) []ValidationResul
 // LogicRuleSharedService validates the shared-services environment.
 // This rule ensures the shared-services environment meets the strictest requirements.
 type LogicRuleSharedService struct {
-	config configdomain.GeneralBooleanConfig
+	config            configdomain.GeneralBooleanConfig
+	classificationPlugin plugins.Plugin
+	compliancePlugin  plugins.Plugin
 }
 
 // NewLogicRuleSharedService creates a new SharedService validation rule.
-func NewLogicRuleSharedService(config configdomain.GeneralBooleanConfig) *LogicRuleSharedService {
-	return &LogicRuleSharedService{config: config}
+func NewLogicRuleSharedService(config configdomain.GeneralBooleanConfig, classificationPlugin plugins.Plugin, compliancePlugin plugins.Plugin) *LogicRuleSharedService {
+	return &LogicRuleSharedService{
+		config:            config,
+		classificationPlugin: classificationPlugin,
+		compliancePlugin:  compliancePlugin,
+	}
 }
 
 // Validate checks that the shared-service environment meets all requirements.
@@ -98,9 +107,18 @@ func (r *LogicRuleSharedService) Validate(taxonomy *domain.Taxonomy) []error {
 		return ""
 	}
 
-	// Get expected highest values (hardcoded for now)
-	expectedSens := "A"
-	expectedCrit := "1"
+	// Get expected highest values from classifications plugin
+	imageData := r.classificationPlugin.GetImageData()
+	expectedSens := ""
+	expectedCrit := ""
+	for _, data := range imageData {
+		if data.Key == "sensitivity" && len(data.OrderedValues) > 0 {
+			expectedSens = data.OrderedValues[0]
+		}
+		if data.Key == "criticality" && len(data.OrderedValues) > 0 {
+			expectedCrit = data.OrderedValues[0]
+		}
+	}
 
 	if getSensitivity(sharedSeg) != expectedSens || getCriticality(sharedSeg) != expectedCrit {
 		err := fmt.Errorf("%s environment does not have the highest sensitivity or criticality", envName)
@@ -108,10 +126,26 @@ func (r *LogicRuleSharedService) Validate(taxonomy *domain.Taxonomy) []error {
 		errs = append(errs, err)
 	}
 
-	if len(taxonomy.SegL1s[envName].ComplianceReqs) != len(taxonomy.CompReqs) {
-		err := fmt.Errorf("%s environment does not have all compliance requirements", envName)
-		o11y.Log.Printf("%v", err)
-		errs = append(errs, err)
+	// Check if shared-service has all compliance requirements defined via labels
+	if r.compliancePlugin != nil {
+		if cp, ok := r.compliancePlugin.(*plugins.CompliancePlugin); ok {
+			ns := cp.GetNamespace()
+			totalCompReqs := len(cp.Config.Definitions)
+			inScopeCount := 0
+
+			// Count how many compliance requirements are in-scope
+			for reqID := range cp.Config.Definitions {
+				if scope, exists := sharedSeg.LabelNamespaces[ns][reqID]; exists && scope == plugins.ScopeInScope {
+					inScopeCount++
+				}
+			}
+
+			if inScopeCount != totalCompReqs {
+				err := fmt.Errorf("%s environment does not have all compliance requirements in-scope", envName)
+				o11y.Log.Printf("%v", err)
+				errs = append(errs, err)
+			}
+		}
 	}
 
 	return errs

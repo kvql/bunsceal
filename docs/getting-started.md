@@ -72,18 +72,22 @@ name: Production
 id: production
 description: |
   Production environment containing all live customer-facing systems.
-def_sensitivity: "a"
-sensitivity_reason: |
-  Contains customer data and PII requiring highest protection level.
-def_criticality: "1"
-criticality_reason: |
-  Mission-critical systems with 24/7 availability requirement.
-def_compliance_reqs:
-  - "SOC2"
-  - "GDPR"
+labels:
+  - "bunsceal.plugin.classifications/sensitivity:A"
+  - "bunsceal.plugin.classifications/sensitivity_rationale:Contains customer data and PII requiring highest protection level."
+  - "bunsceal.plugin.classifications/criticality:1"
+  - "bunsceal.plugin.classifications/criticality_rationale:Mission-critical systems with 24/7 availability requirement."
+  - "bunsceal.plugin.compliance/soc2:in-scope"
+  - "bunsceal.plugin.compliance/soc2_rationale:Production systems must comply with SOC2 requirements."
+  - "bunsceal.plugin.compliance/gdpr:in-scope"
+  - "bunsceal.plugin.compliance/gdpr_rationale:Processes customer PII subject to GDPR."
 ```
 
-Required fields: `name`, `id`, `description`, `def_sensitivity`, `sensitivity_reason`, `def_criticality`, `criticality_reason`, `def_compliance_reqs`
+Required fields: `name`, `id`, `description`, `labels`
+
+Labels use plugin namespaces:
+- Classifications: `bunsceal.plugin.classifications/{classification}:{value}` and `bunsceal.plugin.classifications/{classification}_rationale:{text}`
+- Compliance: `bunsceal.plugin.compliance/{requirement}:{in-scope|out-of-scope}` and `bunsceal.plugin.compliance/{requirement}_rationale:{text}`
 
 ### Step 3: Create an L2 Segment
 
@@ -95,23 +99,26 @@ name: "Security Tooling"
 id: sec-tooling
 description: |
   Security monitoring and detection infrastructure.
-env_details:
+l1_parents:
+  - production
+  - staging
+  - dev
+l1_overrides:
   production:
-    def_sensitivity: "a"
-    sensitivity_reason: |
-      Has visibility into all production systems and logs.
-    def_criticality: "1"
-    criticality_reason: |
-      Required for threat detection and incident response.
-    def_compliance_reqs:
-      - "SOC2"
+    labels:
+      - "bunsceal.plugin.classifications/sensitivity:A"
+      - "bunsceal.plugin.classifications/sensitivity_rationale:Has visibility into all production systems and logs."
+      - "bunsceal.plugin.classifications/criticality:1"
+      - "bunsceal.plugin.classifications/criticality_rationale:Required for threat detection and incident response."
+      - "bunsceal.plugin.compliance/soc2:in-scope"
+      - "bunsceal.plugin.compliance/soc2_rationale:Security tooling must comply with SOC2 requirements."
   staging:
     # Inherits all metadata from staging L1
   dev:
     # Inherits all metadata from dev L1
 ```
 
-The `env_details` section maps this L2 to L1 segments. Leave L1 entries empty to inherit all metadata. Override specific fields as needed.
+The `l1_parents` array lists which L1 segments contain this L2. The `l1_overrides` section allows overriding inherited labels for specific L1 parents. Leave L1 entries empty (or omit entirely) to inherit all metadata from the parent L1.
 
 ### Step 4: Validate
 
